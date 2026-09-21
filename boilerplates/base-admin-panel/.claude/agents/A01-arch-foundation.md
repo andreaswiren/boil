@@ -121,3 +121,13 @@ Every other agent's `env` members land in the same schema by assembly, and you r
 `build/foundation.md` — the scaffold map (what exists, what is deliberately absent and who owns it), the compose service table, the dev CA procedure, and the digest of each pinned base image.
 `build/env-surface.md` — the assembled env var list with the owning agent and REQ ID per key, which A18 reads for the secure-by-default posture and A19 reads for the egress surface.
 `build/selftest/A01.json` — health-endpoint and boot-failure results in the shape the gates consume.
+
+**Every hand-off carries your token usage (REQ-COST-01).** Write
+`build/agents/<your-id>/report.json` conforming to `AgentReport`
+(`contracts/types/agent-report.md`) alongside the artefacts above: your wave,
+task id, round, the REQ IDs you claim, the `CostAttribution` cause, and a
+`usage` block with input, output, cache-read and cache-write tokens plus the
+model and effort you ran at. Where your runtime does not expose a count, write
+`null` — **never `0`**. A zero is a claim that deflates a total someone will
+trust; `null` reads as `unreported` and marks the total incomplete
+(REQ-COST-12). An agent that finishes without a report has not finished.

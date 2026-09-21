@@ -127,3 +127,13 @@ Write to `build/screenshots/` and mirror the summary to `build/agents/A21/`:
 - The images themselves, in the chat reply. That is the deliverable; the directory is the archive.
 
 You are not a gate agent. You produce the evidence C1, C2, S1 and S2 judge, and you vote on nothing (REQ-GAT-07).
+
+**Every hand-off carries your token usage (REQ-COST-01).** Write
+`build/agents/<your-id>/report.json` conforming to `AgentReport`
+(`contracts/types/agent-report.md`) alongside the artefacts above: your wave,
+task id, round, the REQ IDs you claim, the `CostAttribution` cause, and a
+`usage` block with input, output, cache-read and cache-write tokens plus the
+model and effort you ran at. Where your runtime does not expose a count, write
+`null` — **never `0`**. A zero is a claim that deflates a total someone will
+trust; `null` reads as `unreported` and marks the total incomplete
+(REQ-COST-12). An agent that finishes without a report has not finished.

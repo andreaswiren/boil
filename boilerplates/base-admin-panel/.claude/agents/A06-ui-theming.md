@@ -107,3 +107,13 @@ export const declaration = {
 `build/theme.md` — the decode output, the shipped default selection, the token inventory (semantic name → light value → dark value), the contrast matrix result, and the font subset list with file sizes.
 `packages/theme/dist/tokens.css` + `fonts/` — the bundle A08 links for honest mockups and A17 consumes for theme-aware charts.
 `build/selftest/A06.json` — knob-parity count, contrast pass/fail per combination, no-flash test result.
+
+**Every hand-off carries your token usage (REQ-COST-01).** Write
+`build/agents/<your-id>/report.json` conforming to `AgentReport`
+(`contracts/types/agent-report.md`) alongside the artefacts above: your wave,
+task id, round, the REQ IDs you claim, the `CostAttribution` cause, and a
+`usage` block with input, output, cache-read and cache-write tokens plus the
+model and effort you ran at. Where your runtime does not expose a count, write
+`null` — **never `0`**. A zero is a claim that deflates a total someone will
+trust; `null` reads as `unreported` and marks the total incomplete
+(REQ-COST-12). An agent that finishes without a report has not finished.

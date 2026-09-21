@@ -40,7 +40,7 @@ returns 302 and neither `www.anthropic.com/pricing` nor
 egress proxy (`versions/pricing.json` → `egressNote`, 2026-09-21). Every money
 column this build produces is therefore an estimate, says so in its heading, and
 stays one until a fetch succeeds. Nobody upgrades a `confidence` because a
-number looks familiar (`versions/pricing.md` §3). Token counts are unaffected —
+number looks familiar (`versions/pricing.md`, "Confidence levels"). Token counts are unaffected —
 they are measured, exact, and useful when the prices are not.
 
 ## 2. `build/costs.md` — the table itself (REQ-COST-02, REQ-COST-06)

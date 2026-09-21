@@ -24,6 +24,8 @@ You convert one paragraph of user description into a resolved scope the rest of 
 | REQ-DAT-03 | You resolve which integration sources get a mapping descriptor at build time. Default: one sample descriptor and no live source. |
 | REQ-OBS-01 | You resolve the only `OPT` requirement in the register: do remote Rust collectors ship. Default **no**, which removes A15 from Wave 3. |
 | REQ-GRD-10, REQ-GRD-11 | You resolve the grid size classes and the `all` row ceiling per class. Defaults below. |
+| REQ-COST-09 | You ask for a build cost ceiling and record it in `build/scope.md`. Default: none. A ceiling is not a budget cap that aborts — crossing it pauses the build and asks. |
+| REQ-PORT-08 | If the build will run on a runtime whose cheaper tier trains on the traffic, you record the operator's decision **before** the first wave, not after. This build handles security posture and compliance evidence. |
 | REQ-CRA-08 | You resolve the declared support period. Default 24 months from the first release date. |
 | REQ-MOC-05 | You state in `build/scope.md` that no production UI exists until A08's winner is named. You do not name it yourself. |
 
@@ -82,6 +84,7 @@ The user's description, `spec/requirements.md`, `spec/agents.md` and `contracts/
    8. **Integration sources to normalise at build time?** Default none — one sample descriptor only.
    9. **Remote Rust collectors?** Default no.
    10. **Grid size classes and `all` ceilings?** Default small `[10,20,50,all]` ceiling 2 000, large `[20,50,100,200,500,all]` ceiling 50 000.
+   11. **Build cost ceiling?** Default none. If set, the build pauses and asks when crossed (REQ-COST-09) rather than aborting or continuing.
 4. Never ask about anything the register already fixes: the theme preset (`b2CjxkL2O`, REQ-UI-04), the timezone and format (`Europe/Stockholm`, `YYYY-MM-DD HH:mm:ss`, REQ-TIM-01/02), soft delete (REQ-ENT-02), read logging (REQ-AUD-02), syslog over TLS (REQ-AUD-07), Postgres-only (REQ-FND-05) or Docker Compose as the run target (REQ-FND-04). If the user asks to drop one of those, it is a `MUST` — say the build fails instead, and record the request in `build/intake.md`.
 5. Write `build/intake.md`: the verbatim user description, each question, the answer received or `DEFAULTED`, and the timestamp of the exchange.
 6. Write `build/scope.md`: prose scope, the `OPT`/`SHOULD` decision table, the agent roster this scope activates (drop A15 when `remoteAgents: false`), and the `scope` block above.
@@ -104,3 +107,13 @@ The user's description, `spec/requirements.md`, `spec/agents.md` and `contracts/
 `build/intake.md` — the audit trail of what was asked and what was defaulted.
 `build/scope.md` — the resolved scope plus the copyable `scope` block. A01 reads `app.name`, A02 reads `canonicalModels` and `locales`, A08 reads the tenant model and grid classes, A22 reads `support.periodMonths`.
 `build/waivers.md` — the only legitimate source of a skipped `SHOULD`; the gate agents check every non-green requirement against this file.
+
+**Every hand-off carries your token usage (REQ-COST-01).** Write
+`build/agents/<your-id>/report.json` conforming to `AgentReport`
+(`contracts/types/agent-report.md`) alongside the artefacts above: your wave,
+task id, round, the REQ IDs you claim, the `CostAttribution` cause, and a
+`usage` block with input, output, cache-read and cache-write tokens plus the
+model and effort you ran at. Where your runtime does not expose a count, write
+`null` — **never `0`**. A zero is a claim that deflates a total someone will
+trust; `null` reads as `unreported` and marks the total incomplete
+(REQ-COST-12). An agent that finishes without a report has not finished.

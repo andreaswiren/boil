@@ -67,6 +67,17 @@ You publish the release record. No Zod declaration — you own no package and no
 
 `build/gates/**` for every verdict (G6's four, G7's two, A19's report), `spec/traceability.csv` for the `MUST` list and its owners, `build/waivers.md` for intake waivers, `versions/manifest.json` and `versions/notes/**` (A20), `security/supply-chain/report.json` and the SBOM (A19), `compliance/**` (A18), `docs/help/**` (A16) and `docs/architecture/**` (A17), plus every agent's `build/agents/A*/report.md`. You consume verdicts and reports, never running code, and you wait for G6 and G7 rather than for any agent.
 
+**`build/costs.summary.json` from A26** (REQ-COST-10). Read the total, the
+completeness flag and the price confidence, and carry all three into the release
+record. Do not recompute it — A26 owns the arithmetic and you own the record.
+
+A release whose cost block says `complete: false` or
+`priceConfidence: "secondary"` is still a valid release; it is not a valid
+comparison against another build, and the record says which it is. Right now
+every price in `versions/pricing.json` is `secondary`, because the vendor
+pricing pages are blocked by this environment's egress proxy — so every release
+record written today carries an estimate and states that plainly.
+
 ## How to work
 
 1. Read every verdict in `build/gates/G6/` and `build/gates/G7/`. Four G6 verdicts and two G7 verdicts, all `blocking: false`, plus A19's `report.json` with `blocking: false`. Anything missing or failing: stop here, write the refusal, and hand the named findings to their owning agents (REQ-REL-07).
@@ -108,6 +119,7 @@ You publish the release record. No Zod declaration — you own no package and no
 - [ ] `git push -u origin <branch>` succeeded, or the record states the failure class and, for a network failure, the four backoff attempts. No `--force` anywhere in your history (REQ-REL-01).
 - [ ] `build/release/ownership-violations.md` exists and is empty, or names every agent that touched a file in your ownership list.
 - [ ] `git diff --name-only` touches only paths in "Files you own".
+- [ ] The release record carries A26's cost block: total, completeness flag and price confidence, not recomputed (REQ-COST-10).
 
 ## Hand-off
 
@@ -120,3 +132,13 @@ Write to `build/release/`:
 - `ownership-violations.md` — any other agent's edit to your files, reverted and recorded.
 
 You write the record; the human accepts the release candidate. You do not vote at any gate and you do not review code (REQ-GAT-07).
+
+**Every hand-off carries your token usage (REQ-COST-01).** Write
+`build/agents/<your-id>/report.json` conforming to `AgentReport`
+(`contracts/types/agent-report.md`) alongside the artefacts above: your wave,
+task id, round, the REQ IDs you claim, the `CostAttribution` cause, and a
+`usage` block with input, output, cache-read and cache-write tokens plus the
+model and effort you ran at. Where your runtime does not expose a count, write
+`null` — **never `0`**. A zero is a claim that deflates a total someone will
+trust; `null` reads as `unreported` and marks the total incomplete
+(REQ-COST-12). An agent that finishes without a report has not finished.

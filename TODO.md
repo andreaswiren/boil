@@ -3,7 +3,7 @@
 Live status for the `boil` repository. Updated in the same commit as the work it
 describes (`CLAUDE.md` hard rule 4).
 
-Repo version: **0.2.0**
+Repo version: **0.3.0**
 
 ---
 
@@ -21,19 +21,21 @@ Repo version: **0.2.0**
 - [x] `README.md`, `SECURITY.md`, `CHANGELOG.md`, `VERSION`
 
 ### base-admin-panel — prompt structure
-- [x] `spec/requirements.md` — 272 requirements, 29 domains, stable IDs (270 MUST, 1 SHOULD, 1 OPT)
-- [x] `spec/traceability.csv` — 272 rows, every requirement mapped to owner
+- [x] `spec/requirements.md` — 294 requirements, 31 domains, stable IDs (292 MUST, 1 SHOULD, 1 OPT)
+- [x] `spec/traceability.csv` — 294 rows, every requirement mapped to owner
       agent, contract member, gate and spec document; generated from the register
-- [x] `spec/agents.md` — 26 build agents in 5 waves, 4 gate agents; Wave 3 is 15-wide
+- [x] `spec/agents.md` — 27 build agents in 5 waves plus 4 gate agents; Wave 3 is 15-wide
 - [x] `prompts/00-master-orchestrator.md` — dispatch, gates, CCRs, loop discipline
 - [x] `contracts/README.md` — contract law (REQ-CTR-01 … REQ-CTR-10)
 - [x] `contracts/ownership.md` — single-owner map for paths, routes, tables,
       migration namespaces
-- [x] `contracts/` — 21 artefacts across `types/`, `events/`, `openapi/`, `db/`
-- [x] `.claude/agents/` — 30 agent definitions (26 builders, 4 blocking reviewers)
+- [x] `contracts/` — 22 artefacts across `types/`, `events/`, `openapi/`, `db/`
+- [x] `.claude/agents/` — 31 agent definitions (27 builders, 4 blocking reviewers)
 - [x] `gates/` — G0–G8 ladder, verdict schema, loop rules, Karpathy lens
 - [x] `.claude/skills/` — 6 operational skills
-- [x] `spec/` — 17 domain specifications, incl. setup wizard, ACME/TLS, edge proxy and settings
+- [x] `spec/` — 18 domain specifications, incl. setup wizard, ACME/TLS, edge proxy, settings and cost reporting
+- [x] `portability/` — capability map and the Muse Code adapter (untested)
+- [x] `versions/pricing.json` + `pricing.md` — prices with per-entry confidence
 - [x] `scripts/check-conventions.sh` — passes clean on the whole repo
 - [x] `versions/manifest.json` — 83 externally validated entries with source URL
       and check timestamp (REQ-VER-02, REQ-VER-03)
@@ -103,6 +105,23 @@ is a design claim, not an observed one.
       structure, not just into the generated app.
 
 ### Gaps known now
+- [ ] **Verify the Muse Code adapter by running one wave on it** (REQ-PORT-09).
+      It is written in full and untested; there is no Muse Code binary here and
+      Meta's hosts are blocked by the egress proxy. Until that run happens the
+      adapter is a well-researched draft.
+- [ ] **Confirm whether Muse Code defaults to the contributor tier.** Several
+      sources say it does. If so, a fresh install has already sent prompts to a
+      training-eligible tier, and the REQ-PORT-08 decision belongs before the
+      first run. `cat ~/.config/muse/settings.json` and check which model id the
+      session reports.
+- [ ] **Upgrade at least one price to `verified`.** Every entry in
+      `versions/pricing.json` is `secondary` because the vendor pricing pages are
+      proxy-blocked here. Until one is verified, every money column in every
+      build is an estimate.
+- [ ] Muse Code's exact tool names, per-agent tool restriction, per-subagent
+      model override, subagent concurrency cap, usage-log path, telemetry keys
+      and hooks location are all `unconfirmed` with a check recorded. Each needs
+      running once against the real binary.
 - [ ] `REQ-FND-11` is the claim most worth testing first: `docker compose up` on
       a clean host yielding working HTTPS with nothing else installed. It is what
       a user meets in their first thirty seconds, and nothing has verified it.

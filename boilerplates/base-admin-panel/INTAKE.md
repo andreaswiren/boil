@@ -46,6 +46,7 @@ Each has a default, which is used if you say "whatever you think".
 | Remote collectors needed | No (`REQ-OBS-01` is `OPT`) |
 | Grid size classes | Small `[10,20,50,all]`, large `[20,50,100,200,500,all]` |
 | Expected largest table | 100k rows — sets the server-side grid threshold |
+| Build cost ceiling | None. Set one and the build pauses and asks when it is crossed, rather than continuing silently (REQ-COST-09). |
 
 Defaults that are **not** questions, because they are `MUST` requirements:
 
@@ -61,5 +62,9 @@ Defaults that are **not** questions, because they are `MUST` requirements:
 
 1. A00 confirms the resolved scope back to you.
 2. Ten layout mockups are rendered and screenshotted. **You pick one.**
-3. The build runs. You will be asked again only if a gate deadlocks
-   (REQ-GAT-05) or a breaking contract change needs a human call.
+3. The build runs. A cost table is presented at every gate — tokens spent,
+   running total, and the variance against the pre-wave estimate
+   (REQ-COST-03).
+4. You will be asked again only if a gate deadlocks (REQ-GAT-05), a
+   breaking contract change needs a human call, or a declared cost ceiling
+   is crossed (REQ-COST-09).

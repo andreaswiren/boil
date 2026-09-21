@@ -103,3 +103,13 @@ export const declaration = {
 `docs/architecture/registry.json` — chart ids, kinds, render paths, alt text, derivation hashes and review dates. A16 embeds by id; the documentation gate reads the staleness result.
 `build/charts.md` — the chart list with the files each was derived from, and every discrepancy found between the code and `spec/requirements.md`, named with the REQ ID and the owning agent.
 `build/selftest/A17.json` — render determinism, contrast, edge-label, topology-parity and staleness results.
+
+**Every hand-off carries your token usage (REQ-COST-01).** Write
+`build/agents/<your-id>/report.json` conforming to `AgentReport`
+(`contracts/types/agent-report.md`) alongside the artefacts above: your wave,
+task id, round, the REQ IDs you claim, the `CostAttribution` cause, and a
+`usage` block with input, output, cache-read and cache-write tokens plus the
+model and effort you ran at. Where your runtime does not expose a count, write
+`null` — **never `0`**. A zero is a claim that deflates a total someone will
+trust; `null` reads as `unreported` and marks the total incomplete
+(REQ-COST-12). An agent that finishes without a report has not finished.

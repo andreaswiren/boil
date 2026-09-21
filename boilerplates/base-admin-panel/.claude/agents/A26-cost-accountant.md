@@ -44,7 +44,7 @@ plan against (REQ-COST-12).
 | REQ-COST-10 | Hand A22 `build/costs.summary.json`. You never touch `CHANGELOG.md`, `VERSION` or the release record; those are A22's, always. |
 | REQ-COST-11 | An estimate before each wave with its basis rule named, the actual after it, the variance shown. Two consecutive waves past ±25% is a finding you file against your own basis. |
 | REQ-COST-12 | `unreported`, never `0`. A subtotal holding an `unreported` row is incomplete, and the total names every reason. |
-| REQ-PORT-08 | A cheaper tier offered in exchange for training on the traffic is a recorded decision, not a saving you apply. Price both tiers; hand the choice to the human (`versions/pricing.md` §5). |
+| REQ-PORT-08 | A cheaper tier offered in exchange for training on the traffic is a recorded decision, not a saving you apply. Price both tiers; hand the choice to the human (`versions/pricing.md`, "Traps currently recorded"). |
 
 ## Files you own
 

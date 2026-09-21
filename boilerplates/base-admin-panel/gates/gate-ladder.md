@@ -3,6 +3,27 @@
 Fixed order. Per gate: entry, checks, runner, pass criterion, failure target,
 human involvement. Verdicts land in `build/gates/<gate>/` (`verdict-schema.md`).
 
+
+## The cost criterion, at every gate
+
+Every gate below carries one additional pass criterion that is not repeated in
+each section:
+
+> **The cost table has been updated and presented in the reply** (REQ-COST-02,
+> REQ-COST-03). Token counts come from each agent's `AgentReport.usage`; money
+> is derived and labelled with the unit price it used (REQ-COST-04). An agent
+> that handed off without a usage report has not satisfied REQ-COST-01, and the
+> gate does not pass on its work.
+
+A gate may pass with an **incomplete** total — where a runtime did not expose
+usage, the cell reads `unreported` and the total says so (REQ-COST-12). A gate
+may not pass with a **fabricated** total, and a `0` where nothing was reported
+is fabrication.
+
+If a cost ceiling was declared at intake and this gate crosses it, the gate
+**pauses and asks** rather than failing or continuing (REQ-COST-09). A pause is
+not a gate failure and does not start a loop round.
+
 ## G0 — Intake resolved
 **Runs:** A00. **Entry:** the user's description exists. **Human:** yes — answers
 the questions that change the build; the rest is defaulted loudly.
@@ -164,3 +185,8 @@ signal, not a duplicate to suppress.
 **Pass:** all of the above and the human accepts. **Fail →** A22 for the record
 files, the owning agent for a red `MUST`, back to G6 or G7 if a fix touched a
 reviewed surface.
+
+**Additionally at G8:** the build total is written into the release record
+(REQ-COST-10), with its completeness flag and the price confidence it was
+derived at. A release whose cost is unrecorded cannot be compared to the next
+one, which is most of the reason to measure it.

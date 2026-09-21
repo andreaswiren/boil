@@ -9,6 +9,95 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-09-21
+
+Token accounting and runtime portability. 294 requirements (272 → 294), 31
+agents, 128 files. `scripts/check-conventions.sh` passes clean.
+
+### Added
+
+**Cost reporting (`REQ-COST-01` … `REQ-COST-12`, agent A26)**
+- Every agent's hand-off now carries an `AgentReport` with its token usage —
+  input, output, cache-read, cache-write, plus the model and effort it ran at.
+  An agent that finishes without one has not finished. Added to all 26 agent
+  files that have a hand-off section.
+- The orchestrator presents the cost table **at every gate**, in the reply, not
+  at the end. The gate ladder carries it as a standing pass criterion.
+- **`null` means unreported, never `0`.** A zero is a claim that deflates a
+  total someone will then trust; `null` reads as `unreported` and marks the
+  total incomplete. A gate may pass with an incomplete total and may not pass
+  with a fabricated one.
+- **Measured tokens and derived money are never conflated.** Every money figure
+  cites the unit price it used and whether that price is `verified` or
+  `secondary`.
+- Rework is attributed to its cause. A G6 finding costs the reviewer's round,
+  the owner's fix and the re-review, and all three attribute to that finding —
+  which prices the *defect* rather than the work, and is the only figure that
+  says whether the gates earn their keep.
+- Cache reads are reported separately from fresh input, because the ratio
+  between them is the main cost lever the structure itself controls: a frozen
+  contract read by fifteen agents is exactly the shape that caches well.
+- A cost ceiling is an intake question. Crossing it pauses and asks — not a gate
+  failure, not a loop round, not a silent continue.
+- `versions/pricing.json` + `pricing.md` get the version manifest's discipline:
+  source URL, check timestamp, and a `confidence` per entry.
+- A26 runs on the cheapest model in the fleet on purpose, and its own file makes
+  the arithmetic concrete: spending Opus tokens to report on Opus token spend is
+  a 5x overhead for addition.
+
+**Runtime portability (`REQ-PORT-01` … `REQ-PORT-10`)**
+- `portability/capability-map.md` — 16 capabilities the structure needs, one
+  column per runtime, and a final column naming **which REQ IDs become
+  unverifiable** where a runtime cannot provide one. A runtime that cannot
+  restrict an agent's tools degrades `REQ-GAT-07` from a structural guarantee to
+  a prompt-level request, and the map says so rather than letting someone find
+  out at G7.
+- `portability/muse-code.md` — a paste-ready adapter for Muse Code running Muse
+  Spark 1.3. An adapter, not a fork: two copies of a prompt structure diverge,
+  one structure plus an adapter does not.
+- The adapter is small because Muse Code already scans `.claude/skills` (and
+  `.codex/skills`, and ships `muse skills import --from claude`), and its
+  instruction-file fallback chain is `AGENTS.md` → `CLAUDE.md` — both of which
+  this boilerplate already had.
+- Telemetry must be off in the **agent runtime**, not only in the generated app.
+  `REQ-SUP-06` applies to the tool doing the building.
+
+### Changed
+
+- `REQ-FND-04`/`REQ-ACME-03`/`REQ-PROX-03`: no requirement names a deployment or
+  runtime vendor. Tool names live only in agent frontmatter and the capability
+  map, which is the one place a translation happens.
+- A22 consumes A26's cost summary and carries total, completeness flag and price
+  confidence into the release record. It does not recompute them — A26 owns the
+  arithmetic, A22 owns the record.
+- A00 asks two new questions: the build cost ceiling, and — before the first
+  wave — the training-tier decision of `REQ-PORT-08`.
+
+### Known gaps, stated rather than implied
+
+- **Every price is `secondary`.** `docs.claude.com` returned 302 and both
+  `anthropic.com/pricing` and `dev.meta.ai` were unreachable through this
+  environment's egress proxy. Anthropic's figures trace to a bundled skill cache
+  dated 2026-06-24; Meta's to search snippets. Every money column is therefore
+  an estimate and says so, and a `confidence` may not be upgraded without a
+  successful fetch.
+- **The Muse Code adapter is untested**, and its first line says so.
+  `REQ-PORT-09` requires verification by running one wave on the target; there is
+  no Muse Code binary here and Meta's hosts are blocked. The one-wave test is
+  written in full and has not been run.
+- **Muse Code reportedly defaults to the contributor tier**, where Meta may use
+  prompts and completions to improve its products. If true, a build on a fresh
+  install has already sent its prompts to a training-eligible tier before anyone
+  chose anything — so the `REQ-PORT-08` decision must be made *before* the first
+  run. Marked `unconfirmed`, with the command to verify.
+- Exact Muse Code tool names, per-agent tool restriction, per-subagent model
+  override, the subagent concurrency cap (two sources conflict), the usage-log
+  path, telemetry key names and the hooks location are each marked `unconfirmed`
+  with a check. None was invented — a fabricated settings key is worse than a
+  gap, because it would be pasted.
+- Still no generated application. Every claim remains a design claim.
+
+
 ## [0.2.0] — 2026-09-21
 
 Four subsystems added to `base-admin-panel`: a first-run setup wizard,
@@ -274,6 +363,7 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/andreaswiren/boil/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/andreaswiren/boil/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/andreaswiren/boil/releases/tag/v0.1.0

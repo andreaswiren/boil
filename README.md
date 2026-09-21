@@ -14,7 +14,7 @@ Two halves:
 
 | Boilerplate | What it produces | Status |
 |-------------|------------------|--------|
-| [`base-admin-panel`](boilerplates/base-admin-panel/) | A multi-tenant Next.js admin panel that deploys with `docker compose up`: RBAC, MFA (password+OTP, passkeys, OIDC), a skip-proof setup wizard, HAProxy edge with built-in Let's Encrypt across all four challenge types, full audit including read logging, PWA with push, SMTP, syslog forwarding, an advanced TanStack datagrid, personal/tenant/global settings, EU CRA + CER compliance documentation. Driven by a 26-agent fleet across 5 waves behind 9 quality gates. | Prompt structure complete, unbuilt |
+| [`base-admin-panel`](boilerplates/base-admin-panel/) | A multi-tenant Next.js admin panel that deploys with `docker compose up`: RBAC, MFA (password+OTP, passkeys, OIDC), a skip-proof setup wizard, HAProxy edge with built-in Let's Encrypt across all four challenge types, full audit including read logging, PWA with push, SMTP, syslog forwarding, an advanced TanStack datagrid, personal/tenant/global settings, EU CRA + CER compliance documentation. 294 requirements driven by a 27-agent fleet across 5 waves behind 9 quality gates, with per-gate token-cost reporting and a portability adapter for non-Claude runtimes. | Prompt structure complete, unbuilt |
 
 More boilerplates will be added alongside it. Each one is independent.
 
