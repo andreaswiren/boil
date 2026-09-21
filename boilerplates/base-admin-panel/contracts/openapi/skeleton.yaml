@@ -1,0 +1,395 @@
+# The shape `pnpm openapi:generate` emits (REQ-API-01). Generated from the Zod
+# schemas the runtime validates with — this file is the reference skeleton, not
+# a hand-maintained document. Rules: contracts/openapi/conventions.md.
+openapi: 3.1.0
+info:
+  title: "{{APP_NAME}} Admin API"
+  version: 1.0.0
+  summary: Tenant-scoped admin API. Every operation declares a permission and an audit intent.
+  description: |
+    Generated from `packages/*/contract.declaration.ts` (REQ-API-01). Errors are
+    RFC 9457 `application/problem+json` with a stable code taxonomy
+    (REQ-API-10, `contracts/types/errors.md`). Lists accept the shared
+    pagination grammar (REQ-API-11, `contracts/types/pagination.md`).
+    The tenant is derived from the session, never from a parameter (REQ-RBA-03).
+    All timestamps are UTC RFC 3339 with a `Z` offset; display formatting
+    happens only in `packages/contracts/time` (REQ-TIM-03, REQ-TIM-04).
+  contact:
+    name: Security contact
+    url: https://example.com/security
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: https://{host}/api/v1
+    description: Deployed instance. TLS only; HTTP 308s to HTTPS (REQ-SEC-02).
+    variables:
+      host:
+        default: localhost
+        description: Reverse-proxy host name.
+tags:
+  - name: tenancy
+    description: Tenants and membership (A04).
+  - name: api
+    description: API keys and documentation (A11).
+security:
+  - sessionCookie: []
+  - apiKeyHeader: []
+paths:
+  /tenancy/tenants:
+    get:
+      operationId: tenancy.listTenants
+      tags: [tenancy]
+      summary: api.tenancy.list_tenants
+      description: |
+        Paginated list. Accepts the shared sort and filter grammar verbatim
+        (REQ-API-11). Permission `tenancy.tenant.read`; a global-tier caller
+        with `global.tenant.read-any` sees every tenant. Audited as
+        `tenancy.tenant.list`, kind `view`, aggregated (REQ-AUD-02).
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Filter"
+        - $ref: "#/components/parameters/Query"
+        - $ref: "#/components/parameters/IncludeDeleted"
+      responses:
+        "200":
+          description: One page of tenants.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PageEnvelope"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/Tenant" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+      x-permission: tenancy.tenant.read
+      x-step-up: false
+      x-audit: { action: tenancy.tenant.list, kind: view }
+  /tenancy/tenants/{tenantId}:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    get:
+      operationId: tenancy.getTenant
+      tags: [tenancy]
+      summary: api.tenancy.get_tenant
+      description: |
+        Detail read, always audited, never sampled (REQ-AUD-02). A reference to
+        another tenant returns 404 `tenancy.cross_tenant`, never 403
+        (`contracts/types/errors.md` §4).
+      responses:
+        "200":
+          description: The tenant.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "401": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+      x-permission: tenancy.tenant.read
+      x-step-up: false
+      x-audit: { action: tenancy.tenant.read, kind: read }
+    patch:
+      operationId: tenancy.updateTenant
+      tags: [tenancy]
+      summary: api.tenancy.update_tenant
+      description: |
+        Audited write. The body carries the entity write envelope's `comment`
+        (REQ-ENT-01, `contracts/openapi/conventions.md` §5), which is copied
+        into the row and into the audit event's diff. Actor and timestamp
+        columns are set by the data-access layer and are not accepted here
+        (REQ-ENT-04). Step-up required (REQ-AUT-07).
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name: { type: string, maxLength: 200 }
+                defaultLocale: { type: string, enum: [en, sv] }
+                defaultTimeZone: { type: string, default: Europe/Stockholm }
+                authMethods:
+                  type: array
+                  items: { type: string, enum: [password_totp, passkey, oidc] }
+                comment:
+                  type: [string, "null"]
+                  maxLength: 2000
+                  description: Free-text reason for this write. Copied into the audit event.
+      responses:
+        "200":
+          description: The updated tenant.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403": { $ref: "#/components/responses/Problem" }
+        "404": { $ref: "#/components/responses/Problem" }
+        "409": { $ref: "#/components/responses/Problem" }
+      x-permission: tenancy.tenant.write
+      x-step-up: true
+      x-audit: { action: tenancy.tenant.update, kind: write, diff: true }
+  /api/keys:
+    post:
+      operationId: api.mintKey
+      tags: [api]
+      summary: api.api.mint_key
+      description: |
+        Mint an API key. Scopes may never exceed the owner's live permission set
+        (REQ-API-04); a service key needs `global.api-key.mint-service` and an
+        owner of record (REQ-API-05). `expiresAt` is mandatory and capped by
+        `API_KEY_MAX_TTL_DAYS` (REQ-API-07). The material is returned exactly
+        once and stored only as a SHA-256 hash plus a non-secret prefix
+        (REQ-API-06). Audited as `api.key.mint` (REQ-API-08).
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [kind, scopes, expiresAt]
+              properties:
+                kind: { type: string, enum: [user, service] }
+                scopes:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: string
+                    pattern: "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*$"
+                expiresAt: { type: string, format: date-time }
+                ipAllowlist:
+                  type: array
+                  items: { type: string, format: cidr }
+                  default: []
+                comment: { type: [string, "null"], maxLength: 2000 }
+      responses:
+        "201":
+          description: |
+            The key. `token` is present in this response and nowhere else, ever
+            (REQ-API-06).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, prefix, token, expiresAt]
+                properties:
+                  id: { type: string, format: uuid }
+                  prefix: { type: string, minLength: 12, maxLength: 12 }
+                  token: { type: string, description: Shown exactly once. Not stored. }
+                  expiresAt: { type: string, format: date-time }
+        "400": { $ref: "#/components/responses/Problem" }
+        "403":
+          description: |
+            `auth.step_up_required` when step-up is stale, `api.key_scope_exceeded`
+            when a scope exceeds the owner's live set.
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+      x-permission: api.key.mint-own
+      x-step-up: true
+      x-audit: { action: api.key.mint, kind: write }
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-session
+      description: |
+        Opaque server-side session id (REQ-AUT-10, REQ-SEC-09). Carries no
+        claims, no tenant and no permissions.
+    apiKeyHeader:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        API key material. Effective permissions are the key's scopes intersected
+        with the owner's live permission set (REQ-API-04).
+  parameters:
+    Page:
+      name: page
+      in: query
+      required: false
+      description: Page mode. Mutually exclusive with `cursor`.
+      schema: { type: integer, minimum: 1, default: 1 }
+    PageSize:
+      name: pageSize
+      in: query
+      required: false
+      description: Per-grid ranges (REQ-GRD-10). `all` is guarded (REQ-GRD-11).
+      schema:
+        oneOf:
+          - { type: integer, minimum: 1, maximum: 500, default: 50 }
+          - { type: string, enum: [all] }
+    Sort:
+      name: sort
+      in: query
+      required: false
+      description: "Multi-column, left to right is highest precedence: `status:asc,createdAt:desc`. Max four clauses."
+      schema:
+        type: string
+        maxLength: 200
+        pattern: "^[a-zA-Z][a-zA-Z0-9_]*:(asc|desc)(,[a-zA-Z][a-zA-Z0-9_]*:(asc|desc)){0,3}$"
+      example: status:asc,createdAt:desc
+    Filter:
+      name: filter
+      in: query
+      required: false
+      style: deepObject
+      explode: true
+      description: |
+        Type-aware, one key per column: `filter[status]=in:active,suspended`.
+        Date values are RFC 3339 with a `Z` offset; a bare `YYYY-MM-DD` is
+        rejected (REQ-TIM-03).
+      schema:
+        type: object
+        additionalProperties: { type: string, maxLength: 400 }
+      example:
+        status: in:active,suspended
+        createdAt: between:2026-01-01T00:00:00Z,2026-02-01T00:00:00Z
+    Query:
+      name: q
+      in: query
+      required: false
+      description: Fuzzy search across the grid's declared searchable columns (REQ-GRD-02).
+      schema: { type: string, maxLength: 200 }
+    IncludeDeleted:
+      name: includeDeleted
+      in: query
+      required: false
+      description: |
+        Lifts the `deleted_at IS NULL` predicate. Requires
+        `global.deleted-record.read`; without it the request is rejected, not
+        ignored (REQ-ENT-05).
+      schema: { type: boolean, default: false }
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      description: |
+        The target tenant. This is the global-tier exception of
+        `contracts/types/identity.md` §1 — the tenant is the resource, never the
+        isolation scope (REQ-RBA-03).
+      schema: { type: string, format: uuid }
+    CsrfToken:
+      name: X-CSRF-Token
+      in: header
+      required: true
+      description: Double-submit CSRF token on every cookie-authenticated write (REQ-SEC-10).
+      schema: { type: string, minLength: 32, maxLength: 128 }
+  responses:
+    Problem:
+      description: RFC 9457 problem (REQ-API-10). No secret, no stack trace, no cross-tenant evidence.
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+  schemas:
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, instance, code, correlationId]
+      properties:
+        type: { type: string, format: uri, example: "https://errors.example.com/tenancy.cross_tenant" }
+        title: { type: string, description: Resolved from the i18n catalogue. }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string, description: Catalogue key plus parameters. Never an echoed value. }
+        instance: { type: string, description: The request path. No query string. }
+        code:
+          type: string
+          pattern: "^[a-z][a-z0-9]*\\.[a-z][a-z0-9_]*$"
+          example: tenancy.cross_tenant
+        correlationId:
+          type: string
+          format: uuid
+          description: Joins to the audit record and the console frame (REQ-AUD-04).
+        errors:
+          type: array
+          description: Field-level validation. Paths and rule names only, never values.
+          items:
+            type: object
+            additionalProperties: false
+            required: [path, rule]
+            properties:
+              path: { type: string }
+              rule: { type: string }
+    EntityBase:
+      type: object
+      description: |
+        The base envelope (REQ-ENT-01, `contracts/types/entity-base.md`).
+        `comment` is the only member a caller may write; the rest are set by the
+        data-access layer from the request actor (REQ-ENT-04). All timestamps
+        are UTC `timestamptz` in storage and RFC 3339 `Z` on the wire.
+      required: [createdAt, createdBy]
+      properties:
+        comment: { type: [string, "null"], maxLength: 2000 }
+        createdAt: { type: string, format: date-time }
+        createdBy: { type: string, format: uuid }
+        updatedAt: { type: [string, "null"], format: date-time }
+        updatedBy: { type: [string, "null"], format: uuid }
+        deletedAt: { type: [string, "null"], format: date-time, description: Soft-delete marker (REQ-ENT-02). }
+        deletedBy: { type: [string, "null"], format: uuid }
+    PageEnvelope:
+      type: object
+      description: |
+        The shared page envelope (REQ-API-11, `contracts/types/pagination.md`
+        §6). `appliedSort` and `appliedFilters` echo what the server actually
+        applied, so a silently dropped filter is visible.
+      required: [items, page, pageSize, total, nextCursor, appliedSort, appliedFilters]
+      properties:
+        items: { type: array, items: { type: object } }
+        page: { type: integer, minimum: 1 }
+        pageSize:
+          oneOf:
+            - { type: integer, minimum: 1 }
+            - { type: string, enum: [all] }
+        total: { type: [integer, "null"], minimum: 0, description: Null in cursor mode. }
+        nextCursor: { type: [string, "null"], description: Cursor mode only. Null on the last page. }
+        appliedSort:
+          type: array
+          maxItems: 4
+          items:
+            type: object
+            required: [column, direction]
+            properties:
+              column: { type: string }
+              direction: { type: string, enum: [asc, desc] }
+        appliedFilters:
+          type: array
+          items:
+            type: object
+            required: [column, op, values]
+            properties:
+              column: { type: string }
+              op:
+                type: string
+                enum: [eq, neq, contains, starts, ends, empty, in, nin, gt, gte, lt, lte, between, on, before, after, is]
+              values: { type: array, items: { type: string } }
+        truncated: { type: boolean, default: false, description: A guard cut the result short (REQ-GRD-11). }
+    Tenant:
+      allOf:
+        - $ref: "#/components/schemas/EntityBase"
+        - type: object
+          required: [id, slug, name, status, defaultLocale, defaultTimeZone, authMethods]
+          properties:
+            id: { type: string, format: uuid }
+            slug: { type: string, pattern: "^[a-z0-9][a-z0-9-]{1,62}$" }
+            name: { type: string, maxLength: 200 }
+            status: { type: string, enum: [active, suspended, archived] }
+            defaultLocale: { type: string, enum: [en, sv] }
+            defaultTimeZone: { type: string, default: Europe/Stockholm }
+            authMethods:
+              type: array
+              items: { type: string, enum: [password_totp, passkey, oidc] }
