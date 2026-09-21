@@ -50,6 +50,12 @@ boilerplates/<name>/
 `spec/requirements.md` is mandatory and must use stable IDs. Everything else in
 the boilerplate cites those IDs rather than restating requirements in prose.
 
+Where a boilerplate keeps a traceability matrix, it is **generated** from the
+register by `scripts/gen-traceability.py` and never hand-edited — a matrix that
+can drift from the register is worse than no matrix, because it is trusted.
+`scripts/check-conventions.sh` regenerates it and fails if the committed copy
+differs.
+
 ## 3. Stable requirement IDs
 
 Format: `REQ-<DOMAIN>-<nn>`, e.g. `REQ-GRD-08`.

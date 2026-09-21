@@ -46,6 +46,8 @@ treats it as a failed task and reassigns, rather than accepting the diff.
 | `packages/setup/**` | A24 |
 | `packages/acme/**`, `packages/tls/**` | A25 |
 | `packages/settings/**` | A05 |
+| `packages/editor/**` (Monaco, REQ-MON-01) | A05 |
+| `packages/mobile/**` | A27 |
 
 ## App routes — the contested surface
 

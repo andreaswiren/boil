@@ -45,6 +45,20 @@ for dir in boilerplates/*/; do
     [ "$missing_status" -eq "$total" ] || bad "some requirements lack a MUST/SHOULD/OPT status"
   fi
 
+  # The traceability matrix is generated, so it must still match the register.
+  if [ -f "$dir/spec/traceability.csv" ] && [ -f scripts/gen-traceability.py ]; then
+    tmp=$(mktemp -d)
+    cp "$dir/spec/traceability.csv" "$tmp/before.csv"
+    ( cd "$dir" && python3 "$OLDPWD/scripts/gen-traceability.py" >/dev/null 2>&1 ) || true
+    if diff -q "$tmp/before.csv" "$dir/spec/traceability.csv" >/dev/null 2>&1; then
+      note "traceability matrix is in sync with the register"
+    else
+      bad "traceability.csv is stale — regenerate with scripts/gen-traceability.py"
+      cp "$tmp/before.csv" "$dir/spec/traceability.csv"
+    fi
+    rm -rf "$tmp"
+  fi
+
   # CONVENTIONS.md §5 — ownership before parallelism.
   if [ -f "$dir/contracts/ownership.md" ]; then
     for a in $(grep -oE '\b[AC][0-9]{2}\b|\bS[12]\b|\bC[12]\b' "$dir/contracts/ownership.md" | sort -u); do

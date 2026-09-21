@@ -40,11 +40,16 @@ requirement without a status, an ownership map naming an agent that does not
 exist, and a broken internal reference:
 
 ```bash
-./scripts/check-conventions.sh
+cd boilerplates/<name> && python3 ../../scripts/gen-traceability.py   # if it has a matrix
+cd - && ./scripts/check-conventions.sh
 ```
 
 Fix the register, never the citation. The citation is the thing that made you
 notice.
+
+A new requirement domain needs a row in `gen-traceability.py`'s `DOMAIN` table;
+the generator fails loudly on an unmapped domain rather than silently leaving
+those requirements unowned.
 
 ## Style
 

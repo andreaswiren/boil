@@ -91,6 +91,34 @@ one of them stalls every agent at once.
 | REQ-RBA-06 | MUST | A global tier above tenants — MSP operators, global admins, superadmins — with system-wide administration, its own permission namespace, and mandatory step-up auth. |
 | REQ-RBA-07 | MUST | Global-tier impersonation or tenant-entry is time-boxed, reason-required, banner-visible to the operator, and audited on both entry and exit. |
 | REQ-RBA-08 | MUST | Role and permission changes are versioned and audited with a before/after diff. |
+| REQ-RBA-09 | MUST | Where an actor has access to more than one tenant, they can switch between them. Switching **changes the session**, server-side. It never becomes a request parameter, a query string or a header — REQ-RBA-03 holds during and after a switch, and a chooser that passes a tenant id to the API is the exact bug that requirement exists to prevent. |
+| REQ-RBA-10 | MUST | The tenant list offered is derived server-side from the actor's own grants. A tenant the actor cannot reach is never in the list, and asking for one anyway is denied and audited, not merely absent from the UI. |
+| REQ-RBA-11 | MUST | A switch rotates the session, invalidates cached tenant-scoped data in the client, and is audited with both the previous and new tenant. Data from the previous tenant must not survive the switch in any cache, store or open stream. |
+| REQ-RBA-12 | MUST | With exactly one accessible tenant there is no chooser and no switch path, because a control that cannot do anything is a control that teaches people to ignore controls. |
+
+## IMP — Impersonation
+
+A global operator can enter a user's session and see what that user sees. This
+is the most dangerous capability in the product: it is, by construction, an
+authorized account takeover. These requirements exist so it is auditable,
+bounded, and cannot quietly become privilege escalation.
+
+| ID | Status | Requirement |
+|----|--------|-------------|
+| REQ-IMP-01 | MUST | A global-tier operator with the impersonation permission can enter the session of a specific user and see the application exactly as that user sees it — their tenant, their navigation, their data, their permitted actions. |
+| REQ-IMP-02 | MUST | The effective permission set during impersonation is the **target's, exactly** — not the operator's, and never the union of the two. The union is the defect this requirement exists to prevent: it silently grants the operator's powers inside the target's account and makes every audit record a lie about what was possible. |
+| REQ-IMP-03 | MUST | The audit trail records both identities on every event: the operator as actor, the target as on-behalf-of (REQ-AUD-04). No action taken while impersonating is attributable to the target alone. |
+| REQ-IMP-04 | MUST | Impersonation is time-boxed with a stated maximum, requires a typed reason at entry, and is audited on entry **and** exit (REQ-RBA-07). Expiry ends the session rather than extending it silently. |
+| REQ-IMP-05 | MUST | A persistent, unmissable banner is visible on every screen for the whole session, naming the target, the remaining time, and carrying the exit control. It is not dismissible, and it is not a toast. |
+| REQ-IMP-06 | MUST | Exit is always one action from anywhere, and returns the operator to their own session — never to a logged-out state, which is how operators end up re-authenticating and losing the audit thread. |
+| REQ-IMP-07 | MUST | Actions that would escalate or conceal are refused during impersonation, with a stated reason rather than a silent failure: changing the target's password or email, enrolling or removing their MFA factors, generating recovery codes, minting an API key as them, changing their roles, or starting a nested impersonation. Impersonation is for seeing what they see, not for becoming them permanently. |
+| REQ-IMP-08 | MUST | Impersonating another global-tier operator is refused by default. Where an intake explicitly enables it, it requires a second operator's approval, because a tier that can enter its peers' sessions has no separation of duties left. |
+| REQ-IMP-09 | MUST | The impersonated session is a distinct, revocable session object. It appears in the operator's session list, is revocable by another global operator mid-flight, and never merges with or replaces the operator's own session. |
+| REQ-IMP-10 | MUST | The target can see that they were impersonated: their own security/activity view shows who entered their account, when, for how long, and the stated reason. A capability the subject cannot see is one they cannot challenge. |
+| REQ-IMP-11 | MUST | Impersonation is disabled by default and enabled per deployment, and enabling it is an audited global-tier policy change. Some operators are contractually unable to allow it at all. |
+| REQ-IMP-12 | MUST | A dedicated test suite proves the hard parts rather than the easy one: that the effective permission set equals the target's and excludes the operator's, that each refusal in REQ-IMP-07 actually refuses, that expiry ends the session, that exit restores the operator's own permissions, and that every action carries both identities. |
+
+
 
 ## ENT — Entity conventions
 
@@ -118,6 +146,54 @@ one of them stalls every agent at once.
 | REQ-UI-10 | MUST | Declared space budgets per surface (chrome vs content) are asserted in visual tests at each named breakpoint; a surface spending more chrome than its budget fails the gate. |
 | REQ-UI-11 | MUST | Keyboard-complete and screen-reader-sane: visible focus, logical order, labelled controls, WCAG 2.2 AA contrast in both themes. |
 | REQ-UI-12 | MUST | Command palette (⌘K) covering navigation, entity search and permitted actions. |
+| REQ-UI-13 | MUST | The tenant chooser sits in the **top-left, directly beneath the logotype**, and appears only when the actor can reach more than one tenant (REQ-RBA-12). Position is part of the requirement: it is where a multi-tenant operator looks to answer "whose data am I about to change". |
+| REQ-UI-14 | MUST | The chooser states the current tenant at a glance without being opened, is keyboard-reachable and type-ahead searchable, and stays usable at a few hundred tenants — a plain `<select>` of 400 options is not a chooser. |
+| REQ-UI-15 | MUST | On mobile the chooser keeps its meaning without keeping its geometry: the current tenant stays visible in the header and switching is reachable within the thumb zone (REQ-MOB-04). It is not hidden behind a nested menu, because it answers a question the user needs before acting. |
+
+## MON — Code & text editing surfaces
+
+Anywhere the app lets a human edit text that has a grammar — a mapping
+descriptor, an email template, a policy document, a config value — it is the
+same editor, behaving the same way. A second editor with different keybindings
+and no validation is how a product teaches people not to trust it.
+
+| ID | Status | Requirement |
+|----|--------|-------------|
+| REQ-MON-01 | MUST | Monaco is the base for every text-editing surface in the app. There is one editor component; a `<textarea>` for structured content is a defect, not a simplification. |
+| REQ-MON-02 | MUST | Syntax highlighting, bracket matching, folding and a diff view for every supported language, driven by a declared language id rather than guessed from content. |
+| REQ-MON-03 | MUST | **Formatting is active for every supported file type** — format on demand, format on save, and a stated default for format-on-type per language. The supported set and its formatter are declared in one registry, not spread across call sites. |
+| REQ-MON-04 | MUST | Initial supported languages: JSON, YAML, SQL, Markdown, TypeScript/JavaScript, HTML, CSS, XML, and plain text. Adding a language is a registry entry plus its formatter, never a new editor. |
+| REQ-MON-05 | MUST | Schema-aware validation where a schema exists — mapping descriptors validate against `normalizers/descriptor.schema.json` (REQ-DAT-07) and surface errors inline with the offending line, not as a toast after save. |
+| REQ-MON-06 | MUST | Monaco and its workers are **self-hosted**. No CDN loader, no remote worker fetch, no remote font (REQ-SUP-07). The editor works with the container offline from the public internet. |
+| REQ-MON-07 | MUST | Lazy-loaded and code-split. Monaco is large, and a route that does not edit text does not pay for it. Its weight is asserted in the bundle budget, not assumed. |
+| REQ-MON-08 | MUST | The editor theme is derived from the app's design tokens (REQ-UI-04, REQ-UI-05) for both light and dark, and follows a theme change without a reload. A Monaco default theme beside a themed app is a visible seam. |
+| REQ-MON-09 | MUST | Accessible: keyboard-complete, screen-reader mode available and discoverable, visible focus, and a documented way out of the editor's tab trap. An editor that swallows Tab with no escape fails REQ-UI-11. |
+| REQ-MON-10 | MUST | **Monaco is not used on touch-primary viewports.** Below the declared breakpoint the same surface renders a reduced editor — syntax-highlighted, validated, scrollable, but not Monaco — or is read-only with a stated reason. Shipping a desktop code editor to a phone and calling it responsive is the failure REQ-UI-07 exists to prevent. |
+| REQ-MON-11 | MUST | Editor content is subject to the same redaction and permission rules as any other surface (REQ-AUD-05, REQ-RBA-02). A secret does not become visible because it is inside a config document. |
+| REQ-MON-12 | MUST | Every edit through the editor emits an audit event with a before/after diff (REQ-AUD-01, REQ-AUD-04). The diff is the editor's natural output, so there is no excuse for a weaker record here than anywhere else. |
+
+## MOB — Mobile experience
+
+`REQ-UI-07` demands a genuine mobile design rather than a narrowed desktop. That
+requirement has been in the register since 0.1.0 and has had no dedicated owner:
+the shell agent owned desktop and mobile together, which is precisely the
+arrangement that produces a narrowed desktop. These requirements and agent A27
+exist to fix that.
+
+| ID | Status | Requirement |
+|----|--------|-------------|
+| REQ-MOB-01 | MUST | Mobile has a dedicated owner (A27) who owns the mobile primitives and the mobile half of every surface budget. Mobile is not a breakpoint someone gets to at the end. |
+| REQ-MOB-02 | MUST | A published set of mobile primitives every domain consumes: bottom navigation, sheet, action bar, thumb-reach zones, safe-area insets, pull-to-refresh where it is meaningful, and the keyboard-avoidance container. Domains compose these; they do not invent their own. |
+| REQ-MOB-03 | MUST | Touch targets are at least 44×44 CSS px with at least 8px between adjacent targets, asserted by test at every mobile breakpoint rather than eyeballed. |
+| REQ-MOB-04 | MUST | Primary actions sit in the thumb-reachable zone. A destructive action does not sit adjacent to a frequent one, because on a phone the miss distance is a thumb width. |
+| REQ-MOB-05 | MUST | The on-screen keyboard is treated as a first-class layout event via `visualViewport` (REQ-UI-09): the focused field stays visible, the submit action stays reachable, and no fixed element covers the input. |
+| REQ-MOB-06 | MUST | Correct input affordances per field — `inputmode`, `enterkeyhint`, `autocomplete`, `type` — so the right keyboard appears and autofill works. A numeric field that opens a QWERTY keyboard is a defect. |
+| REQ-MOB-07 | MUST | Gestures never conflict with the platform's own. No horizontal swipe that fights the browser's back gesture at a screen edge, no pull-to-refresh that fires mid-scroll, and every gesture has a visible non-gesture equivalent. |
+| REQ-MOB-08 | MUST | Navigation depth is bounded and every screen states where it is. A phone has no breadcrumb bar to fall back on, so a user four levels deep must still be able to get out in one action. |
+| REQ-MOB-09 | MUST | Long-running and offline states are designed, not defaulted: an action started on a flaky connection shows its state, survives a backgrounded tab, and never silently double-submits (REQ-PWA-01). |
+| REQ-MOB-10 | MUST | Orientation and small-height viewports are supported, including landscape phones where vertical space is scarce and a keyboard leaves very little of it. |
+| REQ-MOB-11 | MUST | The mobile surfaces are verified on a real engine at the declared viewports with touch emulation enabled, in both themes (REQ-TST-02, REQ-TST-03). A desktop browser narrowed to 390px does not exercise touch targets, the on-screen keyboard, or safe-area insets. |
+| REQ-MOB-12 | MUST | Where a surface is genuinely unsuitable for a phone — a dense editor (REQ-MON-10), a wide comparison view — the mobile experience says so and offers the useful subset, rather than shipping an unusable rendering and calling it responsive. |
 
 ## MOC — Mockup & approval phase
 

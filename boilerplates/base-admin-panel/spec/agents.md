@@ -65,7 +65,7 @@ contract fixtures. None of them can block another.
 |----|-------|------|-----------|----------|
 | A03 | `auth-identity` | `packages/auth/**`, `apps/<app>/app/(auth)/**` | `session`, `auth-policy`, `mfa` | `entity-base`, `rbac`, `audit-event`, `theme-tokens`, `i18n:auth` |
 | A04 | `rbac-tenancy` | `packages/rbac/**`, `packages/tenancy/**`, `db/policies/**` | `rbac` (permission strings), `tenancy`, `rls-contract` | `entity-base`, `session` |
-| A05 | `ui-shell` | `apps/<app>/components/shell/**`, `apps/<app>/app/(app)/layout.tsx`, `packages/screenspace/**`, `packages/settings/**`, `apps/<app>/app/(app)/settings/**` | `nav-registry`, `screenspace`, `surface-budget`, `settings-registry` | `theme-tokens`, `rbac`, `i18n:nav`, approved layout |
+| A05 | `ui-shell` | `apps/<app>/components/shell/**`, `apps/<app>/app/(app)/layout.tsx`, `packages/screenspace/**`, `packages/settings/**`, `packages/editor/**`, `apps/<app>/app/(app)/settings/**` | `nav-registry`, `screenspace`, `surface-budget`, `settings-registry`, `editor` | `theme-tokens`, `rbac`, `i18n:nav`, `mobile-primitives`, approved layout |
 | A07 | `datagrid` | `packages/datagrid/**` | `grid-def`, `grid-prefs`, `query-params` | `pagination`, `theme-tokens`, `rbac`, `i18n:grid` |
 | A09 | `pwa-offline` | `apps/<app>/app/manifest.ts`, `packages/pwa/**`, service worker | `push-subscription`, `notification-category` | `session`, `theme-tokens` |
 | A10 | `data-normalization` | `services/normalizer/**`, `packages/canonical/**` | `canonical-models`, `mapping-descriptor`, `provenance` | `entity-base` |
@@ -78,6 +78,7 @@ contract fixtures. None of them can block another.
 | A23 | `test-engineer` | `tests/**` (except `tests/visual/**`), `packages/fixtures/**` | seeded fixtures, contract interface tests | every contract member |
 | A24 | `setup-wizard` | `packages/setup/**`, `apps/<app>/app/(setup)/**` | `wizard-state`, `setup-step` | `session`, `auth-policy`, `mfa`, `rbac`, `mail-template`, `env-schema` |
 | A25 | `acme-tls` | `packages/acme/**`, `packages/tls/**` | `acme-account`, `certificate`, `cert-renewal`, `dns-provider` | `crypto`, `egress-client`, `notification-event`, `audit-event`, `settings-registry` |
+| A27 | `mobile-ux` | `packages/mobile/**` | `mobile-primitives`, `touch-budget` | `theme-tokens`, `screenspace`, `nav-registry`, approved layout |
 
 ### Time & format is not an agent
 
@@ -122,32 +123,54 @@ orchestrator enforces this by never assigning a build task to a gate agent ID.
 | Intake | 1 | `A00` |
 | Wave 1 (mockups) | 3 | `A06` `A08` `A21` |
 | Wave 2 (foundation, sequential) | 3 | `A20` `A01` `A02` |
-| Wave 3 (parallel domains) | **15** | `A03` `A04` `A05` `A07` `A09` `A10` `A11` `A12` `A13` `A14` `A15` `A19` `A23` `A24` `A25` |
+| Wave 3 (parallel domains) | **16** | `A03` `A04` `A05` `A07` `A09` `A10` `A11` `A12` `A13` `A14` `A15` `A19` `A23` `A24` `A25` `A27` |
 | Wave 4 (narrative) + release | 4 | `A16` `A17` `A18` `A22` |
 | Cross-wave | 1 | `A26` |
-| **Build agents** | **27** | `A00`–`A26` |
+| **Build agents** | **28** | `A00`–`A27` |
 | Gate agents (blocking, never build) | 4 | `C1` `C2` `S1` `S2` |
-| **Total** | **31** | |
+| **Total** | **32** | |
 
-Two agents sit outside the wave model because they serve every phase rather than
-one:
+### Why mobile has its own agent and settings does not
+
+`REQ-UI-07` has demanded a genuine mobile design rather than a narrowed desktop
+since 0.1.0, and until 0.4.0 it had no dedicated owner — A05 owned the desktop
+shell and the mobile shell together. That is exactly the arrangement the
+requirement warns about: when one agent owns both, mobile is what gets finished
+second, and "responsive" becomes the word for it.
+
+So A27 owns the mobile primitives and the mobile half of every surface budget,
+and the domains compose them. This is not the settings case, where A05 already
+owned the surface and adding an agent would have been speculative generality
+(`gates/karpathy-lens.md`). Here the split is the fix, and it mirrors the reason
+nothing self-approves: separating the work from the thing that would otherwise
+absorb it.
+
+A27 is a builder, not a reviewer. `C1 critic-design` still votes on mobile and
+still checks for a narrowed desktop — an owner and a critic are different jobs.
+
+### Why Monaco is A05's and not a new agent's
+
+`packages/editor/**` is one well-bounded component. A05 already owns the shared
+UI primitives and the design-token path `REQ-MON-08` needs for the editor theme,
+and `REQ-MON-10`'s touch fallback consumes A27's primitives rather than
+duplicating them. An agent per component is the proliferation the Karpathy lens
+catches.
+
+### The two cross-wave agents
 
 - **`A21 visual-qa`** is listed in Wave 1 because that is where it first runs,
-  but it screenshots anything that renders — the 30 mockup renders at G1 and the
-  integration captures at G5.
-- **`A26 cost-accountant`** runs at every gate. It is the cheapest agent in the
-  fleet on purpose (REQ-COST-04): it does arithmetic and table formatting over
-  structured `AgentReport` input, and spending Opus tokens to report on Opus
-  token spend would be the one joke this design must not make.
+  but it screenshots anything that renders. With A27 in the fleet it also runs
+  the touch-emulation matrix `REQ-MOB-11` requires — a narrowed desktop browser
+  does not exercise touch targets, the on-screen keyboard, or safe-area insets.
+- **`A26 cost-accountant`** runs at every gate, on the cheapest model in the
+  fleet on purpose (REQ-COST-04): spending Opus tokens to report on Opus token
+  spend would be the one joke this design must not make.
 
 The edge proxy (`REQ-PROX-*`) is A01's and the settings surfaces (`REQ-SET-*`)
-are A05's, not new agents' — both already owned those surfaces. Adding an agent
-for a surface that already has an owner is the speculative generality the
-Karpathy lens exists to catch (`gates/karpathy-lens.md`).
+are A05's, because both already owned those surfaces.
 
 The critical path is
 `A00 → A06 → A08/A21 → human → A20 → A01 → A02 → [Wave 3] → [Wave 4] → C1/C2 → S1/S2 → A22`,
 with `A26` reporting alongside each gate rather than on the path.
 
-Wave 3 is where the time is, and it is 15-wide. Everything else is either
-sequential by necessity or narrow by nature.
+Wave 3 is where the time is, and it is 16-wide.

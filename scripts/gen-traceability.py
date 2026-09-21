@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+"""Generate spec/traceability.csv from spec/requirements.md.
+
+The matrix is generated, never hand-edited, so it cannot drift from the
+register (CONVENTIONS.md §3). Run from a boilerplate directory:
+
+    python3 ../../scripts/gen-traceability.py
+
+Ownership is resolved in two layers: a default per requirement domain, and
+per-ID overrides for the requirements whose owner is not their domain's.
+An override exists because a requirement's owner genuinely differs — not to
+paper over a domain that was named wrongly.
+"""
+import re, csv, sys, collections
+from pathlib import Path
+
+# domain -> (owner agent, contract member, blocking gate)
+DOMAIN = {
+ "FND":("A01","env-schema","G4"),           "CTR":("A02","contracts package","G3"),
+ "SEC":("A01","crypto / egress-client","G7"),"AUT":("A03","session / auth-policy / mfa","G7"),
+ "RBA":("A04","rbac / tenancy / rls-contract","G7"),"ENT":("A02","entity-base","G4"),
+ "UI":("A05","nav-registry / surface-budget","G6"),"MOC":("A08","(pre-contract)","G1"),
+ "GRD":("A07","grid-def / grid-prefs / query-params","G6"),
+ "AUD":("A13","audit-event / log-record / console-stream","G6"),
+ "TIM":("A02","time","G4"),                 "I18N":("A14","i18n-namespace","G4"),
+ "API":("A11","openapi-document / api-key / route-contract","G4"),
+ "PWA":("A09","push-subscription / notification-category","G5"),
+ "MAIL":("A12","mail-template / outbox","G5"),
+ "DAT":("A10","canonical-models / mapping-descriptor / provenance","G4"),
+ "OBS":("A15","agent-enrolment / ingest-envelope","G4"),
+ "DOC":("A16","help topic registry","G8"),  "CRA":("A18","(documentation)","G8"),
+ "CER":("A18","(documentation)","G8"),      "SUP":("A19","SBOM / advisory report","G7"),
+ "VER":("A20","manifest.json","G2"),        "TST":("A23","contract interface tests","G5"),
+ "GAT":("orchestrator","(process)","G6"),   "REL":("A22","(release record)","G8"),
+ "WIZ":("A24","wizard-state / setup-step","G5"),
+ "ACME":("A25","certificate / acme-account / cert-renewal","G7"),
+ "SET":("A05","settings-registry","G6"),    "PROX":("A01","edge-topology","G5"),
+ "COST":("A26","agent-report / pricing.json","G8"),
+ "PORT":("orchestrator","capability-map","G8"),
+ "MON":("A05","editor","G6"),               "MOB":("A27","mobile-primitives / touch-budget","G6"),
+ "IMP":("A04","impersonation","G7"),
+}
+
+OVERRIDE = {
+ "REQ-FND-06":("A20","manifest.json","G2"), "REQ-FND-11":("A01","edge-topology / env-schema","G5"),
+ "REQ-CTR-04":("orchestrator","ownership.md","G3"),"REQ-CTR-05":("A11","generated client / fixtures","G4"),
+ "REQ-CTR-06":("A02","contract fixtures","G3"),"REQ-CTR-08":("A02","_selftest route","G4"),
+ "REQ-CTR-09":("orchestrator","CCR","G3"),  "REQ-CTR-10":("A23","contract interface tests","G4"),
+ "REQ-SEC-04":("A12","mail-template","G7"), "REQ-SEC-05":("A13","log-record","G7"),
+ "REQ-SEC-07":("A03","session / mfa","G7"), "REQ-SEC-09":("A03","session","G7"),
+ "REQ-SEC-10":("A11","route-contract","G7"),"REQ-SEC-11":("A03","auth-policy","G7"),
+ "REQ-AUT-08":("A06","theme-tokens","G6"),  "REQ-RBA-07":("A04","impersonation","G7"),
+ "REQ-ENT-02":("A04","rbac","G4"),
+ "REQ-RBA-09":("A04","tenancy / session","G7"),"REQ-RBA-10":("A04","tenancy","G7"),
+ "REQ-RBA-11":("A04","tenancy / session","G7"),"REQ-RBA-12":("A05","nav-registry","G6"),
+ "REQ-UI-01":("A05","nav-registry","G6"),   "REQ-UI-02":("A03","(login-02 block)","G6"),
+ "REQ-UI-03":("A05","nav-registry","G6"),   "REQ-UI-04":("A06","theme-tokens","G6"),
+ "REQ-UI-05":("A06","theme-tokens","G6"),   "REQ-UI-06":("A06","theme-tokens","G6"),
+ "REQ-UI-07":("A27","mobile-primitives","G6"),
+ "REQ-UI-09":("A05","screenspace","G6"),    "REQ-UI-10":("A05","surface-budget","G6"),
+ "REQ-UI-11":("A05","nav-registry","G6"),
+ "REQ-UI-13":("A05","nav-registry","G6"),   "REQ-UI-14":("A05","nav-registry","G6"),
+ "REQ-UI-15":("A27","mobile-primitives","G6"),
+ "REQ-MOC-03":("A21","(screenshots)","G1"), "REQ-MOC-04":("A21","(screenshots)","G1"),
+ "REQ-MOC-05":("orchestrator","approvals.md","G1"),"REQ-MOC-06":("A06","theme-tokens","G1"),
+ "REQ-GRD-08":("A07","grid-prefs","G6"),    "REQ-GRD-14":("A07","grid-def / mobile-primitives","G6"),
+ "REQ-AUD-07":("A13","log-record","G7"),    "REQ-API-09":("A11","openapi-document","G3"),
+ "REQ-PWA-03":("A09","(service worker)","G7"),"REQ-PWA-04":("A09","notification-event","G7"),
+ "REQ-PWA-06":("A12","notification-category","G5"),
+ "REQ-DOC-05":("A17","(charts)","G8"),      "REQ-DOC-06":("A17","(charts)","G8"),
+ "REQ-DOC-07":("A17","(charts)","G8"),      "REQ-DOC-08":("A17","(charts)","G8"),
+ "REQ-CRA-03":("A19","SBOM","G7"),
+ "REQ-TST-02":("A21","(visual suite)","G5"),"REQ-TST-03":("A21","(visual suite)","G5"),
+ "REQ-TST-04":("A21","(visual suite)","G5"),"REQ-TST-06":("A21","(visual suite)","G5"),
+ "REQ-GAT-01":("C1,C2","gate verdict","G6"),"REQ-GAT-02":("S1,S2","gate verdict","G7"),
+ "REQ-GAT-03":("S1,S2","review plan","G7"), "REQ-GAT-04":("C1,C2,S1,S2","gate verdict","G6"),
+ "REQ-GAT-06":("C1,C2","karpathy-lens","G6"),
+ "REQ-WIZ-02":("A24","wizard-state","G7"),  "REQ-WIZ-03":("A24","wizard-state / rbac","G7"),
+ "REQ-WIZ-04":("A24","wizard-state","G7"),  "REQ-WIZ-06":("A12","mail-template / outbox","G5"),
+ "REQ-WIZ-08":("A24","env-schema / edge-topology","G8"),"REQ-WIZ-13":("A24","errors","G7"),
+ "REQ-WIZ-14":("A24","i18n-namespace","G6"),
+ "REQ-ACME-03":("A25","certificate / edge-topology","G5"),"REQ-ACME-10":("A25","console-stream","G6"),
+ "REQ-ACME-11":("A12","notification-event","G5"),"REQ-ACME-12":("A01","crypto","G7"),
+ "REQ-ACME-13":("A25","certificate / edge-topology","G5"),
+ "REQ-SET-09":("A13","audit-event","G6"),   "REQ-SET-12":("A16","help topic registry","G8"),
+ "REQ-PROX-08":("A01","edge-topology","G7"),"REQ-PROX-09":("A25","certificate / edge-topology","G5"),
+ "REQ-PROX-10":("A01","edge-topology / audit-event","G7"),"REQ-PROX-11":("A01","edge-topology","G7"),
+ "REQ-PROX-12":("A13","log-record","G6"),
+ "REQ-COST-01":("A26","agent-report","G4"), "REQ-COST-02":("A26","agent-report","G4"),
+ "REQ-COST-03":("orchestrator","agent-report","G1"),"REQ-COST-07":("A26","agent-report","G6"),
+ "REQ-COST-09":("A00","(intake)","G0"),     "REQ-COST-10":("A22","(release record)","G8"),
+ "REQ-COST-11":("orchestrator","agent-report","G4"),
+ "REQ-PORT-04":("orchestrator","capability-map","G8"),"REQ-PORT-07":("A19","(telemetry kill-list)","G7"),
+ "REQ-PORT-08":("A00","(intake)","G0"),     "REQ-PORT-09":("A21","(visual suite)","G1"),
+ "REQ-MON-06":("A19","(telemetry kill-list)","G7"),"REQ-MON-10":("A27","mobile-primitives","G6"),
+ "REQ-MON-11":("A13","audit-event","G7"),   "REQ-MON-12":("A13","audit-event","G6"),
+ "REQ-MOB-11":("A21","(visual suite)","G5"),
+ "REQ-IMP-03":("A13","audit-event","G7"),   "REQ-IMP-05":("A05","nav-registry","G6"),
+ "REQ-IMP-10":("A03","session","G7"),       "REQ-IMP-11":("A00","(intake)","G0"),
+ "REQ-IMP-12":("A23","contract interface tests","G7"),
+}
+
+SPEC = {
+ "AUT":"spec/auth.md","RBA":"spec/rbac-tenancy.md","ENT":"spec/entity-model.md",
+ "GRD":"spec/datagrid.md","UI":"spec/screenspace.md","AUD":"spec/observability.md",
+ "TIM":"spec/time.md","I18N":"spec/i18n.md","API":"spec/api.md",
+ "DAT":"spec/data-normalization.md","CTR":"contracts/README.md",
+ "CRA":"compliance/cra/obligations-matrix.md","CER":"compliance/cer/applicability.md",
+ "VER":"versions/README.md","GAT":"gates/gate-ladder.md","MOC":"gates/gate-ladder.md",
+ "FND":"spec/baseline.md","SEC":"compliance/cra/secure-by-default.md",
+ "SUP":"compliance/cra/vulnerability-handling.md","TST":"gates/gate-ladder.md",
+ "REL":"gates/gate-ladder.md","OBS":"spec/data-normalization.md","MAIL":"spec/api.md",
+ "PWA":"spec/screenspace.md","DOC":"spec/baseline.md","WIZ":"spec/setup-wizard.md",
+ "ACME":"spec/acme-tls.md","SET":"spec/settings.md","PROX":"spec/edge-proxy.md",
+ "COST":"spec/cost-reporting.md","PORT":"portability/README.md",
+ "MON":"spec/editor.md","MOB":"spec/mobile-ux.md","IMP":"spec/impersonation.md",
+}
+SPEC_ID = {
+ "REQ-UI-04":"spec/theming.md","REQ-UI-05":"spec/theming.md","REQ-UI-06":"spec/theming.md",
+ "REQ-MOC-06":"spec/theming.md","REQ-AUT-08":"spec/theming.md",
+ "REQ-FND-04":"spec/edge-proxy.md","REQ-FND-11":"spec/edge-proxy.md",
+ "REQ-UI-07":"spec/mobile-ux.md","REQ-UI-15":"spec/mobile-ux.md",
+ "REQ-UI-13":"spec/tenant-switching.md","REQ-UI-14":"spec/tenant-switching.md",
+ "REQ-RBA-09":"spec/tenant-switching.md","REQ-RBA-10":"spec/tenant-switching.md",
+ "REQ-RBA-11":"spec/tenant-switching.md","REQ-RBA-12":"spec/tenant-switching.md",
+ "REQ-RBA-07":"spec/impersonation.md",
+}
+
+def main() -> int:
+    src, out = Path("spec/requirements.md"), Path("spec/traceability.csv")
+    if not src.exists():
+        print("run me from a boilerplate directory (no spec/requirements.md here)", file=sys.stderr)
+        return 2
+    rows, unknown = [], set()
+    pat = re.compile(r'^\| (REQ-([A-Z0-9]+)-\d+) \| (MUST|SHOULD|OPT) \| (.+?) \|\s*$')
+    for line in src.read_text().splitlines():
+        m = pat.match(line)
+        if not m:
+            continue
+        rid, dom, status, text = m.groups()
+        if dom not in DOMAIN:
+            unknown.add(dom); continue
+        rows.append((rid, dom, status, text))
+    if unknown:
+        print(f"unmapped requirement domains: {sorted(unknown)} — add them to DOMAIN", file=sys.stderr)
+        return 1
+    with out.open("w", newline="\n") as f:
+        w = csv.writer(f, lineterminator="\n")
+        w.writerow(["req_id","domain","status","owner_agent","contract_member","gate",
+                    "spec_document","requirement"])
+        for rid, dom, status, text in rows:
+            owner, member, gate = OVERRIDE.get(rid, DOMAIN[dom])
+            w.writerow([rid, dom, status, owner, member, gate,
+                        SPEC_ID.get(rid, SPEC.get(dom, "")), text.replace("**","")])
+    by = lambda i: dict(sorted(collections.Counter(
+        OVERRIDE.get(r[0], DOMAIN[r[1]])[i] for r in rows).items()))
+    print(f"{len(rows)} requirements, {len(set(r[1] for r in rows))} domains")
+    print("gates:", by(2))
+    print("owners:", by(0))
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
