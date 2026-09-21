@@ -44,11 +44,12 @@ tracker.
 - The default configuration as shipped, and the security properties claimed in
   `compliance/cra/secure-by-default.md`.
 - The authentication, MFA, RBAC and tenant-isolation mechanisms
-  (`REQ-AUT-*`, `REQ-RBA-*`) — in particular anything that crosses a tenant
+  (`REQ-AUT-01`..`REQ-AUT-10`, `REQ-RBA-01`..`REQ-RBA-08`) — in particular
+  anything that crosses a tenant
   boundary.
 - The audit trail's integrity and redaction behaviour (`REQ-AUD-03`,
   `REQ-AUD-05`, `REQ-AUD-06`).
-- The API surface and API key handling (`REQ-API-*`).
+- The API surface and API key handling (`REQ-API-01`..`REQ-API-11`).
 - The build and release pipeline, the SBOM, and the signing of releases.
 - Dependencies shipped inside our images: report them to us **and** to the
   upstream project. We track them to a fixed upstream version.
