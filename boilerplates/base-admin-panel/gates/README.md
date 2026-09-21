@@ -42,7 +42,7 @@ The ladder is strictly ordered. There is no "we will come back to G2".
   against a frozen `packages/contracts@1.0.0` or it does not launch.
 - **G4 localises failure.** Each domain proves its own side of the contract
   (REQ-CTR-08) before anything is wired together, so an integration failure
-  names one owner instead of thirteen.
+  names one owner instead of fifteen.
 - **G6 and G7 are the critique gates and they are independent of each other.**
   A security fix does not re-open G6 unless it changed a surface C1 or C2 voted
   on; the orchestrator decides that and records the decision.

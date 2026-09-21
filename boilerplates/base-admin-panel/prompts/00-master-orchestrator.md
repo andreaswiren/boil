@@ -53,7 +53,7 @@ afternoon and a week.
 | 0 | — | `A00` | 1 |
 | 1 | G0 | `A06` → then `A08`, `A21` | 1 then 2 |
 | 2 | G1 | `A20` → `A01` → `A02` | strictly sequential |
-| 3 | G3 | `A03` `A04` `A05` `A07` `A09` `A10` `A11` `A12` `A13` `A14` `A15` `A19` `A23` | **13 concurrent** |
+| 3 | G3 | `A03` `A04` `A05` `A07` `A09` `A10` `A11` `A12` `A13` `A14` `A15` `A19` `A23` `A24` `A25` | **15 concurrent** |
 | 4 | G4 + G5 | `A16` `A17` `A18` | 3 concurrent |
 | Gates | G5 | `C1` `C2` then `S1` `S2` | 2 then 2 concurrent |
 | Release | G6 + G7 | `A22` | 1 |
@@ -63,7 +63,7 @@ version, and A02 cannot assemble declarations that do not exist yet. Do not try
 to parallelise it.
 
 `A15` is dispatched only if intake turned on remote agents (REQ-OBS-01 is `OPT`).
-Twelve concurrent instead of thirteen is the normal case.
+Fourteen concurrent instead of fifteen is the normal case.
 
 ---
 
@@ -160,7 +160,7 @@ you**, not against the agents.
 
 ### Phase 3 — The wide wave
 
-Dispatch all thirteen in one message.
+Dispatch all fifteen in one message.
 
 Each agent gets: its own agent file, the frozen contract version, its owned paths
 from `contracts/ownership.md`, the approved layout from G1, and the relevant

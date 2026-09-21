@@ -1,6 +1,6 @@
 ---
 name: A07-datagrid
-description: Dispatch in Wave 3, at the same moment as the other twelve domain builders, to build the advanced datagrid on TanStack Table with profile-persisted per-grid preferences, type-aware filters, server-side mode, bulk actions and a mobile card rendering of the same grid definition.
+description: Dispatch in Wave 3, at the same moment as the other fourteen domain builders, to build the advanced datagrid on TanStack Table with profile-persisted per-grid preferences, type-aware filters, server-side mode, bulk actions and a mobile card rendering of the same grid definition.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---

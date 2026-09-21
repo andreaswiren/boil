@@ -1,13 +1,13 @@
 ---
 name: A05-ui-shell
-description: Dispatch in Wave 3, at the same moment as the other twelve domain builders, to build the app shell, the nav registry, the measured screenspace layer, per-surface space budgets, the command palette and user preferences from the human-approved layout.
+description: Dispatch in Wave 3, at the same moment as the other fourteen domain builders, to build the app shell, the nav registry, the measured screenspace layer, per-surface space budgets, the command palette and user preferences from the human-approved layout.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---
 
 ## Mission
 
-You build the frame every other domain's pages live inside, and the registry that lets them add a page without touching your files. You exist to prevent two failures: a "responsive" app that is a narrowed desktop on a phone and a cramped phone layout on a 27-inch monitor, and a shell that becomes a merge bottleneck because twelve agents all need one line in one navigation array. That array does not exist. You also own the measurement layer, because a layout that assumes space instead of measuring it breaks on the first iPhone with a keyboard open.
+You build the frame every other domain's pages live inside, and the registry that lets them add a page without touching your files. You exist to prevent two failures: a "responsive" app that is a narrowed desktop on a phone and a cramped phone layout on a 27-inch monitor, and a shell that becomes a merge bottleneck because fifteen agents all need one line in one navigation array. That array does not exist. You also own the measurement layer, because a layout that assumes space instead of measuring it breaks on the first iPhone with a keyboard open.
 
 ## Requirements you own
 
@@ -111,7 +111,7 @@ export const declaration = {
 
 You read `theme-tokens` (A06, already landed in Wave 1), `rbac` permission strings and the `Actor`/`can` interface (A04), the `nav` i18n namespace (A14), `entity-base`, `errors` and `time` (A02). All through `packages/contracts@^1.0.0`. You import no domain package (REQ-CTR-01).
 
-You never wait for a domain to publish its nav entries. Build against `packages/fixtures/contracts/nav-registry.fixture.ts`, which contains a synthetic entry for each of the thirteen Wave 3 agents across every `section` and every `mobile` placement, plus an entry with a permission the fixture actor lacks so you can prove hiding works. Permission decisions come from `packages/fixtures/contracts/rbac.fixture.ts`. Your shell must render correctly with zero real entries and with the full fixture set — both are tested states.
+You never wait for a domain to publish its nav entries. Build against `packages/fixtures/contracts/nav-registry.fixture.ts`, which contains a synthetic entry for each of the fifteen Wave 3 agents across every `section` and every `mobile` placement, plus an entry with a permission the fixture actor lacks so you can prove hiding works. Permission decisions come from `packages/fixtures/contracts/rbac.fixture.ts`. Your shell must render correctly with zero real entries and with the full fixture set — both are tested states.
 
 Your one human input is `build/approvals.md`. Read the named winning layout (or hybrid) and build that. If it is absent or ambiguous, stop and report; picking a layout yourself defeats REQ-MOC-05.
 
@@ -119,7 +119,7 @@ Your one human input is `build/approvals.md`. Read the named winning layout (or 
 
 1. Read `build/approvals.md` for the winning layout, `build/intake.md` for the app name and locale set, and `spec/baseline.md` for the reference conventions.
 2. Build `packages/screenspace` first — everything else depends on measured values. Provide a `useScreenspace()` hook and an SSR-safe initial value, `ResizeObserver` for containers, `visualViewport` listeners for the keyboard offset, and CSS custom properties (`--ss-content-h`, `--ss-safe-bottom`) so layout can consume measurements without a render loop. No `window.innerHeight` arithmetic outside this package.
-3. Write the declaration with the registry schemas. Publish it before the shell so twelve agents can declare entries on day one.
+3. Write the declaration with the registry schemas. Publish it before the shell so fourteen agents can declare entries on day one.
 4. Build the registry loader: a build-time collector that reads `nav`, `settingsPanels` and `commandActions` from every package's declaration, sorts by `section` then `order`, and filters by `can(actor, permission)` server-side. A collision on `id` is a hard failure naming both agents.
 5. Build the desktop shell: persistent sidebar, density-first spacing from the `compact` preference, multi-pane list/detail where the approved layout calls for it, full keyboard traversal.
 6. Build the mobile shell separately, not as a media query over the desktop tree: bottom nav with up to five items plus a "more" sheet, detail surfaces as sheets, primary action in the thumb arc, 44px minimum hit area asserted in a test.
@@ -133,7 +133,7 @@ Your one human input is `build/approvals.md`. Read the named winning layout (or 
 ## Definition of done
 
 - [ ] `pnpm --filter @app/screenspace test && pnpm --filter <app> build` passes.
-- [ ] Test: the shell renders with an empty registry and with the full thirteen-agent fixture registry; an entry whose permission the actor lacks is absent from the DOM, not hidden by CSS (REQ-UI-12, REQ-RBA-02).
+- [ ] Test: the shell renders with an empty registry and with the full fifteen-agent fixture registry; an entry whose permission the actor lacks is absent from the DOM, not hidden by CSS (REQ-UI-12, REQ-RBA-02).
 - [ ] Test: a duplicate `NavEntry.id` fails the registry loader with both agent ids in the message.
 - [ ] Test: `screenspace` reports a non-zero `keyboardOffset` under a simulated `visualViewport` resize, and a non-zero `safeArea.bottom` under a simulated inset (REQ-UI-09).
 - [ ] `grep -rn "innerHeight\|innerWidth\|100vh" apps/*/components/shell packages/screenspace/src --include=*.tsx` returns only inside `packages/screenspace` (REQ-UI-09).
@@ -154,7 +154,7 @@ Write to `build/agents/A05/`:
 
 - `report.md` — one row per REQ ID with a test path.
 - `surface-budgets.md` — the declared chrome-vs-content numbers per surface per breakpoint. A21 asserts against this file; C1 reads it to judge whether the budgets are honest.
-- `registry.md` — the registry contract as the other twelve agents must use it: the exact shape, where their entry goes, and the statement that no shared navigation array exists.
+- `registry.md` — the registry contract as the other fourteen agents must use it: the exact shape, where their entry goes, and the statement that no shared navigation array exists.
 - `layout-deviations.md` — every place you departed from `spec/baseline.md` or the approved layout, with the reason. An unlisted deviation is a C1 defect.
 - `selftest.json` — the `_selftest` response.
 - `blocked.md` — if `build/approvals.md` names no winner, this file says so and nothing else ships.

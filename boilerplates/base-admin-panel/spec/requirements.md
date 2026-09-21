@@ -19,7 +19,7 @@ them. A `MUST` cannot be waived; the build fails instead.
 | REQ-FND-01 | MUST | Monorepo layout even for a single app. Apps live at `apps/<app-name>/`, shared code at `packages/<name>/`. |
 | REQ-FND-02 | MUST | pnpm workspaces + Turborepo task graph. One lockfile at the root. |
 | REQ-FND-03 | MUST | Next.js App Router, React Server Components, TypeScript `strict` with `noUncheckedIndexedAccess`. |
-| REQ-FND-04 | MUST | Docker Compose is the only supported run target: `app`, `db` (PostgreSQL), `smtp-relay`, `reverse-proxy`. Dev and prod compose files share a base. |
+| REQ-FND-04 | MUST | Docker Compose is the only supported run target: `app`, `db` (PostgreSQL), `smtp-relay`, `edge` (HAProxy — REQ-PROX-01). Dev and prod compose files share a base. |
 | REQ-FND-05 | MUST | PostgreSQL is the only datastore. No secondary state store that survives a restart. |
 | REQ-FND-06 | MUST | All dependency versions come from `versions/manifest.json`, externally validated (REQ-VER-01). |
 | REQ-FND-07 | MUST | Config is env-var driven, parsed and validated at boot by a single Zod schema. Boot fails loudly on a missing or malformed value — never a silent default for a security-relevant key. |
@@ -293,6 +293,88 @@ one of them stalls every agent at once.
 | REQ-CER-07 | MUST | Personnel security and access control documentation: background-check posture, joiner/mover/leaver, and privileged-access review cadence. |
 | REQ-CER-08 | MUST | Physical and environmental assumptions stated explicitly, since they are the deploying operator's responsibility, not the product's. |
 | REQ-CER-09 | MUST | A four-yearly reassessment cadence recorded, with the next due date in the document. |
+
+## WIZ — First-run setup wizard
+
+| ID | Status | Requirement |
+|----|--------|-------------|
+| REQ-WIZ-01 | MUST | A setup wizard launches automatically at the first login and cannot be dismissed, skipped or navigated around until it is complete. |
+| REQ-WIZ-02 | MUST | The shipped initial account is `admin@example.invalid` with a temporary password **generated at first boot** — never a fixed default, never a value in the repo or the image. It is written once to the container log and stored only as an Argon2id hash. |
+| REQ-WIZ-03 | MUST | The initial account is constrained to completing the wizard. It holds no tenant-data permission, cannot call the API, and cannot create another account except the real admin in REQ-WIZ-05. |
+| REQ-WIZ-04 | MUST | The initial account is disabled and its credential destroyed the moment the real admin is created. It cannot be re-enabled, and no code path recreates it after setup completes. |
+| REQ-WIZ-05 | MUST | Step: create the real global admin — email, display name, a password meeting policy, and **mandatory MFA enrolment with recovery codes issued** before the step can complete (REQ-AUT-05, REQ-AUT-06). |
+| REQ-WIZ-06 | MUST | Step: SMTP configuration with a **live verification send that must succeed** before the step completes. Email-based password and OTP recovery stays disabled until a real message has been delivered and confirmed. |
+| REQ-WIZ-07 | MUST | Step: environment guidance — the wizard states which environment variables are required, which are missing, and which currently hold an insecure development default, each with a copy-paste block. It reads actual runtime config, not a static list. |
+| REQ-WIZ-08 | MUST | Dokploy-specific guidance, because it is the documented deployment target: variables are set in the Dokploy Environment editor which writes the `.env` and is referenced as `${VAR}`; a container rebuild is required before a change takes effect; domains are configured in the Domains tab rather than in the compose file; `dokploy-network` is attached per service; and the TLS-termination decision of REQ-ACME-03 must be made explicitly. |
+| REQ-WIZ-09 | MUST | The wizard is resumable. Each step's progress persists, a crash or closed tab resumes at the same step, and no step half-applies — a step either completes and is recorded or leaves nothing behind. |
+| REQ-WIZ-10 | MUST | Every step emits an audit event (REQ-AUD-01), including the initial-account disablement, the first real admin creation, and each configuration write. |
+| REQ-WIZ-11 | MUST | Completion is explicit: the wizard writes a completion record, signs the session out, and the user performs their first real login with the account they just created. |
+| REQ-WIZ-12 | MUST | Once complete the wizard cannot be re-entered. Re-running any part of setup requires a global-tier permission and is audited as a distinct event, never as a first run. |
+| REQ-WIZ-13 | MUST | While setup is incomplete the wizard is the only reachable surface: every other route redirects to it, and the API refuses non-wizard calls with a distinct error code rather than a generic 403. |
+| REQ-WIZ-14 | MUST | The wizard is localised (REQ-I18N-01), follows the approved layout and theme, and is usable at 390px — it is the first thing anyone sees. |
+
+## PROX — Edge proxy & long-lived connections
+
+The app is always fronted by its own HAProxy, even when that HAProxy is itself
+behind someone else's proxy. This exists because long-lived connections are
+load-bearing here — the debug console streams over SSE (REQ-AUD-08), and a proxy
+that buffers, coalesces or idle-times those streams breaks a feature that looks
+fine in every short-request test.
+
+| ID | Status | Requirement |
+|----|--------|-------------|
+| REQ-PROX-01 | MUST | HAProxy is the default and only shipped edge proxy, running as the `edge` service in the compose stack (REQ-FND-04). It is present even when the stack sits behind an external proxy. |
+| REQ-PROX-02 | MUST | The app container is never directly internet-facing and never published to the host except through `edge`. |
+| REQ-PROX-03 | MUST | Three supported topologies, declared explicitly at setup and stored as configuration: `self` (HAProxy is the internet-facing edge — the default), `behind-proxy` (HAProxy sits behind an upstream such as Dokploy's Traefik or a corporate load balancer), and `delegated` (no HAProxy; an external proxy fronts the app directly, which is supported but unsupported for the ACME paths in REQ-ACME-03). |
+| REQ-PROX-04 | MUST | HAProxy configuration is generated from the same validated config source as the app (REQ-FND-07), not hand-maintained alongside it. A hostname or port that exists in one and not the other is a boot failure, not a runtime surprise. |
+| REQ-PROX-05 | MUST | Long-lived connections are explicitly configured and verified: SSE and WebSocket upgrades pass through without response buffering, without chunk coalescing, and with timeouts long enough for an idle stream to survive. The configured values are stated, not left to defaults. |
+| REQ-PROX-06 | MUST | A test proves an SSE stream stays open and delivers events promptly through `edge` — not merely that the endpoint returns 200. This is the requirement that catches the buffering class of bug, and it must fail if buffering is reintroduced. |
+| REQ-PROX-07 | MUST | WebSocket upgrade is supported end to end through every topology, including `behind-proxy`, and is covered by the same style of test as REQ-PROX-06. |
+| REQ-PROX-08 | MUST | The HAProxy↔app hop is TLS, in every topology. REQ-SEC-01 has no exemption for traffic that stays inside the compose network. |
+| REQ-PROX-09 | MUST | HAProxy reloads without dropping established connections, and the reload path is the one the certificate installer uses (REQ-ACME-13). |
+| REQ-PROX-10 | MUST | The real client address survives to the application through every topology — `X-Forwarded-For` / `Forwarded` handling is configured with an explicit trusted-proxy list, and the app never trusts a forwarded address from an untrusted hop. The audit trail records source IP (REQ-AUD-04), so a wrong client address is an integrity defect in the audit record, not a cosmetic one. |
+| REQ-PROX-11 | MUST | Security headers and TLS policy (REQ-SEC-02, REQ-SEC-08) are asserted at `edge` and by the app, so removing the proxy cannot silently remove the headers. |
+| REQ-PROX-12 | MUST | HAProxy's own runtime state — connection counts, reload history, certificate load status, error rates — is visible to permitted operators and emitted to the audit and log sinks like any other component (REQ-AUD-07). |
+
+## ACME — Certificates & TLS automation
+
+| ID | Status | Requirement |
+|----|--------|-------------|
+| REQ-ACME-01 | MUST | A built-in ACME client supporting all four validation paths: HTTP-01, DNS-01, TLS-ALPN-01 and DNS-PERSIST-01. |
+| REQ-ACME-02 | MUST | Challenge type is selectable per certificate. The UI states each type's prerequisite and refuses a selection whose prerequisite is unmet rather than failing at issuance. |
+| REQ-ACME-03 | MUST | An explicit TLS-termination mode with three values, matching the three topologies of REQ-PROX-03: `self` (our HAProxy is the internet-facing edge and we own ACME end to end — the default), `behind-proxy` (our HAProxy is in the path but an upstream terminates public TLS, so internal ACME is disabled for the public hostname only), and `delegated` (no HAProxy; internal ACME fully disabled). The mode is chosen explicitly, never inferred silently. Two ACME clients competing for the same hostname and port 80 is the failure this prevents. |
+| REQ-ACME-04 | MUST | Guided DNS setup: the exact record name, type, value and TTL to create, with a re-check action and a propagation check against the domain's **authoritative** nameservers before issuance is requested. |
+| REQ-ACME-05 | MUST | DNS-PERSIST-01 support: the persistent TXT record at `_validation-persist.<domain>` binding this ACME account and CA, with the account key thumbprint displayed and the consequence of rotating that key stated plainly. |
+| REQ-ACME-06 | MUST | Renewal is automatic and requires no future user intervention, ever. A deployment left alone for a year keeps working. |
+| REQ-ACME-07 | MUST | Renewal timing is **ARI-driven** (RFC 9773, ACME Renewal Information): the client polls the CA's suggested renewal window and obeys it, rather than assuming a fixed fraction of the certificate lifetime. |
+| REQ-ACME-08 | MUST | The check frequency is configurable down to every 1 hour, and the safety margin before the window closes is configurable. These two are the only renewal knobs a user should ever need. |
+| REQ-ACME-09 | MUST | Short-lived certificate profiles are supported — Let's Encrypt's 160-hour (6-day) profile — where the expected cadence is renewal every 2–3 days with ARI checks at least daily. The shipped defaults must be correct for this case, not only for 90-day certificates. |
+| REQ-ACME-10 | MUST | Full debug logs in the certificate renewal settings screen: every ACME protocol step, request, response, challenge state transition, DNS lookup and error, with timestamps — subject to the same redaction rules as every other sink (REQ-AUD-05, REQ-AUD-12). |
+| REQ-ACME-11 | MUST | Renewal failure raises a notification before expiry, escalating as the remaining margin shrinks. Silent failure until an outage is not acceptable. |
+| REQ-ACME-12 | MUST | The ACME account key and all certificate private keys are stored under envelope encryption (REQ-SEC-06), never leave the server, and never appear in a log, a debug stream, an export or an audit diff. |
+| REQ-ACME-13 | MUST | Certificate installation is atomic and hot-reloaded without dropping connections or requiring a restart. |
+| REQ-ACME-14 | MUST | Staging and production ACME directories are both selectable, staging is the default for a first issuance, and rate-limit state is surfaced before a request that would exceed it. |
+| REQ-ACME-15 | MUST | Multiple certificates, SAN lists and wildcards are supported. A wildcard requires DNS-01 or DNS-PERSIST-01, and the UI enforces that rather than letting the order fail. |
+| REQ-ACME-16 | MUST | A certificate inventory showing, per certificate: names, issuer, challenge type, validity window, last renewal, next scheduled check, ARI window, and full issuance history. |
+| REQ-ACME-17 | MUST | Every ACME operation is audited. Issuance, renewal, revocation and challenge failure are first-class audit events (REQ-AUD-01). |
+| REQ-ACME-18 | MUST | DNS provider credentials for DNS-01 are stored encrypted, scoped to the minimum the provider allows, and the supported provider set is a declarative registry — adding a provider is data, not a new branch in a switch statement. |
+
+## SET — Settings surfaces
+
+| ID | Status | Requirement |
+|----|--------|-------------|
+| REQ-SET-01 | MUST | A settings section is always present in the navigation. It is not an afterthought reachable only from an avatar menu. |
+| REQ-SET-02 | MUST | Three scopes, always distinguishable: **personal**, **tenant**, **global**. |
+| REQ-SET-03 | MUST | Personal settings cover: profile, theme, locale, timezone and date format (REQ-TIM-05), notification preferences, MFA factors, recovery codes, active sessions, and the user's own API keys. |
+| REQ-SET-04 | MUST | Tenant settings cover: tenant identity and branding, enabled auth methods within global policy (REQ-AUT-04), SMTP sender identity, audit retention, grid defaults, and tenant-scoped API keys. |
+| REQ-SET-05 | MUST | Global settings cover: system-wide auth policy, tenant administration, global roles, SMTP, syslog forwarding, certificates (REQ-ACME-*), normalizer mappings, telemetry posture, declared support and end-of-support dates, and backup/restore. |
+| REQ-SET-06 | MUST | Scope is unambiguous on every panel **before** a change is saved, not explained after. A global change must read as global while the user is making it. |
+| REQ-SET-07 | MUST | Every scope and every panel is permission-gated. A scope with no panel the actor may see is not rendered at all, rather than rendered empty. |
+| REQ-SET-08 | MUST | Panels are contributed by their owning domain through a settings registry, never a shared list — the same rule that keeps the parallel wave safe (REQ-CTR-04). |
+| REQ-SET-09 | MUST | Every settings change is audited with a before/after diff (REQ-AUD-01, REQ-AUD-04), including which scope it was made at. |
+| REQ-SET-10 | MUST | A global or tenant change with blast radius requires typed confirmation naming what will change and for whom. |
+| REQ-SET-11 | MUST | Precedence is documented and visible in-app: personal overrides tenant overrides global, except where a policy is declared non-overridable — and where it is, the panel says so and shows the effective value with its source. |
+| REQ-SET-12 | MUST | Settings are searchable, deep-linkable, and every panel has a help topic (REQ-DOC-03). |
 
 ## SUP — Supply chain & telemetry
 

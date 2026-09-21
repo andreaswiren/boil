@@ -17,6 +17,7 @@ A namespace is a single segment. One owner, assigned at the freeze.
 | `auth` | A03 | Login, MFA enrolment, recovery codes, OIDC, step-up |
 | `rbac` | A04 | Roles, permissions, tenant admin, impersonation banner |
 | `nav` | A05 | Navigation labels, shell chrome, command palette |
+| `theme` | A06 | Theme and appearance controls — every generator-parity knob in REQ-UI-05 needs a label |
 | `grid` | A07 | Toolbar, filter operators, pagination, the `all` refusal |
 | `pwa` | A09 | Install prompt, notification permission, update prompt |
 | `canonical` | A10 | Canonical model and field labels, enum value labels |
@@ -26,7 +27,7 @@ A namespace is a single segment. One owner, assigned at the freeze.
 | `audit` | A13 | Event names, reason templates, console labels |
 | `collector` | A15 | Agent enrolment and status |
 | `help` | A16 | Help topic titles and navigation |
-| `errors` | A02 | One entry per error code in `types/errors.md` |
+| `errors` | A02 | **Cross-domain** error codes only — the `common.*` of errors. A domain's own error messages live in that domain's namespace as `<domain>.errors.<code_tail>`, because the domain that defines an error code owns its wording. This resolves the apparent conflict with `types/errors.md` §2: both are correct, and they describe different sets. A02 owning every domain's error copy would make A02 a bottleneck on every domain's wording. |
 | `common` | A02 | Yes/no, save/cancel, date labels — only genuinely cross-domain terms |
 
 `common` is the namespace that rots. A key belongs there only if three or more

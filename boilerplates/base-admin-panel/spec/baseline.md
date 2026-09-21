@@ -137,7 +137,7 @@ components.json                    →   apps/<app>/components.json             
 |----------|--------|-----|---------------------|
 | Reference is a dependency or a reading | Reading only — no vendor, no fork | Keeps REQ-SUP-01/04 clean and lets us deviate freely | No |
 | Route group names | `(app)` and `(auth)` | Matches `contracts/ownership.md` verbatim | No |
-| Nav as array or registry | Registry, per-domain declarations | Shared array is a merge point in a 13-wide wave (REQ-CTR-04) | No |
+| Nav as array or registry | Registry, per-domain declarations | Shared array is a merge point in a 15-wide wave (REQ-CTR-04) | No |
 | Nav `order` step | 100, sparse | Insert without renumbering anyone else's entry | No |
 | Icon reference in registry | Icon *name* string, not component | Registry stays serialisable and cheap to assemble | No |
 | Lint/format tool | Biome, as the reference | One tool for lint and format; A01 configures | No |

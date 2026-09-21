@@ -1,7 +1,7 @@
 # Ownership Map
 
 Every path in the generated app has exactly one owning agent (REQ-CTR-04).
-This is the document that makes a 13-wide parallel wave possible: agents do not
+This is the document that makes a 15-wide parallel wave possible: agents do not
 coordinate, they do not merge, and they do not negotiate — they write inside
 their own paths and read everyone else's work through the frozen contract.
 
@@ -15,7 +15,8 @@ treats it as a failed task and reassigns, rather than accepting the diff.
 | Path | Owner | Notes |
 |------|-------|-------|
 | `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json` | A01 | Version fields are A22's (see below) |
-| `docker/**`, `compose.yml`, `compose.dev.yml`, `compose.prod.yml` | A01 | |
+| `docker/**`, `compose.yml`, `compose.dev.yml`, `compose.prod.yml` | A01 | Includes the `edge` HAProxy service (REQ-PROX-01) |
+| `docker/haproxy/**`, the generated HAProxy config | A01 | Generated from the same validated config source as the app (REQ-PROX-04). A25 owns only the certificate-install and reload path it shares (REQ-PROX-09, REQ-ACME-13). |
 | `.env.example` | A01 | Every agent *declares* its vars; A01 writes the file |
 | `packages/config/**` | A01 | The single env schema |
 | `packages/crypto/**` | A01 | Envelope encryption, KEK rotation, egress client |
@@ -41,6 +42,9 @@ treats it as a failed task and reassigns, rather than accepting the diff.
 | `packages/i18n/**`, `locales/**` | A14 |
 | `agents/collector/**` (Rust) | A15 |
 | `packages/fixtures/**` | A23 |
+| `packages/setup/**` | A24 |
+| `packages/acme/**`, `packages/tls/**` | A25 |
+| `packages/settings/**` | A05 |
 
 ## App routes — the contested surface
 
@@ -55,7 +59,8 @@ route group, and **each route group has one owner**:
 | `apps/<app>/app/(app)/console/**` | A13 |
 | `apps/<app>/app/(app)/api-docs/**` | A11 |
 | `apps/<app>/app/(app)/help/**` | A16 |
-| `apps/<app>/app/(app)/settings/**` | A05 shell, panels contributed per-domain via `nav-registry` |
+| `apps/<app>/app/(app)/settings/**` | A05 shell and the three scope surfaces (personal / tenant / global), panels contributed per-domain via `settings-registry` (REQ-SET-08) |
+| `apps/<app>/app/(setup)/**` | A24 — the first-run wizard, reachable only while setup is incomplete (REQ-WIZ-13) |
 | `apps/<app>/app/api/**` | A11 owns the route kit and the `/api/v1` tree; each domain owns its own subtree under it |
 | `apps/<app>/components/shell/**` | A05 |
 | `apps/<app>/app/manifest.ts`, `sw.ts` | A09 |
@@ -68,7 +73,11 @@ A05's shell reads the registry at build time. Nobody edits a shared navigation
 array — that array does not exist.
 
 The same pattern covers settings panels, command-palette entries, help topic
-links and notification categories. **Registry, never a shared list** is the rule
+links and notification categories. A settings panel is the clearest case: A25
+contributes the certificate panel from inside `packages/acme/`, declaring its
+scope as `global`, and A05's settings shell renders it. A25 never opens a file
+under `apps/<app>/app/(app)/settings/`, and A05 never learns what a certificate
+is. **Registry, never a shared list** is the rule
 that keeps the wave parallel.
 
 ## Database schema
@@ -91,6 +100,8 @@ produce a conflicting migration ordinal:
 | `user_grid_prefs` | A07 |
 | `user_preferences` (theme, locale, timezone, format) | A05 |
 | `help_topics` | A16 |
+| `setup_state`, `setup_steps` | A24 |
+| `acme_accounts`, `certificates`, `cert_orders`, `cert_renewal_log`, `dns_providers` | A25 |
 
 A04 owns the RLS policy for **every** tenant-scoped table, including tables it
 does not own. A table owner declares `tenantScoped: true` in its contract entry;

@@ -13,46 +13,60 @@ audit rows (A13) and mints no sessions (A03) — it emits events and evaluates.
 ## Requirements covered
 
 REQ-RBA-01 … REQ-RBA-08, REQ-ENT-02, REQ-ENT-05, REQ-AUT-07, REQ-AUD-01,
-REQ-AUD-04, REQ-CTR-08, REQ-TST-05, REQ-TST-07.
+REQ-AUD-04, REQ-SET-02, REQ-SET-05, REQ-SET-07, REQ-SET-10, REQ-CTR-08,
+REQ-TST-05, REQ-TST-07.
 
 ## 1. Permission string grammar (REQ-RBA-01)
 
 ```
-<domain>.<resource>.<action>
-
-domain    [a-z][a-z0-9]*            the owning package's namespace, or `global`
-resource  [a-z][a-z0-9-]*           kebab-case, singular
-action    [a-z][a-z0-9-]*           from the closed vocabulary below
+<domain>.<resource>.<action>        segment := [a-z][a-z0-9-]*
 ```
 
-`PermissionStringSchema` in `packages/contracts/rbac.ts` is that regex.
-Resources are **singular and kebab-case**: `global.deleted-record.read`, not
-`deleted_records`. `spec/auth.md` §5 cites `global.auth_policy.write`; the
-registered string is `global.auth-policy.write` — the grammar wins and A03
-corrects the citation.
+Exactly three segments, lowercase, digits and `-` only. The frozen regex,
+`PermissionStringSchema` and the registry of record are
+`contracts/types/rbac.md` §1 — this section is the design behind them, not a
+second copy of the register.
 
-Closed action vocabulary — every CRUD-shaped resource uses these and no others:
+Resources are **singular and kebab-case**: `global.deleted-record.read`,
+`auth.recovery-code.regenerate`. A compound domain in the global namespace
+folds into the resource so the string stays three segments —
+`global.auth-policy.mfa-disable`, never four. `spec/auth.md` §5 still cites the
+pre-freeze `global.auth_policy.write`; the frozen name is
+`global.auth-policy.mfa-disable` and the rename table in
+`contracts/types/rbac.md` §4 is the tiebreak, not this spec and not that
+citation.
 
-| Action | Means | Notes |
-|---|---|---|
-| `read` | one row by id | detail views are always audited (REQ-AUD-02) |
-| `list` | a paginated collection | list reads are aggregated in audit |
-| `create` | insert one row | |
-| `update` | partial write to one row | |
-| `write` | replace a configuration document with no row identity | policies, settings |
-| `delete` | soft delete — sets `deleted_at` | REQ-ENT-02 |
-| `restore` | clears `deleted_at` | REQ-ENT-02 |
-| `purge` | hard delete | global tier only, step-up 60 s |
-| `export` | bulk extraction | audited per export (REQ-GRD-13) |
-| `revoke` | invalidate a credential, session or key | |
-| `approve` | a second identity authorises a pending action | |
-| `impersonate` | act as another identity | REQ-RBA-07 |
+The action vocabulary is closed: `list`, `read`, `write`, `delete`, `restore`,
+`export`, `run`, `admin` (`contracts/types/rbac.md` §2). Three consequences
+worth stating, because each one gets re-litigated otherwise:
 
-A domain needing a verb outside the twelve registers it in its
-`contract.declaration.ts` as a single lowercase imperative — `enrol`, `reset`,
-`rotate`, `probe`, `retry`. Assembly rejects an unregistered verb, so the
-vocabulary cannot grow by accident in a 13-wide wave. `*` is never a permission
-string: a wildcard grant is a role, and roles are enumerated.
+- **`write` covers create and update.** No resource in this build grants one
+  without the other, and splitting them produces roles where someone can create
+  a tenant role but not fix it. A domain that genuinely needs the split declares
+  a domain verb and argues for it at CCR time.
+- **A domain verb is declared with the permission that uses it** and appears in
+  the register's verb list — `assign`, `revoke`, `rotate`, `enrol`, `purge`,
+  `impersonate`, `replay`, `mint-own`, `mint-service`, and the rest. Assembly
+  cannot tell `write` from `wrait`, so an unlisted verb fails review, and that
+  review is the only control that keeps fifteen agents from inventing fifteen
+  synonyms for "read".
+- **`*` is not a permission string.** A wildcard grant means adding a permission
+  silently widens every role holding the prefix — the semantic-change-under-the-
+  same-name case `contracts/README.md` §5 calls the worst kind. A role lists
+  strings.
+
+One asymmetry worth naming before someone "fixes" it: the **permission** is
+`<domain>.<resource>.write`, while the **audit event names** stay
+`<domain>.<resource>.create` and `.update`
+(`contracts/events/audit-event.md` §2). One grant covers both operations; the
+trail still has to say which one happened. Aligning them in either direction
+loses information — a single `write` event cannot answer "was this row created
+or changed", and a `create` permission that nobody grants separately is a role
+editor full of pairs that are always checked together.
+
+Permission strings are contract members: additive only. A rename is a new
+string, both granted, the old one deprecated with a removal version
+(REQ-CTR-03).
 
 ## 2. Evaluation is deny-by-default, in three independent layers (REQ-RBA-02)
 
@@ -77,48 +91,68 @@ returns `rbac.permission_denied` → 403; a *cross-tenant* attempt returns
 `tenancy.cross_tenant` → **404**, because a 403 confirms the row exists
 (`contracts/types/identity.md` §1).
 
-## 3. System roles and tenant-defined roles
+## 3. Built-in roles and tenant-defined roles
 
-| Kind | Table state | Editable | Why |
+`Role` is frozen in `contracts/types/rbac.md` §5: `key`, `nameKey`,
+`descriptionKey`, `tier`, `version`, `builtIn`, `permissions`, plus the entity
+envelope. What A04 decides on top of it:
+
+| Kind | Row state | Editable | Why |
 |---|---|---|---|
-| System role | `roles.system = true`, seeded by migration | Name and description no, grants no | A tenant that can edit `tenant-admin` can escalate itself |
-| Tenant role | `roles.tenant_id = <tenant>`, `system = false` | Yes, by `rbac.role.update` | Tenants have their own job titles |
-| Global role | `roles.tenant_id IS NULL`, `tier` set | Superadmin only, step-up | REQ-RBA-06 |
+| Built-in tenant role | `builtIn: true`, `tenantId: null`, `tier: "tenant"` | No. Copy it and edit the copy | A tenant that can edit `tenant-admin` can escalate itself |
+| Tenant role | `builtIn: false`, `tenantId` set | Yes, with `rbac.role.write` | Tenants have their own job titles |
+| Global role | `tier: "global"`, `tenantId: null` | `superadmin` only | REQ-RBA-06 |
 
-Seeded system roles: `tenant-admin`, `tenant-operator`, `tenant-viewer`,
+Built-in keys: `tenant-admin`, `tenant-operator`, `tenant-viewer`,
 `global-operator`, `global-admin`, `superadmin`. A tenant role is created by
-cloning a system role, never from an empty grant set filled from memory.
+copying a built-in one, never from an empty grant set filled in from memory.
+`nameKey` and `descriptionKey` are i18n keys in the `rbac` namespace — a role
+name is never a stored English string (REQ-I18N-02).
 
 **The ceiling**: a tenant role may hold only permissions in the tenant's
-available set — the permissions its enabled features declare, minus any the
-global tier has withheld from that tenant. A grant outside it is refused at
-write time with `rbac.grant_exceeds_ceiling`, naming the string. No tenant role
-may hold a `global.*` permission; that is a separate assertion, not a by-product
-of the ceiling, because the ceiling is data and this is a law.
+available set — those its enabled features declare, minus any the global tier
+has withheld from that tenant. A grant outside it is refused at write time,
+naming the offending string. A `global.*` string in a tenant role is refused
+separately with `rbac.global_permission_not_grantable` (422), because the
+ceiling is data and that one is a law: no union of tenant roles may ever produce
+a global permission.
 
 ## 4. Three tiers (REQ-RBA-06)
 
 ```
-global / MSP tier  tenantId: null  namespace global.*  step-up on every write
+global / MSP tier  tenantId: null  namespace global.*  step-up on every check
    │ enters a tenant → mints a NEW session (never widens the current one)
 tenant             tenantId: <id>  namespace <domain>.*  RLS-scoped, holds roles
    │ role assignments
 user               the identity those assignments are attached to
 ```
 
-| Tier | Grants | Cross-tenant | Step-up |
-|---|---|---|---|
-| `operator` | `global.tenant.list`, `global.tenant.read`, `global.impersonation.impersonate`, cross-tenant read | read | every write |
-| `global_admin` | tenant lifecycle, auth policy, role definitions, `global.deleted-record.read` | read + write | every write |
-| `superadmin` | `global.record.purge`, KEK rotation, audit retention, break-glass recovery | read + write | every write |
+| Tier | Representative grants (frozen names) |
+|---|---|
+| `operator` | `global.tenant.read-any`, `global.impersonation.impersonate`, `global.audit.read-any`, `global.collector.read-any` |
+| `global_admin` | the above plus `global.tenant.create` / `.suspend` / `.archive`, `global.role.write-any`, `global.auth-policy.mfa-disable`, `global.auth-session.revoke-any`, `global.deleted-record.read`, `global.rls.inspect` |
+| `superadmin` | the above plus `global.record.purge`, `global.crypto-kek.rotate`, `global.audit-retention.write`, `global.user.recover`, `global.api-key.mint-service` |
 
 Tiers are compared by index in `GLOBAL_TIER_ORDER`, never by string
-(`contracts/types/identity.md` §4). Holding `global_admin` implies **no** tenant
-permission: entering a tenant mints a session and resolves tenant permissions
-for it. The `global.*` namespace is separate so no union of tenant roles can
-produce a global permission, and so
+(`contracts/types/identity.md` §4). Every `global.*` check requires a fresh
+step-up by rule, not per row (`contracts/types/rbac.md` §3.2). Holding
+`global_admin` implies **no** tenant permission: entering a tenant mints a
+session and resolves that session's tenant permissions from the roles the
+operator actually holds there.
+
+The three tiers are the same three scopes the settings surface distinguishes —
+personal, tenant, global (REQ-SET-02). A scope with no panel the actor may see
+is not rendered at all rather than rendered empty (REQ-SET-07), which is the
+presentation half of deny-by-default: an operator who cannot administer tenants
+never sees a global scope to wonder about. Role editing lives on the tenant
+scope, global roles and tenant administration on the global scope
+(REQ-SET-05), and a role change with estate-wide blast radius —
+`global.role.write-any` — demands typed confirmation naming the tenants it will
+touch (REQ-SET-10).
+
+The separate namespace is also an operational property:
 `grep -rh '"global\.' packages/*/contract.declaration.ts` lists the entire
-privileged surface in one command.
+privileged surface of the build in one command.
 
 ## 5. `tenant_id` comes from the session (REQ-RBA-03)
 
@@ -134,86 +168,100 @@ tenants(id)`. The DAL does not write it from an argument either: it comes from
 
 ## 6. Row Level Security, in detail (REQ-RBA-04)
 
-Two independent controls. Each covers the other's failure mode.
+The generated policy files, the role definition and the isolation suite are
+frozen in `contracts/db/rls-contract.md`. This section is why the design is
+shaped that way, and what would break if any part of it were dropped.
+
+**Two independent controls, each covering the other's failure mode.**
 
 ```sql
 -- db/policies/000-roles.sql (A04)
-CREATE ROLE app_owner    NOINHERIT;              -- owns the schema, runs migrations
-CREATE ROLE app_runtime  LOGIN NOINHERIT NOBYPASSRLS;  -- the tenant pool
-CREATE ROLE app_global   LOGIN NOINHERIT NOBYPASSRLS;  -- the global-tier pool
+CREATE ROLE app_owner   NOINHERIT;              -- owns the schema, runs migrations
+CREATE ROLE app_runtime LOGIN NOBYPASSRLS;      -- what DATABASE_URL connects as
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
 ```
 
-**Control 1 — the app is not the owner.** `app_runtime` owns no table and holds
-no `BYPASSRLS`. A table owner bypasses RLS unless it is forced, and
-`SUPERUSER`/`BYPASSRLS` bypasses it even then. Connecting as the owner makes
-every policy below decorative.
+*Control 1 — the app is not the owner.* `app_runtime` owns no table and holds no
+`BYPASSRLS`. A table owner bypasses RLS unless it is forced, and a superuser or
+`BYPASSRLS` role bypasses it even then. Connect as the owner and every policy
+below is decorative. A boot-time assertion fails the app if `current_user` owns
+any table or holds `rolsuper`/`rolbypassrls`.
 
-**Control 2 — `ENABLE` plus `FORCE`.**
+*Control 2 — `ENABLE` **and** `FORCE` on every tenant-scoped table.*
 
 ```sql
-ALTER TABLE devices ENABLE ROW LEVEL SECURITY;
-ALTER TABLE devices FORCE  ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users FORCE  ROW LEVEL SECURITY;
 ```
-
-`ENABLE` applies policies to non-owners. `FORCE` applies them to the owner too.
-We do both, and we do not lean on either alone:
 
 - `ENABLE` without `FORCE`: the day the app runs under the migration
   credentials — a debug session, a data fix, a misread env var — RLS silently
   stops applying. Isolation must not depend on which DSN is in scope.
-- `FORCE` without a non-owner role: one `ALTER TABLE ... NO FORCE ROW LEVEL
+- `FORCE` without a non-owner role: one `ALTER TABLE x NO FORCE ROW LEVEL
   SECURITY`, or one new table created without both statements, and every row in
   it is readable by every tenant. That is a breach one migration away, with no
-  test failing unless the isolation proof in §8 is table-driven. It is.
+  test failing unless the isolation proof is generated per table. It is (§8).
 
-**The tenant is carried by `SET LOCAL`, inside the transaction.**
+**The tenant arrives by `SET LOCAL`, inside the transaction.**
 
 ```sql
 BEGIN;
-SELECT set_config('app.current_tenant', $1::text, true);  -- true = is_local
--- ... the request's statements ...
-COMMIT;                                              -- setting reverts here
+SELECT set_config('app.current_tenant', $1::text, true);  -- SET LOCAL, bindable
+-- ... every statement of the request ...
+COMMIT;                                                   -- the setting reverts
 ```
 
-`set_config(..., true)` is `SET LOCAL` with a bindable parameter, so the tenant
-uuid is never interpolated into SQL text. A session-wide `SET` survives the
-transaction and, under transaction-level pooling (PgBouncer, or any pooler an
-operator puts in front of Postgres), leaks to the next borrower of that
-connection — cross-tenant disclosure caused by pool reuse, the hardest class of
-bug to reproduce and the easiest to ship. `SET LOCAL` reverts at
-`COMMIT`/`ROLLBACK`, so a connection returns to the pool carrying no tenant.
-Every request runs in a transaction; the DAL has no non-transactional read path.
+`set_config(..., true)` is the bindable spelling of the frozen
+`SET LOCAL app.current_tenant`; identical semantics, and the tenant uuid is
+never interpolated into SQL text. A session-wide `SET` survives the transaction
+and, under transaction-level pooling (PgBouncer, or any pooler an operator puts
+in front of Postgres), leaks to the next borrower of that connection —
+cross-tenant disclosure with no attacker, no policy bug and nothing in a log.
+`SET LOCAL` reverts at `COMMIT`/`ROLLBACK`, so a connection returns to the pool
+carrying no tenant. Every request therefore runs inside a transaction; the DAL
+has no non-transactional read path. One place sets it — the route kit's
+transaction wrapper, from `session.tenant.id` (REQ-RBA-03).
 
-**The policy shape.**
+**The policy shape**, generated per `tenantScoped: true` table:
 
 ```sql
--- db/policies/001-helpers.sql
-CREATE FUNCTION app.current_tenant() RETURNS uuid LANGUAGE sql STABLE AS $$
-  SELECT nullif(current_setting('app.current_tenant', true), '')::uuid $$;
-CREATE FUNCTION app.global_read() RETURNS boolean LANGUAGE sql STABLE AS $$
-  SELECT current_setting('app.global_read', true) = 'on'
-     AND current_user = 'app_global' $$;
-
--- db/policies/<table>.sql — generated per tenant-scoped table
-CREATE POLICY devices_tenant ON devices
-  FOR ALL TO app_runtime, app_global
-  USING      (tenant_id = app.current_tenant() OR app.global_read())
-  WITH CHECK (tenant_id = app.current_tenant());
+CREATE POLICY rls_users_tenant_isolation ON users
+  FOR ALL TO app_runtime
+  USING      (tenant_id = current_setting('app.current_tenant', true)::uuid)
+  WITH CHECK (tenant_id = current_setting('app.current_tenant', true)::uuid);
+GRANT SELECT, INSERT, UPDATE, DELETE ON users TO app_runtime;
+CREATE INDEX IF NOT EXISTS users_tenant_idx ON users (tenant_id);
 ```
 
-- `current_setting(..., true)` is NULL when unset, so the comparison is NULL and
-  the row is invisible. Unset means **zero rows**, never all rows. Fail closed
-  is the default state, not a branch.
-- `WITH CHECK` has no global escape: a cross-tenant *write* is impossible even
-  on the global pool. A global-tier write enters the tenant first.
-- Cross-tenant *reads* need two keys — the `app.global_read` GUC **and** the
-  `app_global` role. That pool has its own credentials and serves only routes
-  declaring a `global.*` permission, so an injected `set_config` on the tenant
-  pool buys nothing.
-- Policies are generated from `tenantScoped: true` in the table owner's
-  declaration. Declared and no policy fails assembly; a `tenant_id` column and
-  no declaration fails migration lint.
+- `current_setting(..., true)` is the missing-ok form: unset returns NULL, the
+  comparison is NULL, the row is invisible. Unset means **zero rows**, never all
+  rows. Failing closed is the default state, not a branch — a query returning
+  nothing is a bug report, one returning everything is a breach.
+- `USING` **and** `WITH CHECK` are both required. `USING` alone lets a caller
+  move a row into another tenant.
+- `FOR ALL` is one policy for four commands. Four policies are four chances to
+  omit one.
+- Soft delete is **not** in the policy. `deleted_at IS NULL` is the DAL's
+  predicate, lifted by `global.deleted-record.read`. Isolation and visibility
+  are different concerns, and mixing them makes both unprovable.
+
+**Cross-tenant reads are a second, additive policy — not a widened predicate:**
+
+```sql
+CREATE POLICY rls_audit_events_global_read ON audit_events
+  FOR SELECT TO app_runtime
+  USING (current_setting('app.global_tier', true)
+         IN ('operator', 'global_admin', 'superadmin'));
+```
+
+Policies for the same command are OR-ed, so this widens reads only, on the
+tables that declare it (audit trail, tenant registry, collector inventory).
+`app.global_tier` is set by the same `SET LOCAL` wrapper from
+`session.globalTier`, and only for a session holding the relevant `global.*`
+permission with a fresh step-up. A global-tier **write** has no branch at all:
+it goes through the tenant policy, which means the operator entered the tenant
+and the action is audited as such. `SET LOCAL ROLE` is not used to switch
+tenants — one role, one setting, one predicate to reason about.
 
 ## 7. Impersonation and tenant entry (REQ-RBA-07)
 
@@ -238,47 +286,55 @@ session without an exit event can act unobserved.
 
 ## 8. Isolation is proven per table, not asserted (REQ-RBA-05)
 
-The proof is generated from the contract, so a new table cannot escape it.
+The suite is **generated** from the declared tenant-scoped tables
+(`tests/integration/rls.generated.spec.ts`), so a new table without a test is
+impossible. Four assertions per table:
 
 ```
-tests/tenant-isolation/isolation.spec.ts   (A23, suite: pnpm test:isolation)
 for each table where tenantScoped === true:
-  seed one row in tenant A and one in tenant B (REQ-TST-07)
-  as tenant A on app_runtime:
-    SELECT ...                      → exactly 1 row, A's
-    SELECT ... WHERE id = <B's id>  → 0 rows
-    UPDATE  ... WHERE id = <B's id> → 0 rows affected
-    INSERT  ... (tenant_id = B)     → raises 42501 new row violates row-level security
-    DELETE  ... WHERE id = <B's id> → 0 rows affected
-  with app.current_tenant unset:         → 0 rows on every table
-  as app_global with global_read on: → both rows readable, writes to B still raise
+  cross-tenant read  → 0 rows        (not "throws" — zero rows)
+  cross-tenant write → raises        (0 rows affected also fails)
+                       INSERT with another tenant_id → /row-level security/
+  no tenant setting  → 0 rows        (the pooling case from §6)
+  pg_class           → relrowsecurity AND relforcerowsecurity, policies > 0
 ```
 
-Plus three structural assertions that fail on the schema, not a query: every
-tenant-scoped table has `relrowsecurity` **and** `relforcerowsecurity` true in
-`pg_class`; `app_runtime` owns nothing (`pg_tables.tableowner`); both app roles
-have `rolbypassrls = false`. The suite's table count is compared against the
+The third assertion is the one that catches a missing transaction wrapper, which
+is the realistic way this breaks in production. Two structural checks run
+alongside: `app_runtime` owns no table (`pg_tables.tableowner`) and has
+`rolbypassrls = false`. The suite's table count is compared against the
 contract's tenant-scoped count, so it fails rather than quietly testing fewer
-tables.
+tables. `GET /api/v1/rbac/_selftest` reports the same four facts at runtime, with
+the detailed report gated on `global.rls.inspect`.
 
 ## 9. Role changes are versioned with a diff (REQ-RBA-08)
 
 ```sql
-role_versions (A04)
-  id, role_id, version int, grants text[] NOT NULL,
-  diff jsonb NOT NULL,          -- { added: [...], removed: [...] }
-  reason text NOT NULL,         -- min 20 chars
-  -- entity-base envelope (REQ-ENT-01)
-  UNIQUE (role_id, version)
+role_versions (A04)                       -- carries the entity envelope
+  role_id uuid not null,
+  version int  not null,                  -- monotonic, matches Role.version
+  grants  text[] not null,                -- the full set at this version
+  diff    jsonb  not null,                -- { added: [...], removed: [...] }
+  -- entity-base: created_at/created_by ARE `changedAt`/`changedBy`
+  -- (contracts/types/rbac.md §5); `comment` carries the reason
+  unique (role_id, version)
 ```
 
-Every write to a role's grants inserts a `role_versions` row in the same
-transaction, computes `added`/`removed` against the previous version, and emits
-`rbac.role.update` with the diff, actor, reason and both version numbers
-(REQ-AUD-04). Step-up within 300 s is required. The grant set is reconstructible
-at any past version, so "who gave them that" is one query rather than log
-archaeology. A user's role assignment (`user_roles`) is insert + soft-delete,
-never update, and emits `rbac.role-assignment.create` / `.delete` with the
+The contract's `RoleVersion` has `changedAt`/`changedBy`; in storage those are
+the envelope's `created_at`/`created_by`, set by the DAL from the actor
+(REQ-ENT-04), so the table needs no exemption and no second actor column.
+
+Every write to a role's grants, in one transaction: insert the version row,
+compute `added`/`removed` against the previous version, emit `rbac.role.write`
+carrying the diff, the actor, the `comment` and both version numbers
+(REQ-AUD-04). Step-up within 300 s is required. A write against a superseded
+version is refused with `rbac.role_version_stale` (409) rather than
+last-write-wins — two admins editing one role must not silently overwrite each
+other's grants.
+
+The grant set is reconstructible at any past version, so "who gave them that" is
+one query rather than log archaeology. A user's role assignment (`user_roles`)
+is insert + soft-delete, never update, and emits `rbac.role.assign` with the
 resulting effective permission set. A03 rotates sessions holding an affected
 role on their next request (`spec/auth.md` §8), so a revoked grant does not
 survive in a live session.
@@ -287,20 +343,22 @@ survive in a live session.
 
 | Decision | Choice | Why | Intake-overridable? |
 |---|---|---|---|
-| Action vocabulary | Closed set of 12 + registered domain verbs | Stops synonym drift across 13 agents | No |
+| Action vocabulary | The frozen closed set of 8 + registered domain verbs | Stops synonym drift across 13 agents | No |
 | Deny entries | None — grants only, deny-by-default | Evaluation order is where permission bugs live | No |
-| DB roles | `app_owner` / `app_runtime` / `app_global`, none with `BYPASSRLS` | REQ-RBA-04 | No |
+| DB roles | `app_owner` and `app_runtime`; the app role owns nothing and has no `BYPASSRLS` | REQ-RBA-04 | No |
 | RLS | `ENABLE` **and** `FORCE` on every tenant-scoped table | Each covers the other's failure mode | No |
 | Tenant propagation | `set_config('app.current_tenant', $1, true)` inside the transaction | Pooler-safe; a session `SET` leaks across tenants | No |
-| Cross-tenant read | Two keys: `app.global_read` GUC + `app_global` role | One key is one injection away | No |
+| Cross-tenant read | A second additive `SELECT` policy on `app.global_tier` | A widened predicate is one typo from "tenant = any" | No |
 | Cross-tenant write | Impossible — `WITH CHECK` has no global branch | Enter the tenant instead | No |
 | Tenant role ceiling | Intersection of feature-declared and non-withheld permissions | Tenants define titles, not power | No |
 | Impersonation time box | 30 min default, 4 h max, not extendable | REQ-RBA-07 | Yes, lower only |
+| Concurrent role writes | `rbac.role_version_stale` (409), never last-write-wins | Two admins must not overwrite each other | No |
 
 ## How this is verified
 
-- `pnpm test:isolation` — `tests/tenant-isolation/**` (REQ-TST-05): §8 in full,
-  table-driven from the contract, plus the three structural assertions.
+- `pnpm test:isolation` — `tests/integration/rls.generated.spec.ts` (REQ-TST-05,
+  REQ-RBA-05): §8 in full, generated from the contract's tenant-scoped table
+  list, plus the two structural checks.
 - `pnpm test:permissions` — `tests/permission-denial/**` (REQ-TST-05): every
   registered operation called without its permission returns 403, or 404 for a
   cross-tenant target; a tenant role holding a `global.*` string or a grant
@@ -311,14 +369,14 @@ survive in a live session.
 - `pnpm test:integration` — `tests/integration/rbac/**`: pooler simulation, two
   sequential transactions on one connection where the second issues no
   `set_config` and must read zero rows; role diff over a 10-step history.
-- `pnpm test:audit` — `tests/audit-emission/**`: `rbac.role.update` carries diff
-  and reason; impersonation enter and exit pair on every exit path.
+- `pnpm test:audit` — `tests/audit-emission/**`: `rbac.role.write` carries the
+  diff and the `comment`; impersonation enter and exit pair on every exit path.
 - `pnpm test:contract` — `packages/contracts/tests/rbac.spec.ts`: no duplicate
   permission strings, every `NavEntry.permission` resolves, every operation's
   declared permission exists (REQ-CTR-10).
 - `GET /api/v1/rbac/_selftest` — RLS enabled and forced on every tenant-scoped
-  table, `app_runtime` owns nothing, policy count equals table count
-  (REQ-CTR-08).
+  table, policy count equals table count, `app_runtime` owns nothing; the
+  detailed report is gated on `global.rls.inspect` (REQ-CTR-08).
 
 ## Open to intake
 

@@ -1,6 +1,6 @@
 ---
 name: A19-supply-chain
-description: Dispatch in Wave 3, at the same moment as the other twelve domain builders, to build the dependency inventory and CycloneDX SBOM, the advisory gate that blocks on critical or known-exploited vulnerabilities, the first-party suspicious-code scan, lockfile integrity, the telemetry kill-list asserted by test, and the documented egress inventory.
+description: Dispatch in Wave 3, at the same moment as the other fourteen domain builders, to build the dependency inventory and CycloneDX SBOM, the advisory gate that blocks on critical or known-exploited vulnerabilities, the first-party suspicious-code scan, lockfile integrity, the telemetry kill-list asserted by test, and the documented egress inventory.
 tools: Read, Write, Edit, Bash, Grep, Glob, WebFetch, WebSearch
 model: opus
 ---

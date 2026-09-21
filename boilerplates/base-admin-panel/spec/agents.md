@@ -48,7 +48,7 @@ they are presented in chat. **The build stops here until a human names a winner.
 | ID | Agent | Owns | Publishes | Consumes |
 |----|-------|------|-----------|----------|
 | A20 | `version-validator` | `versions/**` | `manifest.json` | registries, external sources |
-| A01 | `arch-foundation` | `apps/<app>/` scaffold, `docker/**`, `compose*.yml`, `packages/config/**`, `packages/crypto/**` | `env-schema`, `crypto`, `egress-client` | `manifest.json` |
+| A01 | `arch-foundation` | `apps/<app>/` scaffold, `docker/**` incl. the `edge` HAProxy service, `compose*.yml`, `packages/config/**`, `packages/crypto/**` | `env-schema`, `crypto`, `egress-client`, `edge-topology` | `manifest.json` |
 | A02 | `contract-steward` | `packages/contracts/**`, `contracts/ownership.md` | the whole contract surface index, `errors`, `entity-base`, `pagination` | every agent's published members |
 
 A20 runs first — nothing is installed against a remembered version. A01 scaffolds.
@@ -65,7 +65,7 @@ contract fixtures. None of them can block another.
 |----|-------|------|-----------|----------|
 | A03 | `auth-identity` | `packages/auth/**`, `apps/<app>/app/(auth)/**` | `session`, `auth-policy`, `mfa` | `entity-base`, `rbac`, `audit-event`, `theme-tokens`, `i18n:auth` |
 | A04 | `rbac-tenancy` | `packages/rbac/**`, `packages/tenancy/**`, `db/policies/**` | `rbac` (permission strings), `tenancy`, `rls-contract` | `entity-base`, `session` |
-| A05 | `ui-shell` | `apps/<app>/components/shell/**`, `apps/<app>/app/(app)/layout.tsx`, `packages/screenspace/**` | `nav-registry`, `screenspace`, `surface-budget` | `theme-tokens`, `rbac`, `i18n:nav`, approved layout |
+| A05 | `ui-shell` | `apps/<app>/components/shell/**`, `apps/<app>/app/(app)/layout.tsx`, `packages/screenspace/**`, `packages/settings/**`, `apps/<app>/app/(app)/settings/**` | `nav-registry`, `screenspace`, `surface-budget`, `settings-registry` | `theme-tokens`, `rbac`, `i18n:nav`, approved layout |
 | A07 | `datagrid` | `packages/datagrid/**` | `grid-def`, `grid-prefs`, `query-params` | `pagination`, `theme-tokens`, `rbac`, `i18n:grid` |
 | A09 | `pwa-offline` | `apps/<app>/app/manifest.ts`, `packages/pwa/**`, service worker | `push-subscription`, `notification-category` | `session`, `theme-tokens` |
 | A10 | `data-normalization` | `services/normalizer/**`, `packages/canonical/**` | `canonical-models`, `mapping-descriptor`, `provenance` | `entity-base` |
@@ -76,6 +76,8 @@ contract fixtures. None of them can block another.
 | A15 | `rust-remote-agent` | `agents/collector/**` (Rust) | `agent-enrolment`, `ingest-envelope` | `canonical-models`, mTLS identity |
 | A19 | `supply-chain` | `security/supply-chain/**`, `.github/workflows/supply-chain.yml` | SBOM, advisory report, suspicious-code report, telemetry kill-list | the lockfiles |
 | A23 | `test-engineer` | `tests/**` (except `tests/visual/**`), `packages/fixtures/**` | seeded fixtures, contract interface tests | every contract member |
+| A24 | `setup-wizard` | `packages/setup/**`, `apps/<app>/app/(setup)/**` | `wizard-state`, `setup-step` | `session`, `auth-policy`, `mfa`, `rbac`, `mail-template`, `env-schema` |
+| A25 | `acme-tls` | `packages/acme/**`, `packages/tls/**` | `acme-account`, `certificate`, `cert-renewal`, `dns-provider` | `crypto`, `egress-client`, `notification-event`, `audit-event`, `settings-registry` |
 
 ### Time & format is not an agent
 
@@ -119,18 +121,31 @@ orchestrator enforces this by never assigning a build task to a gate agent ID.
 | Intake | 1 | `A00` |
 | Wave 1 (mockups) | 3 | `A06` `A08` `A21` |
 | Wave 2 (foundation, sequential) | 3 | `A20` `A01` `A02` |
-| Wave 3 (parallel domains) | 13 | `A03` `A04` `A05` `A07` `A09` `A10` `A11` `A12` `A13` `A14` `A15` `A19` `A23` |
+| Wave 3 (parallel domains) | **15** | `A03` `A04` `A05` `A07` `A09` `A10` `A11` `A12` `A13` `A14` `A15` `A19` `A23` `A24` `A25` |
 | Wave 4 (narrative) + release | 4 | `A16` `A17` `A18` `A22` |
-| **Build agents** | **24** | `A00`–`A23` |
+| **Build agents** | **26** | `A00`–`A25` |
 | Gate agents (blocking, never build) | 4 | `C1` `C2` `S1` `S2` |
-| **Total** | **28** | |
+| **Total** | **30** | |
 
 `A21` is listed in Wave 1 because that is where it first runs, but it serves
 every phase that renders something — the 30 mockup screenshots at G1 and the
 integration screenshots at G5.
 
+The edge proxy (`REQ-PROX-*`) is A01's, not a new agent's. A01 already owns
+`docker/**` and the validated config source the HAProxy config is generated from
+(REQ-PROX-04), and an edge that disagrees with the app about hostnames or ports
+is exactly the class of bug single ownership prevents. A25 owns one seam into it:
+the certificate install and reload path (REQ-PROX-09, REQ-ACME-13), which it
+drives through HAProxy's runtime interface rather than by writing A01's config.
+
+The settings surfaces (`REQ-SET-*`) are A05's, not a new agent's. A05 already
+owns the settings shell, and the three scopes are chrome plus a registry — the
+panels themselves are contributed by the domains that own the data. Adding an
+agent for a surface that already has an owner is the speculative generality the
+Karpathy lens exists to catch (`gates/karpathy-lens.md`).
+
 The critical path is
 `A00 → A06 → A08/A21 → human → A20 → A01 → A02 → [Wave 3] → [Wave 4] → C1/C2 → S1/S2 → A22`.
 
-Wave 3 is where the time is, and it is 13-wide. Everything else is either
+Wave 3 is where the time is, and it is 15-wide. Everything else is either
 sequential by necessity or narrow by nature.

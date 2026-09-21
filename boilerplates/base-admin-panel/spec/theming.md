@@ -11,7 +11,8 @@ component: every other agent consumes tokens, and no agent writes a colour.
 ## Requirements covered
 
 REQ-UI-04 (primary), REQ-UI-05, REQ-UI-06, REQ-UI-01, REQ-UI-02, REQ-UI-11,
-REQ-SUP-07, REQ-FND-07, REQ-I18N-02, REQ-TST-03, REQ-TST-06.
+REQ-SUP-07, REQ-FND-07, REQ-I18N-02, REQ-SET-03, REQ-SET-08, REQ-SET-11,
+REQ-TST-03, REQ-TST-06.
 
 ## 1. The preset, decoded (REQ-UI-04)
 
@@ -58,9 +59,13 @@ A06 owns that file; nobody else edits it, and no agent runs `init` a second time
 ## 2. Generator parity: every knob is editable, previewable, persistable
 
 REQ-UI-05 is parity with the generator, not a palette switcher. The generator
-exposes eleven knobs and all eleven are live in-app, at
-`/(app)/settings/appearance`, contributed to A05's settings shell through the
-registry (`spec/baseline.md`).
+exposes eleven knobs and all eleven are live in-app, on the **personal**
+appearance panel at `/(app)/settings/appearance` — contributed to A05's settings
+shell through the registry, never by editing A05's files (REQ-SET-03,
+REQ-SET-08). The panel names its scope before a change is saved and shows the
+effective value with its source when a tenant default is in force
+(REQ-SET-06, REQ-SET-11): "Emerald — from your tenant's default". A tenant
+theme panel is the same component at tenant scope.
 
 | Knob | Values | Editable | Previewable | Persisted to |
 |---|---|---|---|---|
@@ -76,7 +81,11 @@ registry (`spec/baseline.md`).
 | `menuColor` | `default`, `tinted`, `contrast` | yes | yes | same |
 | `mode` | `light`, `dark`, `system` | yes | yes | `user_preferences.theme_mode` + cookie (§4) |
 
-- **Editable** — a control per knob, labelled from `i18n:theme` (REQ-I18N-02).
+- **Editable** — a control per knob, labelled from the `theme` i18n namespace
+  (REQ-I18N-02). The initial registry assigns A06 no namespace
+  (`contracts/types/i18n-namespaces.md` §1), and a new namespace with a new
+  owner is additive, so A06 registers `theme` by CCR at the freeze rather than
+  writing keys into A05's `nav`.
 - **Previewable** — the editor writes the candidate values to the custom
   properties on a preview container, so the sample surfaces (a card, a button
   row, a table header, a chart, the sidebar) re-render live with no request and
@@ -144,8 +153,20 @@ non-colour concerns such as a shadow or an opacity.
 Enforced by `pnpm lint:tokens` (A01 configures, A06 supplies the deny list):
 any hex, `rgb(`, `hsl(`, `oklch(` literal outside `packages/theme/`, any
 Tailwind colour-scale utility, and any `dark:` on a colour utility fails CI.
-Charts read `--chart-1 … --chart-5`, so a chart re-themes with the app
-(REQ-DOC-07).
+
+Three token families exist for consumers that are not ordinary components, and
+A06 owns their values in the preset while the consumer owns their use:
+
+| Family | Tokens | Consumer |
+|---|---|---|
+| Charts | `--chart-1 … --chart-5` | A17's architecture charts and every dashboard chart, so a chart re-themes with the app (REQ-DOC-07) |
+| Console levels | `--console-trace`, `-debug`, `-info`, `-warn`, `-error`, `-fatal` | A13's debug console (`contracts/events/console-stream.md` §3) |
+| ANSI palette | `--ansi-0 … --ansi-15` | A13's ANSI renderer; 8-bit and 24-bit sequences quantise onto these sixteen |
+
+Every one of them is contrast-checked at AA against `--background` and `--card`
+in both modes by the same unit test that checks the semantic tokens. A console
+that is legible in light and invisible in dark fails REQ-AUD-10, and the only
+way to keep that true through eleven knobs of editing is to test the pairs.
 
 ## 4. Dark, light, system — and no flash of the wrong theme (REQ-UI-06)
 
@@ -234,6 +255,7 @@ export const montserrat = localFont({
 | `system` resolution | One nonce'd inline script, `<head>`, pre-stylesheet | The server cannot know the OS preference | No |
 | Theme resolution order | user → tenant → system | Matches locale and timezone chains | No |
 | Fonts | Self-hosted Montserrat variable, latin + latin-ext | REQ-SUP-07 | Yes, per intake font choice |
+| Console and ANSI tokens | Part of the preset, A06 owns values, A13 owns use | One AA contrast test covers every theme the editor can produce | No |
 | Icon library | `lucide`, by name from the nav registry | REQ-UI-04; keeps the registry serialisable | Yes |
 
 ## How this is verified
@@ -243,13 +265,16 @@ export const montserrat = localFont({
   `apps/<app>/components.json`; `generate-presets.ts` is deterministic — the
   same `ThemeSelection` renders a byte-identical CSS file.
 - `pnpm lint:tokens` — no colour literal outside `packages/theme/`, no Tailwind
-  colour-scale utility, no `dark:` on a colour utility, anywhere in
-  `apps/**` or `packages/**`.
+  colour-scale utility, no `dark:` on a colour utility, anywhere in `apps/**` or
+  `packages/**`. It also carries A14's logical-property deny list
+  (`spec/i18n.md` §9), because both rules are one pass over the same class
+  strings.
 - `pnpm test:visual` — `tests/visual/theme.spec.ts` (REQ-TST-03): first-paint
   versus settled screenshots in `light`, `dark` and `system` (with the emulated
   OS preference both ways) prove no flash; all eleven knobs applied in
   combination screenshot the sample surfaces at 390/834/1440; axe AA contrast in
-  both themes (REQ-TST-06, REQ-UI-11).
+  both themes (REQ-TST-06, REQ-UI-11); every semantic, chart, console and ANSI
+  token asserted at AA against `--background` and `--card` in both modes.
 - `pnpm test:integration` — `tests/integration/theme/**`: the preference
   round-trip per user, the tenant default fallback, and the cookie surviving a
   session rotation (`spec/auth.md` §8).

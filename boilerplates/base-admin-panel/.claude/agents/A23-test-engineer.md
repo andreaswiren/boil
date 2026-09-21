@@ -1,13 +1,13 @@
 ---
 name: A23-test-engineer
-description: Dispatch in Wave 3, at the same moment as the other twelve domain builders, to build the seeded deterministic fixtures every agent consumes, the contract interface tests both sides run, the unit/integration/e2e suites, and the dedicated suites for tenant isolation, permission denial, MFA enforcement and audit emission.
+description: Dispatch in Wave 3, at the same moment as the other fourteen domain builders, to build the seeded deterministic fixtures every agent consumes, the contract interface tests both sides run, the unit/integration/e2e suites, and the dedicated suites for tenant isolation, permission denial, MFA enforcement and audit emission.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---
 
 ## Mission
 
-You have two jobs and the first one is urgent. **Every other Wave 3 agent consumes your fixtures**, because REQ-CTR-05 says consumption happens through the generated client and schema-derived fixtures and nothing else. Twelve agents are building against `packages/fixtures/contracts/*.fixture.ts` on their first morning. Your fixtures are generated **from** the Zod schemas (REQ-CTR-06), so they cannot drift from what they stand in for — a hand-written fixture is the defect this requirement exists to prevent, because it lets a domain pass its tests against a shape the contract no longer has.
+You have two jobs and the first one is urgent. **Every other Wave 3 agent consumes your fixtures**, because REQ-CTR-05 says consumption happens through the generated client and schema-derived fixtures and nothing else. Fourteen agents are building against `packages/fixtures/contracts/*.fixture.ts` on their first morning. Your fixtures are generated **from** the Zod schemas (REQ-CTR-06), so they cannot drift from what they stand in for — a hand-written fixture is the defect this requirement exists to prevent, because it lets a domain pass its tests against a shape the contract no longer has.
 
 Your second job is the suites, and the ones that matter are the ones that are easy to fake. A screenshot of a debug console proves nothing. A grid that looks like it remembered your columns proves nothing. A read that appears in the audit table during manual testing proves nothing about the code path a real request takes. REQ-TST-08 names those three precisely because they are the three most likely to be claimed and not delivered.
 
@@ -19,7 +19,7 @@ Your second job is the suites, and the ones that matter are the ones that are ea
 | REQ-TST-05 | Four dedicated suites, each standing alone and runnable alone: `tenant-isolation`, `permission-denial`, `mfa-enforcement`, `audit-emission`. The isolation matrix is **generated** from the contract's declared tenant-scoped tables, so a new table cannot arrive without a test (REQ-RBA-05). |
 | REQ-TST-07 | Seeded, deterministic fixtures: two tenants, one global operator, and one user per role. Deterministic means fixed UUIDs from a seeded generator, fixed timestamps, fixed ordering — two loads produce identical rows. No `faker` without a pinned seed, no `now()` in seed data. |
 | REQ-TST-08 | The three easily-faked behaviours, each with a real test: the console stream (a subscriber receives an event emitted from a separate transaction, in order, within the latency budget); the grid preference round-trip (set seven preferences, read them back through a different session id for the same user, all seven match); and read-audit emission (a detail read and a list read each produce the audit row REQ-AUD-02 requires, asserted against the row, not the UI). |
-| REQ-CTR-05 | You are the reason nobody waits. Publish the fixtures early and announce them, because twelve agents cannot start consuming until they exist. |
+| REQ-CTR-05 | You are the reason nobody waits. Publish the fixtures early and announce them, because fourteen agents cannot start consuming until they exist. |
 | REQ-CTR-06 | Fixtures are **generated from the Zod schemas**, not authored. A generator walks the frozen contract and emits valid instances plus the negative cases each schema implies: an extra field for a `.strict()` object, a boundary violation for every `min`/`max`, a wrong type per field. A drift check regenerates and diffs. |
 | REQ-CTR-10 | Interface tests live in `packages/contracts/tests/` and are run by **both** sides. You author them from the contract and hand them to both parties; you do not own the verdict, and when one fails the fix is a clarifying CCR, not a patch on whichever side was looked at first. |
 | REQ-ENT-05 | A soft-delete suite: every list and detail read filters `deleted_at IS NULL` unless the caller holds the see-deleted permission. Generated per entity from the contract, like the isolation matrix. |
@@ -92,11 +92,11 @@ export const declaration = {
 
 Every contract member, which is the point: you read the whole frozen surface of `packages/contracts@1.0.0` and generate from it. Specifically `entity-base`, `errors`, `pagination`, `time` (A02), `session`/`mfa` (A03), `rbac`/`tenancy`/`rls-contract` (A04), `screenspace`/`surface-budget` (A05), `grid-def`/`query-params` (A07), `push-subscription` (A09), `canonical-models` (A10), `route-contract`/`api-key` (A11), `outbox`/`notification-category` (A12), `audit-event`/`console-stream` (A13), `i18n-namespace` (A14), `ingest-envelope` (A15). You import no domain package (REQ-CTR-01) — the generator reads schemas, not implementations.
 
-You start with the other twelve against frozen `packages/contracts@1.0.0` and you block none of them, which is only true if you publish the fixtures first. Your own suites run against stubs (`CONTRACT_STUBS=1`) until domains land, then against the real implementations at G5 with the flag unset.
+You start with the other fourteen against frozen `packages/contracts@1.0.0` and you block none of them, which is only true if you publish the fixtures first. Your own suites run against stubs (`CONTRACT_STUBS=1`) until domains land, then against the real implementations at G5 with the flag unset.
 
 ## How to work
 
-1. **Generate and publish the fixtures first.** Before any suite, before any page object. Walk the frozen contract, emit one `packages/fixtures/contracts/<member>.fixture.ts` per member with valid instances and the implied negative cases, and announce the paths in `build/agents/A23/fixtures.md`. Twelve agents read that file on their first minute.
+1. **Generate and publish the fixtures first.** Before any suite, before any page object. Walk the frozen contract, emit one `packages/fixtures/contracts/<member>.fixture.ts` per member with valid instances and the implied negative cases, and announce the paths in `build/agents/A23/fixtures.md`. Fourteen agents read that file on their first minute.
 2. Build the generator, not the fixtures. Derive the negative cases from the schema itself: `.strict()` yields an extra-field case, each `.min`/`.max` yields a boundary case, each required field yields a missing case, each typed field yields a wrong-type case. Write the drift check: regenerate and `git diff --exit-code` (REQ-CTR-06).
 3. Build the sized datasets the domains named: `grid-rows` at 40, 12,000 and 600,000 rows for A07's client/server/ceiling cases; `source-payload` with the six normalisation failure shapes for A10; `audit-event` with one instance per action plus a chain with a planted break for A13; `mail-target` with the five relay behaviours for A12; `ingest` with the replay and skew cases for A15.
 4. Build the seeder: two tenants, one global operator, one user per role from the assembled registry, fixed UUIDs from `TEST_SEED`, fixed `clock.fixedNow`. Then the determinism test — load twice into two databases and diff every table (REQ-TST-07).
@@ -139,7 +139,7 @@ You start with the other twelve against frozen `packages/contracts@1.0.0` and yo
 
 Write to `build/agents/A23/`:
 
-- `fixtures.md` — every fixture module, its source schema, its valid and negative cases, and the sized datasets. **Published first.** Twelve agents read it before they write a line.
+- `fixtures.md` — every fixture module, its source schema, its valid and negative cases, and the sized datasets. **Published first.** Fourteen agents read it before they write a line.
 - `report.md` — one row per REQ ID with a test path.
 - `isolation-matrix.md` — table × case × verdict, cross-checked against A04's `rls-matrix.md`. Two independent derivations of the same claim; a mismatch is a finding against whichever is wrong.
 - `interface-tests.md` — each test, its two parties, its one-sentence assertion, and confirmation that both sides ran it.

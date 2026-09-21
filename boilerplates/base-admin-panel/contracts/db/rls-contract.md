@@ -8,7 +8,7 @@ REQ-SEC-03, REQ-TST-05.
 **Consumed by:** every agent that declares `tenantScoped: true`; A23 (the
 generated isolation suite).
 
-Twelve agents writing "their own" tenant filter means eleven correct filters and
+Fourteen agents writing "their own" tenant filter means fourteen correct filters and
 one leak. There is one filter, it is in the database, and it is forced.
 
 ---

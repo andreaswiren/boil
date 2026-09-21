@@ -77,8 +77,8 @@ db/migrations/A11/20261015T081200Z__create_api_keys.sql
 | `<slug>` | `snake_case`, imperative: `create_api_keys`, `add_last_used_at`. |
 
 Why the namespace exists: **two agents can never produce a conflicting
-ordinal.** Thirteen agents run at the same moment in Wave 3. A single
-`migrations/0042__*.sql` sequence would mean thirteen agents racing for `0043`,
+ordinal.** Fifteen agents run at the same moment in Wave 3. A single
+`migrations/0042__*.sql` sequence would mean fifteen agents racing for `0043`,
 and the loser's file either collides or silently reorders someone else's DDL.
 With one directory per agent, two agents writing at the same second produce two
 files that cannot conflict, because neither is in the other's directory.

@@ -6,7 +6,7 @@
 This is the only date and time formatter in the application. It lives in the
 contract package rather than in a domain because a second formatter is the exact
 failure this requirement exists to prevent (REQ-TIM-04) — and a second formatter
-is what you get when thirteen agents each need to render a timestamp and none of
+is what you get when fifteen agents each need to render a timestamp and none of
 them owns the answer.
 
 ## 1. Storage is UTC, always
@@ -46,7 +46,7 @@ export type FormatProfile = z.infer<typeof FormatProfileSchema>;
 /** The only way to render an instant for a human. */
 export function formatInstant(
   value: Date | string,
-  opts: { profile: FormatProfile; precision?: "second" | "minute" | "day" },
+  opts: { profile: FormatProfile; precision?: "milli" | "second" | "minute" | "day" },
 ): string;
 
 /** Relative label plus the absolute value it must always carry (REQ-TIM-06). */
@@ -76,7 +76,8 @@ REQ-TIM-02 gives `YYYY-MM-DD HH:mm:ss` as the default and
 
 | Context | Precision | Renders |
 |---------|-----------|---------|
-| Audit event, log line, console stream, API key last-used | `second` | `2026-09-21 19:26:03` |
+| Audit event, log line, API key last-used | `second` | `2026-09-21 19:26:03` |
+| Debug console stream, ACME protocol log | `milli` | `2026-09-21 19:26:03.418` — the console interleaves events inside one second, so second precision loses their order. Without this, A13 and A25 would format locally and break REQ-TIM-04. |
 | Created/updated column in a grid, detail header, email | `minute` | `2026-09-21 19:26` |
 | Date-only field (a birth date, a retention boundary) | `day` | `2026-09-21` |
 

@@ -1,6 +1,6 @@
 ---
 name: A12-notifications-comms
-description: Dispatch in Wave 3, at the same moment as the other twelve domain builders, to build TLS-only SMTP sending with per-tenant sender identity, themed localised templates, a durable outbox with retry and dead-letter, and per-category per-channel notification preferences.
+description: Dispatch in Wave 3, at the same moment as the other fourteen domain builders, to build TLS-only SMTP sending with per-tenant sender identity, themed localised templates, a durable outbox with retry and dead-letter, and per-category per-channel notification preferences.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---

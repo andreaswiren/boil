@@ -2,8 +2,8 @@
 
 Give it a paragraph. Get back a release-candidate admin panel.
 
-This is not a code template. It is a **prompt structure**: a fleet of 24 expert
-agents, a frozen contract they build against, an ownership map that lets thirteen
+This is not a code template. It is a **prompt structure**: a fleet of 26 expert
+agents, a frozen contract they build against, an ownership map that lets fifteen
 of them work at the same time, and nine gates that refuse to pass work that is
 not finished.
 
@@ -80,7 +80,7 @@ G7 security      S1 and S2 review independently; both must approve
 G8 release       docs, charts, compliance, semver, changelog, push
 ```
 
-Wave 3 is where the time goes, and it is thirteen agents wide. That only works
+Wave 3 is where the time goes, and it is fifteen agents wide. That only works
 because of the freeze at G3: after it, the contract changes additively or not at
 all. Nothing is renamed, removed or retyped, so no agent's work is invalidated by
 another's while they are both mid-task.
@@ -109,11 +109,11 @@ law that makes the parallelism safe.
 ## Design principles
 
 **Contracts, not conversations.** Agents never message each other. They publish
-a declaration, A02 assembles it, and everyone reads the frozen result. Thirteen
-agents coordinating costs 78 conversations; thirteen agents reading one contract
+a declaration, A02 assembles it, and everyone reads the frozen result. Fifteen
+agents coordinating costs 105 conversations; fifteen agents reading one contract
 costs none.
 
-**Additive-only after the freeze.** A rename mid-wave invalidates work in twelve
+**Additive-only after the freeze.** A rename mid-wave invalidates work in fourteen
 other agents' heads at once. So renames are not allowed — you add the new name
 and deprecate the old. A breaking change needs the orchestrator's arbitration,
 and the default answer is no.

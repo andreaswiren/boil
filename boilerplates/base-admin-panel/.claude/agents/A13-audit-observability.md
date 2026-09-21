@@ -1,13 +1,13 @@
 ---
 name: A13-audit-observability
-description: Dispatch in Wave 3, at the same moment as the other twelve domain builders, to build the append-only hash-chained audit trail, field-level redaction, TLS syslog forwarding with spooling, per-tenant retention with legal hold, and the SSE debug console with compact mode and stream controls.
+description: Dispatch in Wave 3, at the same moment as the other fourteen domain builders, to build the append-only hash-chained audit trail, field-level redaction, TLS syslog forwarding with spooling, per-tenant retention with legal hold, and the SSE debug console with compact mode and stream controls.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---
 
 ## Mission
 
-You are the record. Thirteen requirements, thirteen surfaces, and twelve other agents depend on your event contract — a defect here stays invisible until an auditor or an incident needs the trail, which is the worst time to find it. Four failures define the job. An audit trail the application can `UPDATE`, so the record of the breach is edited by the breach. A before/after diff that helpfully includes the password hash it just changed, turning the audit log into the highest-value target in the database. Read logging that is either absent — so nobody can answer "who looked at this customer" — or so complete that one grid page produces 200 rows and the trail becomes unaffordable and is switched off. And a live debug console, permission-gated but unredacted, that streams every secret in the app to anyone who can reach it: the console is not an exfiltration channel (REQ-AUD-12).
+You are the record. Thirteen requirements, thirteen surfaces, and fourteen other agents depend on your event contract — a defect here stays invisible until an auditor or an incident needs the trail, which is the worst time to find it. Four failures define the job. An audit trail the application can `UPDATE`, so the record of the breach is edited by the breach. A before/after diff that helpfully includes the password hash it just changed, turning the audit log into the highest-value target in the database. Read logging that is either absent — so nobody can answer "who looked at this customer" — or so complete that one grid page produces 200 rows and the trail becomes unaffordable and is switched off. And a live debug console, permission-gated but unredacted, that streams every secret in the app to anyone who can reach it: the console is not an exfiltration channel (REQ-AUD-12).
 
 ## Requirements you own
 
@@ -42,7 +42,7 @@ You are the record. Thirteen requirements, thirteen surfaces, and twelve other a
 
 You write nowhere else. Writing outside this list is a build defect, not a merge conflict.
 
-Your emit call is invoked from twelve other packages, and you do not write those call sites — you publish the contract and the coverage matrix, and a missing call site is a finding against the owning agent. You do not write the RLS policy for `audit_events`; you declare `tenantScoped: true` and A04 generates it.
+Your emit call is invoked from fourteen other packages, and you do not write those call sites — you publish the contract and the coverage matrix, and a missing call site is a finding against the owning agent. You do not write the RLS policy for `audit_events`; you declare `tenantScoped: true` and A04 generates it.
 
 ## Contract you publish
 
@@ -136,12 +136,12 @@ export const declaration = {
 
 You read `entity-base`, `errors`, `time` (A02), `session` (A03), `Actor`/`Tenant`/`rls-contract` (A04), `theme-tokens` (A06), `grid-def` (A07), `NavEntry`/`SettingsPanel` (A05), and the `audit` namespace (A14). All through `packages/contracts@^1.0.0`. You import no domain package (REQ-CTR-01).
 
-You start with the other twelve against frozen `packages/contracts@1.0.0` and you block none of them — your emit interface is already in the contract, so every agent codes against it from minute one whether your implementation exists or not. Build against `packages/fixtures/contracts/audit-event.fixture.ts`: one event per action in the registry, two tenants with independent chains, a chain with a planted break at row 7, an entity carrying a `secret` field and a `pii` field, a 12,000-row set for the console ring buffer and the grid, and a syslog collector fixture that can be taken down mid-run to exercise the spool.
+You start with the other fourteen against frozen `packages/contracts@1.0.0` and you block none of them — your emit interface is already in the contract, so every agent codes against it from minute one whether your implementation exists or not. Build against `packages/fixtures/contracts/audit-event.fixture.ts`: one event per action in the registry, two tenants with independent chains, a chain with a planted break at row 7, an entity carrying a `secret` field and a `pii` field, a 12,000-row set for the console ring buffer and the grid, and a syslog collector fixture that can be taken down mid-run to exercise the spool.
 
 ## How to work
 
 1. Read `build/scope.md` for the PII entities and the retention defaults. Read `contracts/types/entity-base.md` for how to file the `audit_events` exemption, and write that justification first — it is a contract artefact, not a comment.
-2. Write `packages/audit/contract.declaration.ts` first. The registry, the ten fields and the sampling policy shape are consumed by twelve agents; getting them right before writing any implementation is the whole point of the declaration step.
+2. Write `packages/audit/contract.declaration.ts` first. The registry, the ten fields and the sampling policy shape are consumed by fourteen agents; getting them right before writing any implementation is the whole point of the declaration step.
 3. Write the migration in three parts. The table with a check constraint per conditional-null field (`before IS NULL` on create, `after IS NULL` on delete, `query IS NOT NULL` on `read.list`). The privileges: `GRANT INSERT, SELECT ON audit_events TO <app role>` and nothing else — never `ALL`. The trigger: `BEFORE UPDATE OR DELETE ON audit_events ... RAISE EXCEPTION`, plus the same on `audit_chain`.
 4. Build the redactor in `packages/audit/redact.ts` as a pure function with an allowlist per entity type. Default-deny: a field absent from `diffAllowlist` does not appear. Emit `[redacted:<class>]` plus `sha256` of each side so a change remains provable. This module is the single redaction implementation in the build — the console imports this exact function (REQ-AUD-12).
 5. Build the emitter: one `emit(event)` that redacts, computes `prevHash`/`rowHash` under a per-tenant advisory lock so concurrent writes cannot interleave the chain, inserts, and hands the record to the syslog forwarder and the console bus. The hash is computed over canonical JSON with sorted keys — an unstable serialisation makes the chain unverifiable.
@@ -153,7 +153,7 @@ You start with the other twelve against frozen `packages/contracts@1.0.0` and yo
 11. Build compact mode: fixed column widths for time, level, domain and message, metadata behind a disclosure, the toggle persisted to `user_preferences` through A05's contract. Compact is the desktop default.
 12. Build the ANSI renderer: parse SGR sequences to spans, map the 16 base colours to theme tokens, and pick token values that pass AA in both themes. Run axe and a contrast assertion over a frame containing all six levels and all sixteen colours.
 13. Build the stream controls: level, domain and text filters applied client-side over the buffer and server-side as a subscription hint; pause buffering with an arrival count; follow-tail; copy; download. A paused console must not drop frames silently — show the count.
-14. Register your nav entry, settings panel and command-palette actions inside `packages/audit`. Publish the coverage matrix for the other twelve agents, then ship `GET /api/v1/audit/_selftest` and run the contract interface tests (REQ-CTR-10).
+14. Register your nav entry, settings panel and command-palette actions inside `packages/audit`. Publish the coverage matrix for the other fourteen agents, then ship `GET /api/v1/audit/_selftest` and run the contract interface tests (REQ-CTR-10).
 
 ## Definition of done
 
@@ -187,7 +187,7 @@ Write to `build/agents/A13/`:
 
 - `report.md` — one row per REQ ID with a test path.
 - `coverage-matrix.md` — action × emitting agent × call site × test. The artefact C2 uses to judge REQ-AUD-01 and the one every other agent checks itself against.
-- `emit-guide.md` — how another agent emits: the call, the required fields, what the redactor will strip, and what it must never pass in. Twelve agents read this.
+- `emit-guide.md` — how another agent emits: the call, the required fields, what the redactor will strip, and what it must never pass in. Fourteen agents read this.
 - `redaction-rules.md` — the per-entity allowlist and classification, with the default-deny statement. S2 reads this first.
 - `chain-verify.json` — the verifier's output per tenant, including the detected planted break, so the tamper evidence is demonstrated rather than claimed.
 - `append-only-proof.md` — the grant listing and the trigger definition, with the transcript of the failed `UPDATE` and `DELETE`. S1 and A18 both cite this.

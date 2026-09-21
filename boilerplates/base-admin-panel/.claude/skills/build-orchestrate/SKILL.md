@@ -35,14 +35,14 @@ touch build/{intake.md,scope.md,waivers.md,approvals.md}
 | 0 | A00 | single |
 | 1 | A08, A06, A21 | 3 concurrent, then **stop for the human** |
 | 2 | A20 → A01 → A02 | strictly sequential |
-| 3 | A03, A04, A05, A07, A09, A10, A11, A12, A13, A14, A15, A19, A23 | **13 concurrent** |
+| 3 | A03, A04, A05, A07, A09, A10, A11, A12, A13, A14, A15, A19, A23, A24, A25 | **15 concurrent** |
 | 4 | A16, A17, A18 | 3 concurrent (A22 runs after G7) |
 | gates | C1, C2 (G6); S1, S2 + A19 (G7) | pairs launched in one message |
 
 **Dispatch rule:** every agent in a wave goes out in ONE message with one Task
 call per agent. Two messages means two serial waves and you have thrown away the
 parallelism the contract design exists to buy. Wave 3 is one message with
-thirteen Task calls.
+fifteen Task calls.
 
 ```
 # correct — one message
@@ -82,7 +82,7 @@ Hard stops you do not negotiate:
   before a human names a layout. Verify with `git status` before launching Wave 3.
 - **G2** — no `pnpm add`, no Dockerfile `FROM`, no `Cargo.toml` dependency line
   until `versions/manifest.json` carries a source URL and timestamp per entry.
-- **G3** — thirteen agents do not start against a moving contract.
+- **G3** — fifteen agents do not start against a moving contract.
 
 G6 and G7 are independent. A G7 fix re-opens G6 only if it touched a surface C1
 or C2 voted on; you make that call and you write it into `build/gates/G7/`.

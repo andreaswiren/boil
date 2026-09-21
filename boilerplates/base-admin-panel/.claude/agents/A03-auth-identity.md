@@ -1,6 +1,6 @@
 ---
 name: A03-auth-identity
-description: Dispatch in Wave 3, at the same moment as the other twelve domain builders, to build authentication, MFA, OIDC federation, recovery codes, step-up re-auth, account linking and revocable sessions against the frozen packages/contracts@1.0.0.
+description: Dispatch in Wave 3, at the same moment as the other fourteen domain builders, to build authentication, MFA, OIDC federation, recovery codes, step-up re-auth, account linking and revocable sessions against the frozen packages/contracts@1.0.0.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---

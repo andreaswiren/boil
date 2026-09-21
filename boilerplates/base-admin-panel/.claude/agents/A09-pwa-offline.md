@@ -1,6 +1,6 @@
 ---
 name: A09-pwa-offline
-description: Dispatch in Wave 3, at the same moment as the other twelve domain builders, to build the installable PWA, the offline shell, the service worker with its no-authenticated-cache rule, VAPID web push with per-category subscriptions and the deterministic update path.
+description: Dispatch in Wave 3, at the same moment as the other fourteen domain builders, to build the installable PWA, the offline shell, the service worker with its no-authenticated-cache rule, VAPID web push with per-category subscriptions and the deterministic update path.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---
@@ -108,7 +108,7 @@ You never wait for A12's outbox or A03's session store to exist. Build against `
 ## How to work
 
 1. Read `build/intake.md` for the app name, the icon source and the locale set. Read `build/approvals.md` for the approved shell, because the offline shell must be recognisably the same app, not a bare error page.
-2. Write `packages/pwa/contract.declaration.ts` first, including the category registry schema — twelve agents declare categories against it.
+2. Write `packages/pwa/contract.declaration.ts` first, including the category registry schema — fourteen agents declare categories against it.
 3. Write `app/manifest.ts` from A06's tokens. Generate maskable icons with the 40% safe zone honoured; a maskable icon with content in the corner is a failing test, not a cosmetic issue. Self-host every asset (REQ-SUP-07).
 4. Write the service worker with an explicit, static cache allowlist: the app shell document for the offline route, the build's hashed static assets, icons and fonts. Write the fetch handler so the DEFAULT branch is network-only and the cache branch is reachable only for an allowlisted path. Then write the test that a request carrying a session cookie or an `/api/v1/` path is never written to a cache (REQ-PWA-03).
 5. Build the offline shell route: navigation renders, an explicit offline banner from the catalogue, and no attempt to show stale tenant data. "Offline" is a state you render, not a blank screen.

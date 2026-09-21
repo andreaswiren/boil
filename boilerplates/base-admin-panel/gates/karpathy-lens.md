@@ -95,7 +95,7 @@ resolver, a `v2` branch in a switch that nothing reaches, a generic
 `EntityService<T>` used by one entity, an event bus with one subscriber.
 Distinguish from required generality: the mapping engine is generic **because**
 REQ-DAT-03 forbids shipping TypeScript per source, and the nav/settings/help
-registries are generic **because** they are what keeps a 13-wide wave parallel
+registries are generic **because** they are what keeps a 15-wide wave parallel
 (`contracts/ownership.md`). Generality that a requirement names is not
 speculation; generality an agent enjoyed writing is.
 

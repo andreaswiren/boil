@@ -189,7 +189,7 @@ statement and the row stays. Every list and detail read appends
 | Soft delete | `<domain>.<resource>.delete` | — | `<domain>.<resource>.delete` |
 | Read including deleted | `global.deleted-record.read` | — | the read event, with `includeDeleted: true` |
 | Restore | `<domain>.<resource>.restore` | — | `<domain>.<resource>.restore` |
-| Hard delete | `global.record.purge` | 60 s | `<domain>.<resource>.purge`, `severity: critical` |
+| Hard delete | `global.record.purge` | 60 s | `<domain>.<resource>.purge` — a `critical` name (`spec/observability.md` §1) |
 
 `global.record.purge` is global-tier only and held by `superadmin` alone. No
 tenant role can hold it (`spec/rbac-tenancy.md` §3), because a tenant admin who

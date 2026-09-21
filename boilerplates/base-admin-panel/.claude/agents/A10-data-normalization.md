@@ -1,6 +1,6 @@
 ---
 name: A10-data-normalization
-description: Dispatch in Wave 3, at the same moment as the other twelve domain builders, to define the canonical product- and integration-agnostic data models and build the Python normalization service that maps vendor payloads into them from versioned declarative descriptors.
+description: Dispatch in Wave 3, at the same moment as the other fourteen domain builders, to define the canonical product- and integration-agnostic data models and build the Python normalization service that maps vendor payloads into them from versioned declarative descriptors.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---
@@ -127,7 +127,7 @@ export const declaration = {
 
 You read `entity-base`, `errors`, `time` (A02), `Actor` and `rls-contract` (A04), and the `canonical` i18n namespace (A14). All through `packages/contracts@^1.0.0`. You import no domain package (REQ-CTR-01).
 
-You start at the same moment as the other twelve Wave 3 agents against frozen `packages/contracts@1.0.0`, and you block none of them. Build against `packages/fixtures/contracts/source-payload.fixture.ts`, which yields, per in-scope model: a clean vendor payload, one with an unknown enum value, one missing a required field, one with an unparseable date, one with an extra vendor field, and one duplicate `sourceId` with conflicting content — the six cases REQ-DAT-06 has to survive. Descriptor-authoring UI calls go through A11's generated client with `CONTRACT_STUBS=1`.
+You start at the same moment as the other fourteen Wave 3 agents against frozen `packages/contracts@1.0.0`, and you block none of them. Build against `packages/fixtures/contracts/source-payload.fixture.ts`, which yields, per in-scope model: a clean vendor payload, one with an unknown enum value, one missing a required field, one with an unparseable date, one with an extra vendor field, and one duplicate `sourceId` with conflicting content — the six cases REQ-DAT-06 has to survive. Descriptor-authoring UI calls go through A11's generated client with `CONTRACT_STUBS=1`.
 
 ## How to work
 
