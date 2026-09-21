@@ -90,10 +90,10 @@ export const declaration = {
   agent: "A11",
   types: { Problem: ProblemSchema, RouteContract: RouteContractSchema, ApiKey: ApiKeySchema },
   permissions: [
-    "api.docs.read", "api.key.mint_own", "api.key.read_own", "api.key.revoke_own",
-    "api.key.read_any", "api.key.revoke_any",
+    "api.docs.read", "api.key.mint-own", "api.key.read-own", "api.key.revoke-own",
+    "api.key.read-any", "api.key.revoke-any",
   ],
-  globalPermissions: ["global.api.key.mint_service"],
+  globalPermissions: ["global.api-key.mint-service"],
   i18nNamespace: "api",
   operations: [
     { id: "api.listKeys", method: "GET", path: "/api/v1/api/keys" },

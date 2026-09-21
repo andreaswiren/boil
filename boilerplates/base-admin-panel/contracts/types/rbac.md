@@ -77,7 +77,7 @@ global-permission := "global" "." <resource> "." <action>
 `global` is a reserved domain, not a modifier. A cross-tenant override of a
 domain permission compounds the domain into the resource segment, so the string
 stays three segments: `global.auth-policy.mfa-disable`, not
-`global.auth.policy.mfa-disable`.
+`global.auth-policy.mfa-disable`.
 
 Three rules, no exceptions:
 
@@ -98,18 +98,22 @@ segments. The grammar in §1 is the frozen shape; these are the names that ship.
 This table exists so an agent reading its own prompt does not declare a string
 assembly will reject.
 
-| Draft string | Declared in | Frozen name |
-|--------------|-------------|-------------|
-| `global.impersonation.start` | A04 | `global.impersonation.impersonate` (`identity.md` §1) |
-| `global.record.hard_delete` | A04 | `global.record.purge` (`entity-base.md` §5) |
-| `global.role.write_any` | A04 | `global.role.write-any` |
-| `global.auth.policy.disable_mfa` | A03 | `global.auth-policy.mfa-disable` |
-| `global.auth.session.revoke_any` | A03 | `global.auth-session.revoke-any` |
-| `global.api.key.mint_service` | A11 | `global.api-key.mint-service` |
-| `api.key.mint_own`, `…read_own`, `…revoke_own`, `…read_any`, `…revoke_any` | A11 | `api.key.mint-own`, `api.key.read-own`, `api.key.revoke-own`, `api.key.read-any`, `api.key.revoke-any` |
-| `auth.session.revoke_tenant` | A03 | `auth.session.revoke-tenant` |
-| `auth.recovery_code.regenerate` | A03 | `auth.recovery-code.regenerate` |
-| `platform.deleted.read` | A02 | `global.deleted-record.read` (`entity-base.md` §5) |
+| Draft string | Declared in | Frozen name | Why it changed |
+|--------------|-------------|-------------|----------------|
+| `global.impersonation.start` | A04 | `global.impersonation.impersonate` (`identity.md` §1) | The action names what is done, not when it begins. `start` has no matching `stop` — exit is the same permission's lifecycle, audited separately (REQ-RBA-07). |
+| `platform.deleted.read` | A02 | `global.deleted-record.read` (`entity-base.md` §5) | There is no `platform` tier. The global tier's namespace is `global.*` (REQ-RBA-06), and the resource is a deleted record, not "deleted". |
+| `global.record.hard_delete` | A04 | `global.record.purge` (`entity-base.md` §5) | `hard_delete` describes the implementation; `purge` describes the capability. The distinction matters because soft delete is the default and this is the separate permission that bypasses it (REQ-ENT-02). |
+| `global.auth.policy.disable_mfa` | A03 | `global.auth-policy.mfa-disable` | Four segments. The grammar in §1 is exactly three, so the compound resource is hyphenated. |
+| `global.auth.session.revoke_any` | A03 | `global.auth-session.revoke-any` | Four segments, same reason. |
+| `global.api.key.mint_service` | A11 | `global.api-key.mint-service` | Four segments, same reason. |
+| `global.mail.sender_identity.write` | A12 | `global.mail-sender.write` | Four segments, same reason. |
+
+Underscores in an action or resource segment (`read_own`, `revoke_any`,
+`recovery_code`, `oidc_provider`, `write_own`) were normalised to hyphens across
+the fleet rather than recorded here, because the grammar in §1 admits only
+`[a-z][a-z0-9-]*` and a purely mechanical substitution is not a design decision
+worth a table row. The rows above are the ones where the *name* changed, not the
+punctuation.
 
 ## 5. `Role` and `PermissionSet`
 

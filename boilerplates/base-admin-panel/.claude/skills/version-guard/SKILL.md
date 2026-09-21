@@ -140,7 +140,7 @@ human**. An unacknowledged major does not enter the manifest; `acknowledgedBy:
 REQ-VER-05. Every trap you hit becomes an entry the next build inherits from
 `versions/traps.json`. Apply every inherited rule before finalising.
 
-- **`VER-TRAP-001` — `@types/node` tracks the Node **LTS** major.** Verified
+- **`VER-TRAP-001` — `@types/node` tracks the Node LTS major.** Verified
   today: `@types/node` `latest` is `26.6.2` while Node LTS is `24.21.0`. Taking
   `latest` gives type definitions for a runtime the app does not run on, and the
   errors surface in CI, not locally. Resolve it against the LTS major:

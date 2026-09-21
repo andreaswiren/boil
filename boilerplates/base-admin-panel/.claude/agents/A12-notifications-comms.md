@@ -96,9 +96,9 @@ export const declaration = {
            NotificationCategory: NotificationCategorySchema, NotificationPreference: NotificationPreferenceSchema },
   permissions: [
     "mail.template.read", "mail.diagnostics.run", "mail.outbox.read", "mail.outbox.requeue",
-    "notify.preference.read_own", "notify.preference.write_own", "notify.category.read",
+    "notify.preference.read-own", "notify.preference.write-own", "notify.category.read",
   ],
-  globalPermissions: ["global.mail.sender_identity.write"],
+  globalPermissions: ["global.mail-sender.write"],
   i18nNamespace: "mail",                                     // packages/notify declares "notify"
   operations: [
     { id: "mail.probe", method: "POST", path: "/api/v1/mail/diagnostics/probe", stepUp: true },

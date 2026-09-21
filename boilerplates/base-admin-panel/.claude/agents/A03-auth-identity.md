@@ -83,12 +83,12 @@ export const declaration = {
   agent: "A03",
   types: { Session: SessionSchema, AuthPolicy: AuthPolicySchema, MfaFactor: MfaFactorSchema },
   permissions: [
-    "auth.session.read", "auth.session.revoke", "auth.session.revoke_tenant",
-    "auth.mfa.enrol", "auth.mfa.reset", "auth.recovery_code.regenerate",
-    "auth.policy.read", "auth.policy.write", "auth.oidc_provider.write",
+    "auth.session.read", "auth.session.revoke", "auth.session.revoke-tenant",
+    "auth.mfa.enrol", "auth.mfa.reset", "auth.recovery-code.regenerate",
+    "auth.policy.read", "auth.policy.write", "auth.oidc-provider.write",
     "auth.identity.link", "auth.identity.unlink",
   ],
-  globalPermissions: ["global.auth.policy.disable_mfa", "global.auth.session.revoke_any"],
+  globalPermissions: ["global.auth-policy.mfa-disable", "global.auth-session.revoke-any"],
   i18nNamespace: "auth",
   operations: [
     { id: "auth.listSessions", method: "GET", path: "/api/v1/auth/sessions" },

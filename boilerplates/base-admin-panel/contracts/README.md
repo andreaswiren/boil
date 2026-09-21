@@ -30,17 +30,22 @@ missing contract member, not an exception.
 
 Nine kinds of member, each with exactly one publishing agent:
 
-| Member | Shape | Published by |
-|--------|-------|--------------|
-| `entity-base` | The `comment` / `created_*` / `updated_*` / `deleted_*` envelope (REQ-ENT-01) | A02 |
-| `errors` | RFC 9457 problem types + the stable error-code taxonomy (REQ-API-10) | A02 |
-| `pagination` | Page/cursor params, sort and filter grammar, shared with the grid (REQ-API-11) | A02 |
-| `time` | Timezone + format module — the only formatter in the app (REQ-TIM-04) | A02 |
-| Type contracts | `Session`, `Tenant`, `Actor`, `CanonicalModel`, … | the owning domain agent |
-| Permission strings | `<domain>.<resource>.<action>` (REQ-RBA-01) | A04 assembles, each domain declares its own |
-| Event contracts | `audit-event`, `notification-event`, `console-stream`, `ingest-envelope` | A13, A12, A13, A15 |
-| API contracts | The OpenAPI 3.1 document, generated from the Zod schemas (REQ-API-01) | A11 assembles, each domain declares its operations |
-| i18n namespaces | `auth.*`, `grid.*`, `nav.*`, … (REQ-I18N-05) | A14 registers, each domain declares its own |
+| Member | Artefact | Published by |
+|--------|----------|--------------|
+| `entity-base` | [`types/entity-base.md`](types/entity-base.md) — the `comment` / `created_*` / `updated_*` / `deleted_*` envelope and its enumerated exemptions (REQ-ENT-01) | A02 |
+| `errors` | [`types/errors.md`](types/errors.md) — RFC 9457 problem types and the stable error-code taxonomy (REQ-API-10) | A02 |
+| `pagination` | [`types/pagination.md`](types/pagination.md) — page/cursor params, sort and filter grammar, shared with the grid (REQ-API-11) | A02 |
+| `time` | [`types/time.md`](types/time.md) — the only formatter in the app: Europe/Stockholm, `YYYY-MM-DD HH:mm:ss`, UTC storage (REQ-TIM-04) | A02 |
+| `identity` | [`types/identity.md`](types/identity.md) — `Actor`, `Session`, `Tenant`, `ImpersonationContext` | A03, A04 |
+| `rbac` | [`types/rbac.md`](types/rbac.md) — the permission grammar and the full catalogue (REQ-RBA-01) | A04 assembles, each domain declares its own |
+| `canonical-models` | [`types/canonical-models.md`](types/canonical-models.md) — the product-agnostic model set and provenance (REQ-DAT-01) | A10 |
+| `i18n-namespaces` | [`types/i18n-namespaces.md`](types/i18n-namespaces.md) — namespace ownership and the collision rule (REQ-I18N-05) | A14 registers, each domain declares its own |
+| `audit-event` | [`events/audit-event.md`](events/audit-event.md) — the audit envelope, read/view kinds, redaction, hash chain (REQ-AUD-04) | A13 |
+| `console-stream` | [`events/console-stream.md`](events/console-stream.md) — the debug console SSE protocol and compact mode (REQ-AUD-08) | A13 |
+| `notification-event` | [`events/notification-event.md`](events/notification-event.md) — categories, channels, and the safe push payload (REQ-PWA-04) | A12 |
+| `ingest-envelope` | [`events/ingest-envelope.md`](events/ingest-envelope.md) — collector ingest and the idempotency key (REQ-OBS-05) | A15 |
+| API surface | [`openapi/conventions.md`](openapi/conventions.md), [`openapi/skeleton.yaml`](openapi/skeleton.yaml) — OpenAPI 3.1 generated from the runtime's Zod schemas (REQ-API-01) | A11 assembles, each domain declares its operations |
+| Schema & isolation | [`db/schema-ownership.md`](db/schema-ownership.md), [`db/rls-contract.md`](db/rls-contract.md) — table ownership, migration namespacing, forced RLS (REQ-RBA-04) | A02 map, A04 policies |
 
 ## 3. Declaration, then assembly
 

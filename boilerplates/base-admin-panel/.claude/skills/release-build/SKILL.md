@@ -52,18 +52,15 @@ in the footer, in the API's `info.version` and in the SBOM.
 
 ## 3. CHANGELOG.md (REQ-REL-03)
 
-Keep a Changelog form, every entry citing the REQ IDs it affects — a reader traces
-the change back to the requirement that motivated it.
+Keep a Changelog form, every entry citing the REQ IDs it affects, so a reader can
+trace the change back to the requirement that motivated it.
 
 ```markdown
 ## [1.4.0] — 2026-09-21
 
 ### Added
-- Read-audit emission on every entity detail view (REQ-AUD-03, REQ-AUD-12).
+- Read/view logging on every entity detail view (REQ-AUD-02, REQ-TST-08).
 - Grid preference round-trip persisted per user (REQ-GRD-08).
-
-### Changed
-- Session cookie rotation moved into the auth policy module (REQ-SEC-04).
 
 ### Fixed
 - Surface budget exceeded on the tablet console at 834px (REQ-UI-10, G6/C1-design-r2).
@@ -72,8 +69,8 @@ the change back to the requirement that motivated it.
 - `@types/node` pinned to the Node LTS major (REQ-VER-05, VER-TRAP-001).
 ```
 
-Only sections with content — an empty `### Added` is noise. Every gate finding
-remediated in this build cites the verdict file that raised it.
+Only sections with content — an empty `### Added` is noise. A remediated gate
+finding cites the verdict file that raised it, as in `### Fixed` above.
 
 ## 4. README.md (REQ-REL-04)
 
@@ -86,21 +83,21 @@ a stale README is a defect, not cosmetic.
 
 Four things, all current:
 
-1. **Supported versions** — the table, the declared support period and the
-   end-of-support date (REQ-CRA-08).
+1. **Supported versions** — the table, the support period, the end-of-support date
+   (REQ-CRA-08).
 2. **CVD policy** — how to report, the single point of contact, acknowledgement and
    triage SLAs, the disclosure window, where advisories are published (REQ-CRA-04,
    REQ-CRA-05).
-3. **CRA reporting posture** — both dates, plainly: Article 14 reporting
-   obligations have been **in force since 11 September 2026** (actively exploited
-   vulnerabilities and severe incidents — 24-hour early warning, 72-hour
-   notification, 14-day/1-month final report, to ENISA and the national CSIRT),
-   and **full CRA application, CE marking and Annex I conformity included, lands
-   11 December 2027**. Link `compliance/cra/reporting-runbook.md` (REQ-CRA-06).
-   The reporting duty is live today; the CE-marking duty is not.
+3. **CRA reporting posture** — both dates, plainly: Article 14 reporting obligations
+   have been **in force since 11 September 2026** (actively exploited vulnerabilities
+   and severe incidents — 24-hour early warning, 72-hour notification, 14-day/1-month
+   final report, to ENISA and the national CSIRT), and **full CRA application, CE
+   marking and Annex I conformity included, lands 11 December 2027**. Link
+   `compliance/cra/reporting-runbook.md` (REQ-CRA-06). The reporting duty is live
+   today; the CE-marking duty is not.
 4. **Security updates** — separable from feature updates, and signed (REQ-CRA-07).
 
-Never write a conformity claim here. `compliance/README.md` sets the posture —
+Never write a conformity claim here: `compliance/README.md` sets the posture —
 conformity is determined by a notified body or authority, never by this repo.
 
 ## 6. TODO.md as live status (REQ-REL-06)
@@ -111,10 +108,10 @@ Not a wish list. Four states, a REQ ID on every line, gate state where one appli
 # TODO — status at 1.4.0 (2026-09-21)
 
 ## Done
-- [x] Read-audit emission — REQ-AUD-03, REQ-AUD-12 — G5 ✓, G6 ✓, G7 ✓
+- [x] Read/view logging on detail views — REQ-AUD-02 — G5 ✓, G6 ✓, G7 ✓
 
 ## In progress
-- [ ] Offline write queue — REQ-PWA-05 — A09 — G4 self-test red on conflict replay
+- [ ] Service-worker update prompt — REQ-PWA-05 — A09 — G4 self-test red
 
 ## Planned
 - [ ] Collector mTLS rotation — REQ-OBS-02 — A15 — after the 1.5 contract minor
@@ -132,16 +129,16 @@ there is no release candidate (REQ-REL-07).
 The message records the gate outcomes and the bump reason — both, every time.
 
 ```
-release: 1.4.0 — read-audit emission and grid preference persistence
+release: 1.4.0 — read/view logging and grid preference persistence
 
-Bump: minor — new capability: read-audit emission on entity detail views
-      (REQ-AUD-03); no contract member changed, no consumer must change.
+Bump: minor — new capability: read/view logging on entity detail views
+      (REQ-AUD-02); no contract member changed, no consumer must change.
 Gates:
   G5 integration     pass  (A23, A21 — 42 screenshots, budgets met)
   G6 design/function pass  (C1 design r2, C1 function r1, C2 design r1, C2 function r2)
   G7 security        pass  (S1 r1, S2 r2, A19 clean: SBOM, 0 critical, telemetry asserted)
   G8 release candidate     human accepted 2026-09-21
-REQ: REQ-AUD-03, REQ-AUD-12, REQ-GRD-08, REQ-SEC-04, REQ-UI-10, REQ-VER-05
+REQ: REQ-AUD-02, REQ-AUT-07, REQ-GRD-08, REQ-TST-08, REQ-UI-10, REQ-VER-05
 Waivers: none (build/waivers.md empty; no MUST waived — REQ-REL-07)
 ```
 
@@ -173,13 +170,10 @@ All of these, or the answer is no. There is no partial RC.
 
 - [ ] Every `MUST` green. A `MUST` is never waived; only a `SHOULD` may be, with its
       entry in `build/waivers.md` citing the intake answer.
-- [ ] C1 and C2 each approved **both** dimensions — four verdicts in
-      `build/gates/G6/`, all `blocking: false` (REQ-GAT-01).
+- [ ] C1 and C2 each approved **both** dimensions — four verdicts in `build/gates/G6/`, all `blocking: false` (REQ-GAT-01).
 - [ ] S1 and S2 both approved independently, plus A19's report clean (REQ-GAT-02).
-- [ ] Docs current: a help topic per shipped feature, charts regenerated from the
-      real code, compliance set generated from repository state (REQ-CRA-10).
-- [ ] `VERSION`, `CHANGELOG.md`, `README.md`, `SECURITY.md` and `TODO.md` all
-      updated in **this** commit.
+- [ ] Docs current: a help topic per shipped feature, charts regenerated from the real code, compliance set from repository state (REQ-CRA-10).
+- [ ] `VERSION`, `CHANGELOG.md`, `README.md`, `SECURITY.md` and `TODO.md` all updated in **this** commit.
 
 ```bash
 ls build/gates/G6/*.json | wc -l     # expect 4

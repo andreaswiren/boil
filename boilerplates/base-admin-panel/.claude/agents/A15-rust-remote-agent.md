@@ -89,7 +89,7 @@ export const declaration = {
            IngestEnvelope: IngestEnvelopeSchema },
   permissions: ["collector.agent.read", "collector.agent.enrol", "collector.agent.revoke",
                 "collector.config.write", "collector.sample.read"],
-  globalPermissions: ["global.collector.read_any"],
+  globalPermissions: ["global.collector.read-any"],
   i18nNamespace: "collector",
   operations: [
     { id: "collector.enrol", method: "POST", path: "/api/v1/collector/enrol" },        // one-time token + CSR

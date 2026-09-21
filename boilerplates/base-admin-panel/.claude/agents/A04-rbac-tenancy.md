@@ -80,7 +80,7 @@ export const declaration = {
   ],
   globalPermissions: [
     "global.tenant.create", "global.tenant.suspend", "global.impersonation.start",
-    "global.role.write_any", "global.record.hard_delete", "global.rls.inspect",
+    "global.role.write-any", "global.record.purge", "global.rls.inspect",
   ],
   i18nNamespace: "rbac",
   operations: [

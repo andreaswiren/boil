@@ -107,7 +107,7 @@ export const declaration = {
   types: { AuditEvent: AuditEventSchema, ReadSamplingPolicy: ReadSamplingPolicySchema,
            RedactionRule: RedactionRuleSchema, ConsoleFrame: ConsoleFrameSchema },
   permissions: ["audit.event.read", "audit.export.run", "audit.chain.verify", "audit.retention.write"],
-  globalPermissions: ["global.console.stream", "global.audit.read_any", "global.audit.purge"],
+  globalPermissions: ["global.console.stream", "global.audit.read-any", "global.audit.purge"],
   i18nNamespace: "audit",
   operations: [
     { id: "audit.listEvents", method: "GET", path: "/api/v1/audit/events" },

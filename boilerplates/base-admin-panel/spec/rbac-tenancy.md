@@ -171,7 +171,7 @@ We do both, and we do not lean on either alone:
 
 ```sql
 BEGIN;
-SELECT set_config('app.tenant_id', $1::text, true);  -- true = is_local
+SELECT set_config('app.current_tenant', $1::text, true);  -- true = is_local
 -- ... the request's statements ...
 COMMIT;                                              -- setting reverts here
 ```
@@ -190,7 +190,7 @@ Every request runs in a transaction; the DAL has no non-transactional read path.
 ```sql
 -- db/policies/001-helpers.sql
 CREATE FUNCTION app.current_tenant() RETURNS uuid LANGUAGE sql STABLE AS $$
-  SELECT nullif(current_setting('app.tenant_id', true), '')::uuid $$;
+  SELECT nullif(current_setting('app.current_tenant', true), '')::uuid $$;
 CREATE FUNCTION app.global_read() RETURNS boolean LANGUAGE sql STABLE AS $$
   SELECT current_setting('app.global_read', true) = 'on'
      AND current_user = 'app_global' $$;
@@ -250,7 +250,7 @@ for each table where tenantScoped === true:
     UPDATE  ... WHERE id = <B's id> → 0 rows affected
     INSERT  ... (tenant_id = B)     → raises 42501 new row violates row-level security
     DELETE  ... WHERE id = <B's id> → 0 rows affected
-  with app.tenant_id unset:         → 0 rows on every table
+  with app.current_tenant unset:         → 0 rows on every table
   as app_global with global_read on: → both rows readable, writes to B still raise
 ```
 
@@ -291,7 +291,7 @@ survive in a live session.
 | Deny entries | None — grants only, deny-by-default | Evaluation order is where permission bugs live | No |
 | DB roles | `app_owner` / `app_runtime` / `app_global`, none with `BYPASSRLS` | REQ-RBA-04 | No |
 | RLS | `ENABLE` **and** `FORCE` on every tenant-scoped table | Each covers the other's failure mode | No |
-| Tenant propagation | `set_config('app.tenant_id', $1, true)` inside the transaction | Pooler-safe; a session `SET` leaks across tenants | No |
+| Tenant propagation | `set_config('app.current_tenant', $1, true)` inside the transaction | Pooler-safe; a session `SET` leaks across tenants | No |
 | Cross-tenant read | Two keys: `app.global_read` GUC + `app_global` role | One key is one injection away | No |
 | Cross-tenant write | Impossible — `WITH CHECK` has no global branch | Enter the tenant instead | No |
 | Tenant role ceiling | Intersection of feature-declared and non-withheld permissions | Tenants define titles, not power | No |
