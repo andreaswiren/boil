@@ -41,13 +41,12 @@ satisfied by fixed slots in the layout, not by a configurable toolbar.
 - Active filters render as removable chips between the two, so a filtered grid
   never looks empty for an unexplained reason.
 - The bulk-action bar occupies the bottom-left slot and appears only with a
-  selection. It replaces nothing; the row is reserved so the table does not
-  shift when a checkbox is ticked.
+  selection. The row is reserved, so ticking a checkbox shifts nothing.
 
 Slots are `GridToolbarLeft`, `GridToolbarRight`, `GridFooterLeft`,
 `GridFooterRight`. A grid may fill them; it may not move them. `pnpm test:visual`
 asserts the search input's bounding box is left of the chooser's at all three
-breakpoints, which is the only way a positional requirement stays true.
+breakpoints — the only way a positional requirement stays true.
 
 ## 2. `GridDefinition` — the whole declaration
 
@@ -129,18 +128,18 @@ type and no per-grid variation, so a user learns the filter once.
 | `boolean` | tri-state segmented control: any / yes / no | `eq` | `f.enabled=eq:true` |
 | `relation` | async combobox, paged lookup, searches by label | `in` | `f.siteId=in:<uuid>,<uuid>` |
 
-Rules that hold for every type: an empty control is not a filter and emits no
-parameter; dates are sent as instants resolved in the user's timezone and stored
-UTC (`spec/time.md` §3); enum labels come from the i18n namespace, never from
-the raw database value; a filter on a permission-gated column is refused
-server-side with 403 rather than returning zero rows, because zero rows reads as
-"no such data" and that is a lie. Filters live in the header filter row on
-desktop and in a filter sheet on mobile — same state object, same URL.
+Rules for every type: an empty control is not a filter and emits no parameter;
+dates are instants resolved in the user's timezone and stored UTC
+(`spec/time.md` §3); enum labels come from the i18n namespace, never the raw
+database value; a filter on a permission-gated column is refused with 403 rather
+than returning zero rows, because zero rows reads as "no such data" and that is
+a lie. Filters sit in the header filter row on desktop and a filter sheet on
+mobile — same state object, same URL.
 
-Fuzzy search (REQ-GRD-02) is separate from column filters: it is a ranked match
-across the columns declared `fuzzy: true`, `q=` in the URL, and it composes with
-filters by intersection. In server mode it maps to one `ILIKE`-based ranked
-predicate; the grid does not send a regex.
+Fuzzy search (REQ-GRD-02) is separate: a ranked match across the columns
+declared `fuzzy: true`, `q=` in the URL, composed with filters by intersection.
+In server mode it is one `ILIKE`-based ranked predicate; the grid never sends a
+regex.
 
 ## 5. Reordering and resizing, with keyboard equivalents (REQ-GRD-06, REQ-GRD-07)
 
@@ -158,10 +157,10 @@ Keyboard, on a focused header cell — REQ-UI-11 means these are not optional:
 | `Enter` / `Space` | Open the column menu: sort, filter, hide, pin |
 
 Every change is announced on an `aria-live="polite"` region — "Status moved to
-position 3 of 7", "Status width 240 pixels" — because a silent reorder is
-invisible to a screen reader and the pointer interaction is unusable for the
-keyboard user REQ-UI-11 exists for. Widths clamp to `min`/`max`; a pinned column
-cannot be dragged out of its pin group; a `locked` column cannot be hidden.
+position 3 of 7", "Status width 240 pixels". A silent reorder is invisible to a
+screen reader, and the pointer interaction is unusable for exactly the user
+REQ-UI-11 exists for. Widths clamp to `min`/`max`; a pinned column cannot leave
+its pin group; a `locked` column cannot be hidden.
 
 ## 6. Preferences: what persists, where, and which source wins
 
@@ -182,12 +181,11 @@ user_grid_prefs (A07)                       -- tenant-scoped, RLS forced
   -- entity-base minus `comment` (exempt, contracts/types/entity-base.md §6)
 ```
 
-Writes are debounced 500 ms and applied optimistically to the local store, so
-dragging a column is not a request per pixel. `prefs` carries a schema version;
-an unreadable or older payload is discarded back to the definition default
-rather than migrated in place, and the discard is logged at `warn`. A column id
-no longer in the definition is dropped on read — a removed column must not brick
-a user's grid.
+Writes are debounced 500 ms and applied optimistically, so dragging a column is
+not a request per pixel. `prefs` carries a schema version; an unreadable or
+older payload is discarded back to the definition default rather than migrated
+in place, and the discard logs at `warn`. A column id no longer in the
+definition is dropped on read — a removed column must not brick a user's grid.
 
 **Precedence, highest first (REQ-GRD-08, REQ-GRD-15):**
 
@@ -199,10 +197,9 @@ a user's grid.
 
 A visit carrying URL state **does not overwrite the profile**. The toolbar shows
 `Viewing a shared view · Save as my default · Reset`, and only `Save` writes.
-REQ-GRD-15 says the URL wins *for that visit*; a link that quietly rewrites the
+REQ-GRD-15 says the URL wins *for that visit*; a link that rewrites the
 recipient's saved layout is a side effect nobody asked for. The URL is written
-with `history.replaceState` so interaction does not fill the back stack, and
-`cols` is a compact ordered id list rather than a serialised object.
+with `history.replaceState`, and `cols` is a compact ordered id list.
 
 ## 7. Size classes and page sizes (REQ-GRD-10)
 
@@ -221,10 +218,9 @@ export const PAGE_SIZE_DEFAULTS = {
 } as const satisfies Record<GridSizeClass, readonly PageSize[]>;
 ```
 
-These constants are read only as the default for a declared class. Nothing in
-the grid imports a single global page-size list — that is the shape REQ-GRD-10
-forbids, because one list means every grid in the app is tuned for whichever
-table someone had in mind last.
+These are read only as the default for a declared class. Nothing imports a
+single global page-size list — the shape REQ-GRD-10 forbids, because one list
+means every grid is tuned for whichever table someone had in mind last.
 
 ## 8. The `all` guard (REQ-GRD-11)
 
@@ -247,10 +243,9 @@ grid.all.refused =
 
 Its shape is fixed: **the actual number**, **the ceiling**, **what to do
 instead**. "Too many rows" tells the user nothing they did not know, and a
-truncated `all` is a wrong answer presented as a complete one. The export offer
-is rendered only if the caller holds the export permission; without it the
-sentence ends after "Narrow the filters." The selected size falls back to the
-previous value, so the grid stays usable.
+truncated `all` is a wrong answer presented as a complete one. The export clause
+appears only if the caller holds the export permission. The selected size falls
+back to the previous value, so the grid stays usable.
 
 ## 9. Selection, bulk actions, export (REQ-GRD-13)
 
@@ -274,17 +269,16 @@ export type BulkAction<TRow> = {
 
 The client hides an action the caller lacks; the server checks it again per row,
 because a selection is a list of ids and a list of ids is client input. A
-partial failure returns per-row results and the grid marks the failed rows in
-place — a bulk action that reports "3 of 40 failed" without saying which three
-is unusable.
+partial failure returns per-row results and marks the failed rows in place — a
+bulk action reporting "3 of 40 failed" without saying which three is unusable.
 
-Export is audited (`spec/observability.md` §2), needs the declared export
-permission plus step-up within 900 s (`spec/auth.md` §6), and emits
-`<domain>.<resource>.export` carrying row count, the column set, a hash of the
-filter state and the format. It runs server-side from the same query the grid
-just ran — never from the rows the client happens to hold — so a permission-
-gated column cannot be exported by a client that had it in memory. CSV is
-UTF-8 with a BOM and `\r\n` for Excel; NDJSON is the machine format.
+Export needs the declared permission plus step-up within 900 s
+(`spec/auth.md` §6) and emits `<domain>.<resource>.export` with row count,
+column set, a hash of the filter state and the format
+(`spec/observability.md` §2). It runs server-side from the same query the grid
+just ran — never from the rows the client holds — so a gated column cannot be
+exported by a client that had it in memory. CSV is UTF-8 with a BOM and `\r\n`
+for Excel; NDJSON is the machine format.
 
 ## 10. Mobile: the same definition, rendered as cards (REQ-GRD-14)
 
@@ -301,13 +295,13 @@ export type MobileCardSpec<TRow> = {
 };
 ```
 
-Filter and sort state is **shared, not parallel** — the same store, the same URL
-parameters, the same `user_grid_prefs` row. A filter set on the phone is present
-on the desktop after login. The controls differ: search stays at the top,
-filters open in a bottom sheet, sort opens in a bottom sheet listing the same
-precedence chips, and pagination becomes a footer with page controls at 44 px
-minimum touch size (REQ-UI-07). Column order and visibility carry over as the
-`meta` field order; widths are meaningless on a card and are ignored, not lost.
+Filter and sort state is **shared, not parallel** — one store, one set of URL
+parameters, one `user_grid_prefs` row. A filter set on the phone is there on the
+desktop after login. Controls differ: search stays at the top, filters and sort
+open in bottom sheets carrying the same precedence chips, pagination becomes a
+footer at 44 px minimum touch size (REQ-UI-07). Column order and visibility
+carry over as the `meta` order; widths are meaningless on a card and are
+ignored, not lost.
 
 ## 11. One client contract in both modes (REQ-GRD-12)
 
@@ -333,22 +327,19 @@ export type GridSource<TRow> = (query: GridQuery) => Promise<GridPage<TRow>>;
 - `mode: "auto"` — server if `total > serverThreshold`, client otherwise,
   decided once from the first response's `total`.
 
-No component, no column spec, no URL and no preference payload differs between
-the modes. Switching a grid from client to server is a one-line change in its
-definition. This is the requirement's point: the identical contract is what lets
-A07 build against fixtures while A11's endpoints do not yet exist, and the
-interface test lives in `packages/contracts/tests/` and is run by both
+No component, column spec, URL or preference payload differs between the modes;
+switching a grid is a one-line change in its definition. That identical contract
+is what lets A07 build against fixtures while A11's endpoints do not exist yet.
+The interface test lives in `packages/contracts/tests/` and both agents run it
 (REQ-CTR-10).
 
 ## Decisions and defaults
 
 | Decision | Choice | Why | Intake-overridable? |
 |---|---|---|---|
-| Headless base | TanStack Table | REQ-GRD-01 | No |
 | Search / chooser / pagination position | Top-left / top-right / bottom, fixed slots | REQ-GRD-02, 03, 09 are positional | No |
 | Toolbar configurability | Slots may be filled, not moved | A movable requirement is not a requirement | No |
 | `maxSortColumns` | 4 | Beyond that server plans degrade silently | Yes |
-| Filter debounce / date presets | 300 ms / today, 7d, 30d, this month | Responsive without a request per keystroke | Yes |
 | Persisted keys | visibility, order, width, pin, sort, filters, density, size | REQ-GRD-08 | No |
 | Not persisted | fuzzy query, selection, page number | A reapplied old search reads as data loss | No |
 | Preference precedence | URL > profile > definition default | REQ-GRD-08, REQ-GRD-15 | No |
@@ -356,10 +347,8 @@ interface test lives in `packages/contracts/tests/` and is run by both
 | Page sizes | Per size class, `small` and `large` | REQ-GRD-10 forbids a global constant | Yes, per grid |
 | `serverThreshold` / `allRowCeiling` | 5 000 / 50 000 rows | Largest expected table is 100k (INTAKE.md) | Yes |
 | `all` above the ceiling | Refused with counts and an alternative | REQ-GRD-11 — no truncation, no hang | No |
-| Bulk `maxSelection` | 500 | Bounds one request and one audit event | Yes |
 | Export source | Server-side, re-running the query | Client rows may hold gated columns | No |
 | Mobile rendering | Mandatory card spec per grid | REQ-GRD-14, REQ-UI-07 | No |
-| Mobile state | The same store, URL and prefs row | Parallel state is state that disagrees | No |
 
 ## How this is verified
 
@@ -373,20 +362,19 @@ interface test lives in `packages/contracts/tests/` and is run by both
   column id does not break the grid.
 - `pnpm test:e2e` — `tests/e2e/grid/**` (Playwright over CDP, REQ-TST-02):
   keyboard reorder and resize with the `aria-live` announcement asserted;
-  `Shift`-click multi-sort and chip reordering; `all` at each of the three row
-  bands including the exact refusal text; bulk action denied without permission;
-  export triggers step-up and emits the audit event.
-- `pnpm test:visual` — `tests/visual/grid.spec.ts`: search left of chooser and
-  pagination at the bottom at 390/834/1440, light and dark; the card renderer at
-  390; axe AA on the toolbar, header row and filter sheet (REQ-TST-06); the
-  surface budget for a grid page (`spec/screenspace.md` §4).
+  `Shift`-click multi-sort and chip reordering; `all` in each of the three row
+  bands including the exact refusal text; a bulk action denied without
+  permission; export triggering step-up.
+- `pnpm test:visual` — `tests/visual/grid.spec.ts`: search left of chooser,
+  pagination at the bottom, at 390/834/1440 in both themes; the card renderer at
+  390; axe AA on toolbar, header row and filter sheet (REQ-TST-06); the grid
+  page's surface budget (`spec/screenspace.md` §4).
 - `pnpm test:audit` — export emits `<domain>.<resource>.export` with row count,
   column set and filter hash; a bulk action emits one event per affected row.
 - `pnpm test:contract` — `packages/contracts/tests/query-params.spec.ts`: the
   grid's `GridQuery` serialisation is accepted by A11's route schemas and the
-  reverse, run by both agents (REQ-CTR-10); every `GridDefinition` has a
-  `mobile` spec, a unique `gridKey`, and columns whose `id` matches a sortable
-  API field.
+  reverse, run by both agents (REQ-CTR-10); every definition has a `mobile`
+  spec, a unique `gridKey` and column ids that match sortable API fields.
 
 ## Open to intake
 

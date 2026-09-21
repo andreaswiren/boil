@@ -31,15 +31,20 @@ Use the `boil-new-boilerplate` skill. It scaffolds the required structure from
 
 ## Editing a boilerplate's requirements
 
-`spec/requirements.md` is the source of truth for that boilerplate, and dozens
-of other files cite its IDs. After editing it, verify no citation dangles:
+`spec/requirements.md` is the source of truth for that boilerplate, and dozens of
+other files cite its IDs. IDs are permanent: never renumber, and give a changed
+requirement a new ID with the old one marked superseded.
+
+After any edit, run the conformance check — it catches a dangling citation, a
+requirement without a status, an ownership map naming an agent that does not
+exist, and a broken internal reference:
 
 ```bash
-cd boilerplates/<name>
-defined=$(grep -oE '^\| REQ-[A-Z0-9]+-[0-9]+' spec/requirements.md | sed 's/^| //' | sort -u)
-used=$(grep -rhoE 'REQ-[A-Z0-9]+-[0-9]+' . --include='*.md' --include='*.csv' | sort -u)
-comm -13 <(echo "$defined") <(echo "$used")   # must print nothing
+./scripts/check-conventions.sh
 ```
+
+Fix the register, never the citation. The citation is the thing that made you
+notice.
 
 ## Style
 

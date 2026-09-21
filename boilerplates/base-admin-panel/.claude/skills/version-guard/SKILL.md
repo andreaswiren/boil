@@ -107,7 +107,7 @@ REQ-VER-03. Four fields per entry are mandatory: `version`, `ecosystem`,
   },
   "majorJumps": [
     { "name": "typescript", "from": 6, "to": 7,
-      "migrationNote": "versions/notes/typescript-7.md", "acknowledgedBy": "human" }
+      "migrationNote": "versions/notes/<package>-<major>.md", "acknowledgedBy": "human" }
   ],
   "traps": [
     { "id": "VER-TRAP-001", "applies": "@types/node",

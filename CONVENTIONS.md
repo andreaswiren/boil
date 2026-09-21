@@ -17,14 +17,20 @@ A boilerplate folder must work when it is the only thing you have.
   agent, and enough structure that an agent pointed at the folder with no other
   context knows what to do first.
 
-Check it:
+Check it, along with every other rule in this file:
 
 ```bash
-# Any relative path escaping the boilerplate is a violation.
-grep -rn '\.\./\.\.' boilerplates/<name>/ --include='*.md' --include='*.json'
-# Any symlink pointing outside is a violation.
-find boilerplates/<name>/ -type l -exec readlink {} \; | grep -F '../'
+./scripts/check-conventions.sh
 ```
+
+That script is the enforcement. It verifies self-containment, the required
+structure, that every cited requirement ID is defined, that every requirement
+carries a status, that every agent named in an ownership map exists, that
+internal document references resolve, and that every version-manifest entry
+carries its source and check timestamp. Run it before every commit.
+
+Paths under `build/` are per-build working state and are expected to be absent —
+which is why a reference to one must always carry its `build/` prefix.
 
 ## 2. Required structure
 

@@ -1,0 +1,53 @@
+{
+  "description": "Compatibility traps, inherited build to build so they are recorded rather than rediscovered (REQ-VER-05). A20 applies every rule here after reading the registries and before finalising versions/manifest.json. A trap is never deleted on a hunch - it is superseded with a reason.",
+  "appliesTo": "versions/manifest.json",
+  "traps": [
+    {
+      "id": "VER-TRAP-001",
+      "package": "@types/node",
+      "kind": "track-other-major",
+      "rule": "Pin the major to the current Node LTS major, not to the registry's latest.",
+      "why": "npm 'latest' for @types/node tracks the newest Node major, which may be a release line we do not run (REQ-VER-06 puts us on the LTS). Bumping it to match npm latest is a regression, not an upgrade.",
+      "observed": {
+        "npmLatestMajor": 26,
+        "nodeLtsMajor": 24,
+        "at": "2026-09-21T21:17:04Z"
+      },
+      "status": "active"
+    },
+    {
+      "id": "VER-TRAP-002",
+      "package": "typescript",
+      "kind": "major-is-a-rewrite",
+      "rule": "Do not adopt the 7.x line until the pinned next, @biomejs/biome and drizzle-kit versions are externally confirmed to support it. Record the outcome either way.",
+      "why": "TypeScript 7 is the native rewrite, not an incremental major. Tooling support lags a rewrite, and REQ-VER-04 makes a major jump a reviewed decision with a migration note.",
+      "action": "Write versions/notes/typescript-7.md and get human acknowledgement, or pin the newest 5.x line with the reason recorded.",
+      "status": "active"
+    },
+    {
+      "id": "VER-TRAP-003",
+      "package": "syslog-pro",
+      "kind": "capability-unverified",
+      "rule": "Verify RFC 5424 structured-data emission and RFC 5425 TLS transport against the actual package before adopting it.",
+      "why": "Low release activity, and REQ-AUD-07 plus REQ-SEC-05 require both. A package that cannot do TLS transport fails the security gate, and discovering that after A13 has built against it costs a round.",
+      "action": "If it cannot do TLS transport, frame RFC 5424 directly over a tls.TLSSocket and record the decision.",
+      "status": "active"
+    },
+    {
+      "id": "VER-TRAP-004",
+      "package": "shadcn",
+      "kind": "not-a-dependency",
+      "rule": "Invoke via npx/pnpm dlx. Never add it to dependencies, and never hand-decode a preset code - use `npx shadcn@latest preset decode <code>`.",
+      "why": "It is a scaffolding CLI. A hand-decoded preset silently produces a different theme than the one the requirement names (REQ-UI-04).",
+      "status": "active"
+    },
+    {
+      "id": "VER-TRAP-005",
+      "package": "@tanstack/react-table",
+      "kind": "major-api-change",
+      "rule": "Major 9. Do not carry v8 patterns across; check the current API before writing row-model code.",
+      "why": "Most published examples and training-era knowledge are v8. REQ-GRD-01 puts the whole grid on this package, so a v8 assumption propagates into twelve surfaces.",
+      "status": "active"
+    }
+  ]
+}

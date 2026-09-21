@@ -122,5 +122,6 @@ rules a boilerplate must satisfy are in [`CONVENTIONS.md`](CONVENTIONS.md).
 - [`TODO.md`](TODO.md) — live status and what is planned
 - [`CONVENTIONS.md`](CONVENTIONS.md) — the rules every boilerplate follows
 - [`CLAUDE.md`](CLAUDE.md) — operating instructions for agents working in this repo
+- [`scripts/check-conventions.sh`](scripts/check-conventions.sh) — enforces `CONVENTIONS.md`; run it before every commit
 
 Licensed under [MIT](LICENSE).

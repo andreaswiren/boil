@@ -59,7 +59,7 @@ You publish `manifest.json`. It is pre-contract state: it exists before `package
     }
   },
   "majorJumps": [
-    { "name": "next", "from": 15, "to": 16, "migrationNote": "versions/notes/next-16.md", "acknowledgedBy": "human" }
+    { "name": "next", "from": 15, "to": 16, "migrationNote": "versions/notes/<package>-<major>.md", "acknowledgedBy": "human" }
   ],
   "traps": [
     { "id": "VER-TRAP-001", "applies": "@types/node",
