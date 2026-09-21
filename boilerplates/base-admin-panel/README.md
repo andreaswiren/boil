@@ -56,12 +56,31 @@ as service identities. Canonical data models fed by *declarative* mapping
 descriptors executed by a Python normalizer, so adding an integration ships no
 TypeScript.
 
+**First run** — a setup wizard you cannot skip. The shipped account is
+`admin@example.invalid` with a password generated at first boot, constrained to
+completing setup and destroyed the moment a real admin exists. It makes you
+enrol MFA, proves SMTP works with a live send before enabling email recovery,
+and tells you which environment variables are missing or still holding a
+development default — read from actual runtime config, not a static checklist.
+
+**Deployment** — `docker compose up` on a clean host with a domain pointed at it
+gives you working HTTPS. Nothing else installed: HAProxy is the edge, and the
+built-in ACME client provisions and renews the certificate on its own. All four
+validation paths are supported — HTTP-01, DNS-01, TLS-ALPN-01 and
+DNS-PERSIST-01 — with guided DNS setup and renewal driven by the CA's own ARI
+window rather than a guess at two-thirds of lifetime, because that guess is
+wrong for a six-day certificate. A platform can sit on top; none is required.
+
+**Settings** — three scopes that stay distinguishable: personal, tenant, global.
+Each panel states its scope before you save, shows the effective value and where
+it came from, and says so when a higher scope has locked it.
+
 **Everything else that gets forgotten** — PWA with push, SMTP with a durable
 outbox, `en`/`sv` with ICU, Europe/Stockholm with correct DST and
 `YYYY-MM-DD HH:mm:ss`, an always-current help section with architecture charts,
 and EU CRA and CER compliance documentation generated from the repository state.
 
-All of it under [`spec/requirements.md`](spec/requirements.md) — 215 requirements
+All of it under [`spec/requirements.md`](spec/requirements.md) — 272 requirements
 with stable IDs, each owned by an agent and checked by a gate.
 
 ---

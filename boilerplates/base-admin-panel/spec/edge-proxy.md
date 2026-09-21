@@ -21,14 +21,20 @@ the endpoint returns 200, the stream just never delivers.
 
 We front the app with our own HAProxy so that behaviour is **ours to configure
 and ours to test**, rather than a property of whatever proxy the operator
-happens to deploy behind. This holds even when the stack runs behind Dokploy's
-Traefik: our HAProxy stays in the path (REQ-PROX-01).
+happens to deploy behind. This holds even when the stack runs behind
+someone else's proxy: our HAProxy stays in the path (REQ-PROX-01).
 
 The secondary benefit is certificates. HAProxy is deliberately simple to drive
 from outside, which is what makes REQ-ACME-13's "atomic install, hot reload, no
 dropped connections" actually achievable rather than aspirational.
 
 ## 2. The three topologies (REQ-PROX-03)
+
+The target is **Docker Compose**, and the stack is self-sufficient (REQ-FND-11):
+`docker compose up` on a clean host with a domain pointed at it yields working
+HTTPS with nothing else installed. That is `self` mode, and it is the path
+everything else is measured against. A deployment platform may sit on top —
+several are documented — but none is required, and none is assumed here.
 
 Declared explicitly at setup by A24 and stored as configuration. Never inferred
 silently — a wrong guess here produces two ACME clients fighting over one
@@ -37,11 +43,11 @@ hostname.
 | Mode | Shape | Who owns the public certificate | Default |
 |------|-------|--------------------------------|---------|
 | `self` | `client → HAProxy → app` | Us, end to end via A25 | **Yes** |
-| `behind-proxy` | `client → upstream proxy → HAProxy → app` | The upstream. Ours is disabled for the public hostname only | The Dokploy case |
+| `behind-proxy` | `client → upstream proxy → HAProxy → app` | The upstream. Ours is disabled for the public hostname only | When a platform already fronts you |
 | `delegated` | `client → external proxy → app` | The external proxy. Internal ACME fully off | Supported, not recommended |
 
-In `behind-proxy` the upstream is Dokploy's Traefik, a corporate load balancer,
-or a CDN. Our HAProxy is still ours and still terminates TLS on its hop to the
+In `behind-proxy` the upstream is whatever already terminates public TLS — a
+PaaS, a corporate load balancer, a CDN, or a hand-rolled proxy. Our HAProxy is still ours and still terminates TLS on its hop to the
 app — **REQ-SEC-01 has no exemption for traffic that stays inside the compose
 network** (REQ-PROX-08).
 
