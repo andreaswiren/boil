@@ -1,0 +1,13 @@
+node_modules/
+.next/
+dist/
+build/out/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+__pycache__/
+target/
+# Per-build working output produced inside a boilerplate at generate time.
+boilerplates/*/build/
