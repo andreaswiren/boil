@@ -57,9 +57,9 @@ curl -s -X POST -d '{"package":{"name":"<pkg>","ecosystem":"npm"},"version":"<ve
 (403 on CONNECT). Never record "no advisories" from a blocked call — record the
 block, rely on `pnpm audit` plus the SBOM, and name the missing source.
 
-**A critical advisory, or one on a known-exploited vulnerability, blocks the
-build** — not a warning, not a ticket. Upgrade, remove the dependency, or get a
-human-signed waiver in `build/waivers.md`; a `MUST` is never waived (REQ-REL-07).
+**A critical advisory, or one on a known-exploited vulnerability, blocks the build**
+— not a warning, not a ticket. Upgrade, remove the dependency, or get a human-signed
+waiver in `build/waivers.md`; a `MUST` is never waived (REQ-REL-07).
 
 ## Pass 2 — First-party suspicious-code scan (REQ-SUP-03)
 
@@ -119,7 +119,7 @@ the packages the lockfile diff added or changed, and sweep fully on a clean chec
 
 ## Pass 3 — Telemetry kill (REQ-SUP-06)
 
-Disabled **and asserted by test**. A variable that happens to default off today
+Disabled **and asserted by test** — a variable that happens to default off today
 is not compliance.
 
 ```bash
