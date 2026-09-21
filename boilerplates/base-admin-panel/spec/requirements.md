@@ -390,6 +390,42 @@ fine in every short-request test.
 | REQ-SUP-07 | MUST | No third-party script, font or asset is loaded from a remote origin at runtime. Fonts and assets are self-hosted. |
 | REQ-SUP-08 | MUST | Egress from the built container is documented and minimal; an unexpected outbound destination fails the security gate. |
 
+## COST — Token accounting & cost reporting
+
+The build spends real money. A structure that cannot say what a wave cost cannot
+tell you whether the parallelism paid for itself, and cannot tell you what a
+gate loop cost you in rework.
+
+| ID | Status | Requirement |
+|----|--------|-------------|
+| REQ-COST-01 | MUST | Every agent's hand-off reports its own token usage: input, output, cache-read and cache-write tokens, plus the model and effort it ran at. An agent that finishes without reporting usage has not finished. |
+| REQ-COST-02 | MUST | The orchestrator maintains a running cost table at `build/costs.md`, updated every time an agent hands off or a gate returns a verdict. |
+| REQ-COST-03 | MUST | The table is **presented to the user at each gate**, not saved for the end. A cost you learn at G8 is a cost you could not have acted on. |
+| REQ-COST-04 | MUST | Two kinds of number, never conflated: **measured** token counts and **derived** money. A derived figure is always labelled as derived and always shows the unit price it used. |
+| REQ-COST-05 | MUST | Prices come from `versions/pricing.json`, validated against the provider's published pricing with the source URL and check timestamp recorded — never from a model's memory. This is REQ-VER-02's discipline applied to money, and for the same reason: a remembered price is wrong. |
+| REQ-COST-06 | MUST | Breakdown by agent, by wave, by gate and by round. A gate that loops three times cost three times, and the table shows each round separately. |
+| REQ-COST-07 | MUST | Rework is attributed to its cause. Tokens spent fixing a gate finding are attributed to that finding, so the cost of a defect is visible rather than absorbed into the domain that had to fix it. |
+| REQ-COST-08 | MUST | Cache reads are reported separately from fresh input tokens, because they are priced differently and the ratio between them is the main cost lever the structure controls. |
+| REQ-COST-09 | MUST | A cost ceiling may be declared at intake. Crossing it pauses the build and asks, rather than continuing silently or aborting. |
+| REQ-COST-10 | MUST | The release record carries the build's total (REQ-REL-08), so cost is part of a build's history and two builds can be compared. |
+| REQ-COST-11 | MUST | An estimate is published before each wave and the actual after it, with the variance shown. An estimator that is consistently wrong is a finding about the estimate, not about the wave. |
+| REQ-COST-12 | MUST | Where the runtime does not expose token usage, the cell reads `unreported` and the total is marked incomplete. A fabricated number is worse than a visible gap, because it will be trusted. |
+
+## PORT — Runtime portability
+
+| ID | Status | Requirement |
+|----|--------|-------------|
+| REQ-PORT-01 | MUST | The prompt structure runs on more than one agent runtime. Claude Code is the reference implementation, not a dependency. |
+| REQ-PORT-02 | MUST | Portability is expressed as a **capability map**: what the structure needs a runtime to be able to do, not which product provides it. |
+| REQ-PORT-03 | MUST | No requirement and no spec names a runtime-specific tool. Tool names appear only in agent frontmatter and in the capability map, which is the one place a translation happens. |
+| REQ-PORT-04 | MUST | An adapter ships for Muse Code with Muse Spark 1.3, as a paste-ready prompt rather than a fork of the structure. Two copies of a prompt structure diverge; one structure plus an adapter does not. |
+| REQ-PORT-05 | MUST | An adapter corrects only what its target would otherwise misread. It never restates a requirement, because a restated requirement is a second source of truth that will drift. |
+| REQ-PORT-06 | MUST | Where a target runtime cannot satisfy a capability, the adapter names the requirements that become unverifiable on it. An unverifiable requirement is reported, never quietly dropped. |
+| REQ-PORT-07 | MUST | Telemetry is disabled in the **agent runtime** as well as in the generated app. REQ-SUP-06 applies to the tool doing the building, not only to the thing built. |
+| REQ-PORT-08 | MUST | Where a runtime offers a cheaper tier in exchange for training on the traffic, using it for a build is an explicitly recorded decision — this build handles security posture, credentials guidance and compliance evidence. |
+| REQ-PORT-09 | MUST | An adapter is verified by running one wave on the target and comparing the artefacts, not by reading it. |
+| REQ-PORT-10 | MUST | Adding a runtime adds an adapter and a capability-map column. It never edits a requirement, a spec, or an agent's mission. |
+
 ## VER — Version currency
 
 | ID | Status | Requirement |

@@ -1,0 +1,103 @@
+{
+  "$schema": "./pricing.md",
+  "generatedAt": "2026-09-21T22:18:53Z",
+  "generatedBy": "A26-cost-accountant",
+  "unit": "USD per 1,000,000 tokens",
+  "policy": {
+    "requirements": [
+      "REQ-COST-04",
+      "REQ-COST-05",
+      "REQ-COST-08",
+      "REQ-COST-12"
+    ],
+    "rules": [
+      "A price is never taken from a model's memory. It is read from the provider's published pricing and recorded here with its source and the timestamp of the check.",
+      "Every entry carries a `confidence`. `verified` means this build read the provider's own pricing page. `secondary` means the figure came from a cached table or a third-party source and has NOT been confirmed against the provider.",
+      "A `secondary` price may be used to produce an estimate, and the estimate must be labelled as resting on an unverified price (REQ-COST-04).",
+      "Re-validate at gate G2 alongside versions/manifest.json. A pricing file older than staleAfterDays makes every money column an estimate.",
+      "Token counts are measured and are never estimated. Money is derived. The cost table never presents one as the other."
+    ],
+    "staleAfterDays": 14
+  },
+  "egressNote": "docs.claude.com returned 302 and both www.anthropic.com/pricing and dev.meta.ai/docs/pricing-rate-limits were unreachable (curl exit, no HTTP status) through this environment's proxy on 2026-09-21. Nothing below is marked `verified` for that reason. Do not silently upgrade a confidence level without a successful fetch.",
+  "providers": {
+    "anthropic": {
+      "source": "https://docs.claude.com/en/docs/about-claude/pricing",
+      "checkedAt": "2026-09-21T22:18:53Z",
+      "confidence": "secondary",
+      "provenance": "Bundled claude-api skill's cached model table, dated 2026-06-24. Not confirmed against the live pricing page this build.",
+      "models": {
+        "claude-opus-5": {
+          "input": 5.0,
+          "output": 25.0,
+          "note": "Default build model. Fast mode is billed at 10.00/50.00 and is a separate decision."
+        },
+        "claude-opus-4-8": {
+          "input": 5.0,
+          "output": 25.0
+        },
+        "claude-opus-4-7": {
+          "input": 5.0,
+          "output": 25.0
+        },
+        "claude-opus-4-6": {
+          "input": 5.0,
+          "output": 25.0
+        },
+        "claude-fable-5-1": {
+          "input": 10.0,
+          "output": 50.0,
+          "cacheRead": 0.25
+        },
+        "claude-fable-5": {
+          "input": 10.0,
+          "output": 50.0
+        },
+        "claude-sonnet-5": {
+          "input": 2.0,
+          "output": 10.0,
+          "note": "Sensible worker-tier model for a reading-heavy subagent."
+        },
+        "claude-sonnet-4-6": {
+          "input": 3.0,
+          "output": 15.0
+        },
+        "claude-haiku-4-5": {
+          "input": 1.0,
+          "output": 5.0,
+          "note": "Cheapest tier; 200K context rather than 1M."
+        }
+      },
+      "modifiers": {
+        "batch": {
+          "multiplier": 0.5,
+          "note": "Batch API runs asynchronously at half price. Not usable for an interactive wave, usable for bulk analysis."
+        },
+        "cacheRead": {
+          "note": "Cache reads are priced below fresh input and are the main lever this structure controls. Where a model's cache-read rate is not recorded above, report the token count and mark the money cell as incomplete rather than assuming a ratio (REQ-COST-12)."
+        }
+      }
+    },
+    "meta": {
+      "source": "https://dev.meta.ai/docs/pricing-rate-limits",
+      "checkedAt": "2026-09-21T22:18:53Z",
+      "confidence": "secondary",
+      "provenance": "Web search snippets citing dev.meta.ai and third-party pricing aggregators, retrieved 2026-09-21. Not confirmed against the live page.",
+      "models": {
+        "muse-spark-1.3": {
+          "input": 1.25,
+          "output": 4.25,
+          "cacheRead": 0.15,
+          "tier": "standard",
+          "note": "Figures quoted for the xhigh tier on the standard endpoint. Confirm the tier matches how the build actually runs before deriving money from this."
+        },
+        "muse-spark-1.3-contributor": {
+          "input": 0.1,
+          "output": 0.2,
+          "tier": "contributor",
+          "warning": "Meta may use prompts and outputs from this tier to improve its products. REQ-PORT-08: running this build on the contributor tier is an explicitly recorded decision, because the build handles security posture, credential guidance and compliance evidence. Roughly 10-20x cheaper is not a reason on its own."
+        }
+      }
+    }
+  }
+}

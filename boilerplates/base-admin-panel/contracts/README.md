@@ -48,6 +48,7 @@ Nine kinds of member, each with exactly one publishing agent:
 | `certificate` | [`types/certificate.md`](types/certificate.md) — ACME account, orders, renewal policy and the DNS provider registry (REQ-ACME-01) | A25 |
 | `settings-registry` | [`types/settings-registry.md`](types/settings-registry.md) — panel descriptors, the three scopes, and effective-value resolution (REQ-SET-08) | A05 |
 | `edge-topology` | [`../spec/edge-proxy.md`](../spec/edge-proxy.md) — the three proxy topologies that decide which ACME challenges are possible (REQ-PROX-03) | A01 |
+| `agent-report` | [`types/agent-report.md`](types/agent-report.md) — every agent's structured hand-off, including token usage where `null` means unreported and never zero (REQ-COST-01) | A02 |
 | API surface | [`openapi/conventions.md`](openapi/conventions.md), [`openapi/skeleton.yaml`](openapi/skeleton.yaml) — OpenAPI 3.1 generated from the runtime's Zod schemas (REQ-API-01) | A11 assembles, each domain declares its operations |
 | Schema & isolation | [`db/schema-ownership.md`](db/schema-ownership.md), [`db/rls-contract.md`](db/rls-contract.md) — table ownership, migration namespacing, forced RLS (REQ-RBA-04) | A02 map, A04 policies |
 

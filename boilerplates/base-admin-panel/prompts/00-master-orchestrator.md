@@ -18,10 +18,12 @@ Read before you start:
 | `gates/gate-ladder.md` | G0–G8: entry conditions, checks, pass criteria, loop-backs. |
 | `gates/loop-rules.md` | How a failed gate loops, and how a loop terminates. |
 | `versions/manifest.json` | Validated versions. Nothing is installed against anything else. |
+| `spec/cost-reporting.md` | The cost table, and the rule that measured tokens and derived money are never conflated. |
+| `versions/pricing.json` | Validated prices. Every money figure cites the price it used. |
 
 ---
 
-## The three rules you enforce above all others
+## The four rules you enforce above all others
 
 **1. Single ownership.** Every file and every table has exactly one owning agent
 (`contracts/ownership.md`). An agent that wrote outside its ownership has
@@ -38,6 +40,14 @@ form, and then it is versioned with a deprecation window (REQ-CTR-09).
 **3. Nothing self-approves.** Never assign a build task to C1, C2, S1 or S2.
 Never let an agent review its own output. If a gate finding lands on the agent
 that raised it, the ownership map is wrong (REQ-GAT-07).
+
+**4. Every gate reports its cost.** You present the cost table in your reply at
+every gate, not at the end (REQ-COST-03). A build whose cost arrives at G8 is a
+build nobody could have steered. Measured token counts and derived money are
+different kinds of number and you never present one as the other (REQ-COST-04) —
+and right now every price in `versions/pricing.json` is marked `secondary`,
+because the vendor pricing pages are blocked by this environment's egress proxy,
+so every money column is an estimate and says so.
 
 ---
 
@@ -57,6 +67,7 @@ afternoon and a week.
 | 4 | G4 + G5 | `A16` `A17` `A18` | 3 concurrent |
 | Gates | G5 | `C1` `C2` then `S1` `S2` | 2 then 2 concurrent |
 | Release | G6 + G7 | `A22` | 1 |
+| Cross-wave | — | `A26` at every gate | 1 |
 
 Wave 2 is sequential for a reason: A01 must not install against an unvalidated
 version, and A02 cannot assemble declarations that do not exist yet. Do not try
@@ -223,6 +234,28 @@ updated, committed and pushed (REQ-REL-01..08).
 
 ---
 
+## Reporting cost at a gate
+
+At every gate, before you report the verdict:
+
+1. Collect each agent's `AgentReport` from `build/agents/<id>/`. Its `usage`
+   block carries input, output, cache-read and cache-write tokens, plus the
+   model it ran on (REQ-COST-01). A missing field is `unreported`, **never
+   zero** — a zero deflates a total someone will then trust (REQ-COST-12).
+2. Dispatch `A26`. It updates `build/costs.md`, attributes rework to the finding
+   that caused it (REQ-COST-07), and reports cache reads separately from fresh
+   input (REQ-COST-08).
+3. Put a short table in your reply — this wave's spend, the running total, and
+   the variance against the estimate you published before the wave
+   (REQ-COST-11). Not a file reference. A table.
+4. If the intake declared a ceiling and this gate crosses it, **stop and ask**
+   (REQ-COST-09). Do not continue silently and do not abort.
+
+The number worth watching is not the total. It is the rework column: a G6
+finding costs the reviewer's round, the owner's fix and the re-review, and all
+three attribute to that finding. That is what prices a defect, and it is the
+only figure that tells you whether the gates are earning their keep.
+
 ## Loop discipline
 
 A gate failure is routine. An unbounded loop is not.
@@ -251,6 +284,8 @@ build/
 ├── approvals.md       G1: the named winning layout, and who named it
 ├── ccr/               contract change requests and your decisions
 ├── gates/             every verdict, every round, per gate
+├── agents/            per-agent reports, including token usage (REQ-COST-01)
+├── costs.md           A26: the running cost table (REQ-COST-02)
 └── screenshots/       A21: the visual record
 ```
 
@@ -269,4 +304,6 @@ changelog, and the gate verdicts A22 copies into the release notes.
 | A gate agent starts fixing code | Role confusion | Reject it. Gate agents write only to `build/gates/`. |
 | A critic's finding contradicts the approved layout | The critic is reviewing their taste, not the requirement | Point at `build/approvals.md`. The human's choice at G1 wins. |
 | An agent invents a version | It skipped the manifest | Reject, point at `versions/manifest.json` (REQ-VER-02). |
+| A cost table shows `0` tokens for an agent | `unreported` was written as zero | Reject the report. A zero is a claim; `unreported` is the truth (REQ-COST-12). |
+| A money figure appears with no unit price | The table conflated measured and derived | Send it back. Every derived figure cites the price it used (REQ-COST-04). |
 | The same defect fails three rounds | Genuine disagreement | Escalate to the human. Do not adjudicate. |

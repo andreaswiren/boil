@@ -93,6 +93,7 @@ other agent imports it and none of them may format a date locally.
 | A17 | `chart-architect` | `docs/architecture/**`, chart sources | C4 + sequence + dataflow + topology charts | the real code, not the plan |
 | A18 | `compliance-cra-cer` | `compliance/**` | CRA + CER document set | SBOM, audit contract, crypto posture, RTO/RPO |
 | A22 | `release-manager` | `CHANGELOG.md`, `README.md`, `SECURITY.md`, `TODO.md`, `VERSION`, version fields | the release record | gate verdicts |
+| A26 | `cost-accountant` | `versions/pricing.json`, `versions/pricing.md`, `build/costs.md` | the cost table | every agent's `AgentReport.usage` |
 
 A16 and A17 run last on purpose: they document what was built, not what was
 planned. A17 reads the code to draw the charts; drawing from the spec is the
@@ -123,29 +124,30 @@ orchestrator enforces this by never assigning a build task to a gate agent ID.
 | Wave 2 (foundation, sequential) | 3 | `A20` `A01` `A02` |
 | Wave 3 (parallel domains) | **15** | `A03` `A04` `A05` `A07` `A09` `A10` `A11` `A12` `A13` `A14` `A15` `A19` `A23` `A24` `A25` |
 | Wave 4 (narrative) + release | 4 | `A16` `A17` `A18` `A22` |
-| **Build agents** | **26** | `A00`–`A25` |
+| Cross-wave | 1 | `A26` |
+| **Build agents** | **27** | `A00`–`A26` |
 | Gate agents (blocking, never build) | 4 | `C1` `C2` `S1` `S2` |
-| **Total** | **30** | |
+| **Total** | **31** | |
 
-`A21` is listed in Wave 1 because that is where it first runs, but it serves
-every phase that renders something — the 30 mockup screenshots at G1 and the
-integration screenshots at G5.
+Two agents sit outside the wave model because they serve every phase rather than
+one:
 
-The edge proxy (`REQ-PROX-*`) is A01's, not a new agent's. A01 already owns
-`docker/**` and the validated config source the HAProxy config is generated from
-(REQ-PROX-04), and an edge that disagrees with the app about hostnames or ports
-is exactly the class of bug single ownership prevents. A25 owns one seam into it:
-the certificate install and reload path (REQ-PROX-09, REQ-ACME-13), which it
-drives through HAProxy's runtime interface rather than by writing A01's config.
+- **`A21 visual-qa`** is listed in Wave 1 because that is where it first runs,
+  but it screenshots anything that renders — the 30 mockup renders at G1 and the
+  integration captures at G5.
+- **`A26 cost-accountant`** runs at every gate. It is the cheapest agent in the
+  fleet on purpose (REQ-COST-04): it does arithmetic and table formatting over
+  structured `AgentReport` input, and spending Opus tokens to report on Opus
+  token spend would be the one joke this design must not make.
 
-The settings surfaces (`REQ-SET-*`) are A05's, not a new agent's. A05 already
-owns the settings shell, and the three scopes are chrome plus a registry — the
-panels themselves are contributed by the domains that own the data. Adding an
-agent for a surface that already has an owner is the speculative generality the
+The edge proxy (`REQ-PROX-*`) is A01's and the settings surfaces (`REQ-SET-*`)
+are A05's, not new agents' — both already owned those surfaces. Adding an agent
+for a surface that already has an owner is the speculative generality the
 Karpathy lens exists to catch (`gates/karpathy-lens.md`).
 
 The critical path is
-`A00 → A06 → A08/A21 → human → A20 → A01 → A02 → [Wave 3] → [Wave 4] → C1/C2 → S1/S2 → A22`.
+`A00 → A06 → A08/A21 → human → A20 → A01 → A02 → [Wave 3] → [Wave 4] → C1/C2 → S1/S2 → A22`,
+with `A26` reporting alongside each gate rather than on the path.
 
 Wave 3 is where the time is, and it is 15-wide. Everything else is either
 sequential by necessity or narrow by nature.

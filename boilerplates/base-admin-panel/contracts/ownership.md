@@ -21,8 +21,9 @@ treats it as a failed task and reassigns, rather than accepting the diff.
 | `packages/config/**` | A01 | The single env schema |
 | `packages/crypto/**` | A01 | Envelope encryption, KEK rotation, egress client |
 | `packages/contracts/**` | A02 | Frozen at G3. CCR-only afterwards |
-| `versions/manifest.json` | A20 | |
+| `versions/manifest.json`, `versions/traps.json`, `versions/notes/**` | A20 | |
 | `CHANGELOG.md`, `README.md`, `SECURITY.md`, `TODO.md`, `VERSION`, all `version` fields | A22 | No other agent edits these, ever |
+| `versions/pricing.json`, `versions/pricing.md`, `build/costs.md` | A26 | The only agent that derives money. It owns no product code and no table. |
 | `.github/workflows/**` | A01, except `supply-chain.yml` (A19) | |
 
 ## Domain packages
