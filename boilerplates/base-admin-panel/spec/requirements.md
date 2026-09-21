@@ -95,7 +95,7 @@ one of them stalls every agent at once.
 
 | ID | Status | Requirement |
 |----|--------|-------------|
-| REQ-ENT-01 | MUST | Almost every entity extends the base envelope: `comment`, `created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`. Exemptions are enumerated in `contracts/db/entity-base.md` and justified there. |
+| REQ-ENT-01 | MUST | Almost every entity extends the base envelope: `comment`, `created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`. Exemptions are enumerated in `contracts/types/entity-base.md` and justified there. |
 | REQ-ENT-02 | MUST | Deletion is soft by default. Hard delete is a separate, global-tier permission with its own audit event. |
 | REQ-ENT-03 | MUST | The envelope is enforced by migration lint, not by convention: CI fails on a table lacking the columns and not listed as exempt. |
 | REQ-ENT-04 | MUST | `created_by`/`updated_by`/`deleted_by` are set from the request's actor context by a single data-access layer, never passed in by a caller. |

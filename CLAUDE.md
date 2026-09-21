@@ -36,8 +36,8 @@ of other files cite its IDs. After editing it, verify no citation dangles:
 
 ```bash
 cd boilerplates/<name>
-defined=$(grep -o '^| REQ-[A-Z0-9]*-[0-9]*' spec/requirements.md | sed 's/^| //' | sort -u)
-used=$(grep -rho 'REQ-[A-Z0-9]*-[0-9]*' . --include='*.md' --include='*.csv' | sort -u)
+defined=$(grep -oE '^\| REQ-[A-Z0-9]+-[0-9]+' spec/requirements.md | sed 's/^| //' | sort -u)
+used=$(grep -rhoE 'REQ-[A-Z0-9]+-[0-9]+' . --include='*.md' --include='*.csv' | sort -u)
 comm -13 <(echo "$defined") <(echo "$used")   # must print nothing
 ```
 

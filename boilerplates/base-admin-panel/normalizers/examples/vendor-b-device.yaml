@@ -1,0 +1,44 @@
+# Vendor B: nested payload, different names, numeric status codes, epoch
+# timestamps, address as a single "ip/mask" string.
+#
+# Same canonical.device target as vendor-a-device.yaml. That is the point:
+# if a second vendor cannot reach the same model without changing it, the
+# model was a copy of the first vendor's schema (REQ-DAT-02).
+source: vendor-b
+version: 2
+canonicalModel: canonical.device
+description: >
+  Vendor B's GET /v2/nodes record. Nested under device.*, status as an integer,
+  timestamps as Unix epoch seconds, management address as CIDR.
+
+identity:
+  sourceIdFrom: device.uuid
+  dedupeOn: [source_system, source_id]
+
+enums:
+  lifecycle_numeric:
+    onUnmapped: quarantine      # an unknown status code is a question, not "active"
+    table:
+      "1": active
+      "2": repair
+      "3": retired
+      "4": staging
+
+fields:
+  hostname:      { op: copy,   from: device.hostname,          as: string }
+  vendor:        { op: const,  value: "Vendor B" }
+  model:         { op: concat, from: [device.hw.family, device.hw.variant], separator: "-" }
+  serial_number: { op: copy,   from: device.hw.serial_no,      as: string }
+  mgmt_ipv4:     { op: split,  from: device.net.mgmt_cidr, separator: "/", index: 0 }
+  mac_address:   { op: coerce, from: device.net.primary_mac,   as: mac }
+  os_version:    { op: copy,   from: device.sw.version,        as: string }
+  lifecycle_state: { op: map,  from: device.state_code,        enum: lifecycle_numeric }
+  site:          { op: lookup, from: device.site_ref, model: canonical.location, matchOn: external_code, onMissing: quarantine }
+  first_seen_at: { op: coerce, from: device.ts.created,        as: timestamp, format: epoch_seconds }
+  last_seen_at:  { op: coerce, from: device.ts.seen,           as: timestamp, format: epoch_seconds }
+  label:         { op: template, pattern: "{device.hostname} ({device.hw.family})" }
+
+required_fields:
+  - hostname
+  - serial_number
+  - lifecycle_state

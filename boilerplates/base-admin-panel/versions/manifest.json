@@ -1,0 +1,585 @@
+{
+  "$schema": "./README.md",
+  "generatedAt": "2026-09-21T21:07:20Z",
+  "generatedBy": "A20-version-validator",
+  "policy": {
+    "requirements": [
+      "REQ-VER-01",
+      "REQ-VER-02",
+      "REQ-VER-03",
+      "REQ-VER-04",
+      "REQ-VER-05",
+      "REQ-VER-06"
+    ],
+    "rules": [
+      "Latest stable only. No prerelease, alpha, beta, rc or canary tag is ever pinned.",
+      "Every version in this file was read from the authoritative registry at generatedAt. None came from memory.",
+      "A major-version jump from the previous manifest is a reviewed decision and needs a migration note in build/versions-review.md before it is adopted.",
+      "Compatibility traps are recorded in the entry's note field so they are not rediscovered each build.",
+      "This manifest is regenerated and re-validated at gate G2 of every build. A stale manifest fails the gate."
+    ],
+    "staleAfterDays": 7
+  },
+  "platform": {
+    "node": {
+      "latestStable": "24.21.0",
+      "pin": "24.x",
+      "codename": "Krypton",
+      "channel": "LTS",
+      "source": "https://nodejs.org/dist/index.json",
+      "checkedAt": "2026-09-21T21:07:20Z",
+      "note": "REQ-VER-06: the stack runs on the current Node LTS, not the newest current release."
+    },
+    "pnpm": {
+      "latestStable": "12.5.1",
+      "pin": "12.x",
+      "source": "https://registry.npmjs.org/pnpm/latest",
+      "checkedAt": "2026-09-21T21:07:20Z",
+      "note": "Declared in package.json packageManager with a digest by corepack."
+    },
+    "postgresql": {
+      "latestStable": "18.6",
+      "pin": "18.6",
+      "source": "https://hub.docker.com/v2/repositories/library/postgres/tags",
+      "checkedAt": "2026-09-21T21:07:20Z",
+      "note": "REQ-FND-09: the compose file pins the image by digest, not by this tag. The tag is recorded so the digest is traceable to a version."
+    },
+    "python": {
+      "latestStable": "3.14.7",
+      "pin": "3.14",
+      "source": "https://hub.docker.com/v2/repositories/library/python/tags",
+      "checkedAt": "2026-09-21T21:07:20Z",
+      "note": "Runtime for services/normalizer only (REQ-DAT-04)."
+    },
+    "rust": {
+      "latestStable": "1.98.1",
+      "pin": "1.98.1",
+      "source": "https://static.rust-lang.org/dist/channel-rust-stable.toml",
+      "checkedAt": "2026-09-21T21:07:20Z",
+      "note": "Remote collectors only (REQ-OBS-01). Pinned in rust-toolchain.toml so the agent build is reproducible."
+    }
+  },
+  "npm": {
+    "framework": {
+      "next": {
+        "latestStable": "16.3.5",
+        "pin": "^16.3.5",
+        "source": "https://registry.npmjs.org/next/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "react": {
+        "latestStable": "19.3.0",
+        "pin": "^19.3.0",
+        "source": "https://registry.npmjs.org/react/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "react-dom": {
+        "latestStable": "19.3.0",
+        "pin": "^19.3.0",
+        "source": "https://registry.npmjs.org/react-dom/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "typescript": {
+        "latestStable": "7.0.2",
+        "pin": "^7.0.2",
+        "source": "https://registry.npmjs.org/typescript/latest",
+        "checkedAt": "2026-09-21T21:07:20Z",
+        "note": "Latest stable is the 7.x native rewrite. REQ-VER-04: a major jump is a reviewed decision. Before pinning 7.x, A20 must externally confirm that the pinned Next.js, Biome and drizzle-kit versions support it, and fall back to the newest 5.x line with the reason recorded in build/versions-review.md if they do not."
+      }
+    },
+    "styling": {
+      "tailwindcss": {
+        "latestStable": "4.3.3",
+        "pin": "^4.3.3",
+        "source": "https://registry.npmjs.org/tailwindcss/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "@tailwindcss/postcss": {
+        "latestStable": "4.3.3",
+        "pin": "^4.3.3",
+        "source": "https://registry.npmjs.org/@tailwindcss%2Fpostcss/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "postcss": {
+        "latestStable": "8.5.28",
+        "pin": "^8.5.28",
+        "source": "https://registry.npmjs.org/postcss/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "class-variance-authority": {
+        "latestStable": "0.7.1",
+        "pin": "^0.7.1",
+        "source": "https://registry.npmjs.org/class-variance-authority/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "tailwind-merge": {
+        "latestStable": "3.7.0",
+        "pin": "^3.7.0",
+        "source": "https://registry.npmjs.org/tailwind-merge/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "clsx": {
+        "latestStable": "2.1.1",
+        "pin": "^2.1.1",
+        "source": "https://registry.npmjs.org/clsx/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    },
+    "ui": {
+      "shadcn": {
+        "latestStable": "4.21.0",
+        "pin": "^4.21.0",
+        "source": "https://registry.npmjs.org/shadcn/latest",
+        "checkedAt": "2026-09-21T21:07:20Z",
+        "note": "CLI, invoked with npx/pnpm dlx rather than installed as a dependency. Never hand-decode a preset code; use 'npx shadcn@latest preset decode'."
+      },
+      "radix-ui": {
+        "latestStable": "1.6.7",
+        "pin": "^1.6.7",
+        "source": "https://registry.npmjs.org/radix-ui/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "lucide-react": {
+        "latestStable": "1.47.0",
+        "pin": "^1.47.0",
+        "source": "https://registry.npmjs.org/lucide-react/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "next-themes": {
+        "latestStable": "0.4.6",
+        "pin": "^0.4.6",
+        "source": "https://registry.npmjs.org/next-themes/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "recharts": {
+        "latestStable": "3.10.1",
+        "pin": "^3.10.1",
+        "source": "https://registry.npmjs.org/recharts/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "sonner": {
+        "latestStable": "2.0.8",
+        "pin": "^2.0.8",
+        "source": "https://registry.npmjs.org/sonner/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "cmdk": {
+        "latestStable": "1.1.1",
+        "pin": "^1.1.1",
+        "source": "https://registry.npmjs.org/cmdk/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "vaul": {
+        "latestStable": "1.1.2",
+        "pin": "^1.1.2",
+        "source": "https://registry.npmjs.org/vaul/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "input-otp": {
+        "latestStable": "1.5.0",
+        "pin": "^1.5.0",
+        "source": "https://registry.npmjs.org/input-otp/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    },
+    "grid": {
+      "@tanstack/react-table": {
+        "latestStable": "9.2.4",
+        "pin": "^9.2.4",
+        "source": "https://registry.npmjs.org/@tanstack%2Freact-table/latest",
+        "checkedAt": "2026-09-21T21:07:20Z",
+        "note": "REQ-GRD-01 base. Major 9 API; do not carry v8 patterns across."
+      },
+      "@dnd-kit/core": {
+        "latestStable": "6.3.1",
+        "pin": "^6.3.1",
+        "source": "https://registry.npmjs.org/@dnd-kit%2Fcore/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "@dnd-kit/sortable": {
+        "latestStable": "10.0.0",
+        "pin": "^10.0.0",
+        "source": "https://registry.npmjs.org/@dnd-kit%2Fsortable/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    },
+    "state-forms": {
+      "zustand": {
+        "latestStable": "5.0.15",
+        "pin": "^5.0.15",
+        "source": "https://registry.npmjs.org/zustand/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "@tanstack/react-query": {
+        "latestStable": "5.103.2",
+        "pin": "^5.103.2",
+        "source": "https://registry.npmjs.org/@tanstack%2Freact-query/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "react-hook-form": {
+        "latestStable": "7.88.0",
+        "pin": "^7.88.0",
+        "source": "https://registry.npmjs.org/react-hook-form/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "@hookform/resolvers": {
+        "latestStable": "5.9.1",
+        "pin": "^5.9.1",
+        "source": "https://registry.npmjs.org/@hookform%2Fresolvers/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    },
+    "data": {
+      "drizzle-orm": {
+        "latestStable": "0.45.3",
+        "pin": "^0.45.3",
+        "source": "https://registry.npmjs.org/drizzle-orm/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "drizzle-kit": {
+        "latestStable": "0.31.11",
+        "pin": "^0.31.11",
+        "source": "https://registry.npmjs.org/drizzle-kit/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "postgres": {
+        "latestStable": "3.4.9",
+        "pin": "^3.4.9",
+        "source": "https://registry.npmjs.org/postgres/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "zod": {
+        "latestStable": "4.6.5",
+        "pin": "^4.6.5",
+        "source": "https://registry.npmjs.org/zod/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    },
+    "auth": {
+      "@simplewebauthn/server": {
+        "latestStable": "14.0.2",
+        "pin": "^14.0.2",
+        "source": "https://registry.npmjs.org/@simplewebauthn%2Fserver/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "@simplewebauthn/browser": {
+        "latestStable": "14.0.0",
+        "pin": "^14.0.0",
+        "source": "https://registry.npmjs.org/@simplewebauthn%2Fbrowser/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "openid-client": {
+        "latestStable": "6.8.8",
+        "pin": "^6.8.8",
+        "source": "https://registry.npmjs.org/openid-client/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "otplib": {
+        "latestStable": "13.5.0",
+        "pin": "^13.5.0",
+        "source": "https://registry.npmjs.org/otplib/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "argon2": {
+        "latestStable": "0.45.1",
+        "pin": "^0.45.1",
+        "source": "https://registry.npmjs.org/argon2/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "jose": {
+        "latestStable": "6.2.12",
+        "pin": "^6.2.12",
+        "source": "https://registry.npmjs.org/jose/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    },
+    "comms": {
+      "nodemailer": {
+        "latestStable": "10.0.10",
+        "pin": "^10.0.10",
+        "source": "https://registry.npmjs.org/nodemailer/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "web-push": {
+        "latestStable": "3.6.7",
+        "pin": "^3.6.7",
+        "source": "https://registry.npmjs.org/web-push/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    },
+    "i18n": {
+      "next-intl": {
+        "latestStable": "4.14.6",
+        "pin": "^4.14.6",
+        "source": "https://registry.npmjs.org/next-intl/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    },
+    "api-docs": {
+      "@asteasolutions/zod-to-openapi": {
+        "latestStable": "9.1.0",
+        "pin": "^9.1.0",
+        "source": "https://registry.npmjs.org/@asteasolutions%2Fzod-to-openapi/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "@scalar/nextjs-api-reference": {
+        "latestStable": "0.12.1",
+        "pin": "^0.12.1",
+        "source": "https://registry.npmjs.org/@scalar%2Fnextjs-api-reference/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    },
+    "pwa": {
+      "serwist": {
+        "latestStable": "9.5.12",
+        "pin": "^9.5.12",
+        "source": "https://registry.npmjs.org/serwist/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "@serwist/next": {
+        "latestStable": "9.5.12",
+        "pin": "^9.5.12",
+        "source": "https://registry.npmjs.org/@serwist%2Fnext/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    },
+    "observability": {
+      "pino": {
+        "latestStable": "10.3.1",
+        "pin": "^10.3.1",
+        "source": "https://registry.npmjs.org/pino/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "pino-pretty": {
+        "latestStable": "13.1.3",
+        "pin": "^13.1.3",
+        "source": "https://registry.npmjs.org/pino-pretty/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "syslog-pro": {
+        "latestStable": "1.0.0",
+        "pin": "^1.0.0",
+        "source": "https://registry.npmjs.org/syslog-pro/latest",
+        "checkedAt": "2026-09-21T21:07:20Z",
+        "note": "Low release activity. A13 must verify RFC 5424 structured-data and RFC 5425 TLS support against the actual package before adopting it (REQ-AUD-07, REQ-SEC-05). If it cannot do TLS transport, implement the framing directly over a tls.TLSSocket and record the decision."
+      }
+    },
+    "test": {
+      "@playwright/test": {
+        "latestStable": "1.63.0",
+        "pin": "^1.63.0",
+        "source": "https://registry.npmjs.org/@playwright%2Ftest/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "vitest": {
+        "latestStable": "5.0.1",
+        "pin": "^5.0.1",
+        "source": "https://registry.npmjs.org/vitest/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "@axe-core/playwright": {
+        "latestStable": "4.13.0",
+        "pin": "^4.13.0",
+        "source": "https://registry.npmjs.org/@axe-core%2Fplaywright/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    },
+    "tooling": {
+      "turbo": {
+        "latestStable": "2.11.2",
+        "pin": "^2.11.2",
+        "source": "https://registry.npmjs.org/turbo/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "@biomejs/biome": {
+        "latestStable": "2.5.14",
+        "pin": "^2.5.14",
+        "source": "https://registry.npmjs.org/@biomejs%2Fbiome/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "husky": {
+        "latestStable": "9.1.7",
+        "pin": "^9.1.7",
+        "source": "https://registry.npmjs.org/husky/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "lint-staged": {
+        "latestStable": "17.5.1",
+        "pin": "^17.5.1",
+        "source": "https://registry.npmjs.org/lint-staged/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "tsx": {
+        "latestStable": "4.23.15",
+        "pin": "^4.23.15",
+        "source": "https://registry.npmjs.org/tsx/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "@cyclonedx/cyclonedx-npm": {
+        "latestStable": "6.0.1",
+        "pin": "^6.0.1",
+        "source": "https://registry.npmjs.org/@cyclonedx%2Fcyclonedx-npm/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    },
+    "types": {
+      "@types/node": {
+        "latestStable": "26.6.2",
+        "pin": "^24.0.0",
+        "source": "https://registry.npmjs.org/@types%2Fnode/latest",
+        "checkedAt": "2026-09-21T21:07:20Z",
+        "note": "REQ-VER-05 trap. npm 'latest' is 26.x, which targets a Node major we do not run. This pin tracks the Node LTS major (24.x) instead. Never bump this to match npm latest."
+      },
+      "@types/react": {
+        "latestStable": "19.3.0",
+        "pin": "^19.3.0",
+        "source": "https://registry.npmjs.org/@types%2Freact/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      },
+      "@types/react-dom": {
+        "latestStable": "19.3.0",
+        "pin": "^19.3.0",
+        "source": "https://registry.npmjs.org/@types%2Freact-dom/latest",
+        "checkedAt": "2026-09-21T21:07:20Z"
+      }
+    }
+  },
+  "crates": {
+    "tokio": {
+      "latestStable": "1.53.1",
+      "pin": "^1.53.1",
+      "source": "https://crates.io/api/v1/crates/tokio",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "rustls": {
+      "latestStable": "0.23.45",
+      "pin": "^0.23.45",
+      "source": "https://crates.io/api/v1/crates/rustls",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "tokio-rustls": {
+      "latestStable": "0.26.5",
+      "pin": "^0.26.5",
+      "source": "https://crates.io/api/v1/crates/tokio-rustls",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "reqwest": {
+      "latestStable": "0.13.5",
+      "pin": "^0.13.5",
+      "source": "https://crates.io/api/v1/crates/reqwest",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "serde": {
+      "latestStable": "1.0.229",
+      "pin": "^1.0.229",
+      "source": "https://crates.io/api/v1/crates/serde",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "serde_json": {
+      "latestStable": "1.0.151",
+      "pin": "^1.0.151",
+      "source": "https://crates.io/api/v1/crates/serde_json",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "clap": {
+      "latestStable": "4.6.7",
+      "pin": "^4.6.7",
+      "source": "https://crates.io/api/v1/crates/clap",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "tracing": {
+      "latestStable": "0.1.44",
+      "pin": "^0.1.44",
+      "source": "https://crates.io/api/v1/crates/tracing",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "anyhow": {
+      "latestStable": "1.0.104",
+      "pin": "^1.0.104",
+      "source": "https://crates.io/api/v1/crates/anyhow",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "thiserror": {
+      "latestStable": "2.0.20",
+      "pin": "^2.0.20",
+      "source": "https://crates.io/api/v1/crates/thiserror",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "rusqlite": {
+      "latestStable": "0.40.2",
+      "pin": "^0.40.2",
+      "source": "https://crates.io/api/v1/crates/rusqlite",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    }
+  },
+  "pypi": {
+    "fastapi": {
+      "latestStable": "0.141.1",
+      "pin": "==0.141.1",
+      "source": "https://pypi.org/pypi/fastapi/json",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "uvicorn": {
+      "latestStable": "0.53.0",
+      "pin": "==0.53.0",
+      "source": "https://pypi.org/pypi/uvicorn/json",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "pydantic": {
+      "latestStable": "2.13.5",
+      "pin": "==2.13.5",
+      "source": "https://pypi.org/pypi/pydantic/json",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "pyyaml": {
+      "latestStable": "6.0.3",
+      "pin": "==6.0.3",
+      "source": "https://pypi.org/pypi/pyyaml/json",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "jsonschema": {
+      "latestStable": "4.26.0",
+      "pin": "==4.26.0",
+      "source": "https://pypi.org/pypi/jsonschema/json",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "httpx": {
+      "latestStable": "0.28.1",
+      "pin": "==0.28.1",
+      "source": "https://pypi.org/pypi/httpx/json",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "hypothesis": {
+      "latestStable": "6.168.0",
+      "pin": "==6.168.0",
+      "source": "https://pypi.org/pypi/hypothesis/json",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "ruff": {
+      "latestStable": "0.16.8",
+      "pin": "==0.16.8",
+      "source": "https://pypi.org/pypi/ruff/json",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    },
+    "pytest": {
+      "latestStable": "9.1.1",
+      "pin": "==9.1.1",
+      "source": "https://pypi.org/pypi/pytest/json",
+      "checkedAt": "2026-09-21T21:07:20Z"
+    }
+  },
+  "telemetry": {
+    "requirement": "REQ-SUP-06",
+    "note": "Asserted by test, not assumed. A19 owns the assertion.",
+    "env": {
+      "NEXT_TELEMETRY_DISABLED": "1",
+      "TURBO_TELEMETRY_DISABLED": "1",
+      "DO_NOT_TRACK": "1",
+      "SCARF_ANALYTICS": "false",
+      "ASTRO_TELEMETRY_DISABLED": "1"
+    },
+    "commands": [
+      "npx next telemetry disable"
+    ]
+  }
+}

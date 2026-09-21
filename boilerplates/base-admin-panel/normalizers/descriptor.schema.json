@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boil.local/normalizers/descriptor.schema.json",
+  "title": "Mapping descriptor",
+  "description": "Declarative mapping from one source system's payload onto a canonical model. Validated in CI (REQ-DAT-07). A descriptor that would write an unknown canonical field fails the build.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source",
+    "version",
+    "canonicalModel",
+    "identity",
+    "fields"
+  ],
+  "properties": {
+    "source": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "Stable source system id. Becomes provenance.sourceSystem."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Immutable. A changed mapping is a new version, because descriptorVersion is provenance (REQ-DAT-05)."
+    },
+    "canonicalModel": {
+      "type": "string",
+      "pattern": "^canonical\\.[a-z_]+$",
+      "description": "Target canonical model. Must exist in packages/canonical; an unknown model fails CI."
+    },
+    "description": {
+      "type": "string"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceIdFrom"
+      ],
+      "properties": {
+        "sourceIdFrom": {
+          "type": "string",
+          "description": "JSON pointer-ish path to the record's id in the source payload. Becomes provenance.sourceId."
+        },
+        "dedupeOn": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Canonical fields forming the idempotent ingest key (REQ-OBS-05)."
+        }
+      }
+    },
+    "fields": {
+      "type": "object",
+      "description": "Canonical field name -> transform. A key not present in the canonical model fails CI.",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/transform"
+      }
+    },
+    "enums": {
+      "type": "object",
+      "description": "Named translation tables referenced by map transforms.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "table"
+        ],
+        "properties": {
+          "table": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "integer",
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          "onUnmapped": {
+            "enum": [
+              "quarantine",
+              "passthrough"
+            ],
+            "default": "quarantine",
+            "description": "Default is quarantine. passthrough requires a justification comment and is only valid for a free-text canonical field (REQ-DAT-06)."
+          }
+        }
+      }
+    },
+    "required_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Canonical fields that must resolve to a non-null value. A failure here is a quarantine, never a default (REQ-DAT-06)."
+    }
+  },
+  "$defs": {
+    "transform": {
+      "type": "object",
+      "required": [
+        "op"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "op": {
+              "const": "copy"
+            },
+            "from": {
+              "type": "string"
+            },
+            "as": {
+              "$ref": "#/$defs/scalarType"
+            },
+            "default": {}
+          },
+          "required": [
+            "op",
+            "from"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "const"
+            },
+            "value": {}
+          },
+          "required": [
+            "op",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "map"
+            },
+            "from": {
+              "type": "string"
+            },
+            "enum": {
+              "type": "string"
+            },
+            "default": {}
+          },
+          "required": [
+            "op",
+            "from",
+            "enum"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "concat"
+            },
+            "from": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 2
+            },
+            "separator": {
+              "type": "string",
+              "default": " "
+            }
+          },
+          "required": [
+            "op",
+            "from"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "split"
+            },
+            "from": {
+              "type": "string"
+            },
+            "separator": {
+              "type": "string"
+            },
+            "index": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "op",
+            "from",
+            "separator",
+            "index"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "coerce"
+            },
+            "from": {
+              "type": "string"
+            },
+            "as": {
+              "$ref": "#/$defs/scalarType"
+            },
+            "format": {
+              "type": "string",
+              "description": "For timestamp: the source format. Output is always UTC timestamptz (REQ-TIM-03)."
+            }
+          },
+          "required": [
+            "op",
+            "from",
+            "as"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "template"
+            },
+            "pattern": {
+              "type": "string",
+              "description": "Named interpolation, e.g. '{vendor} {model}'. Unknown names fail CI."
+            }
+          },
+          "required": [
+            "op",
+            "pattern"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "op": {
+              "const": "lookup"
+            },
+            "from": {
+              "type": "string"
+            },
+            "model": {
+              "type": "string",
+              "pattern": "^canonical\\.[a-z_]+$"
+            },
+            "matchOn": {
+              "type": "string"
+            },
+            "onMissing": {
+              "enum": [
+                "quarantine",
+                "null"
+              ],
+              "default": "quarantine"
+            }
+          },
+          "required": [
+            "op",
+            "from",
+            "model",
+            "matchOn"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "scalarType": {
+      "enum": [
+        "string",
+        "int",
+        "float",
+        "bool",
+        "timestamp",
+        "ipv4",
+        "ipv6",
+        "mac"
+      ]
+    }
+  }
+}

@@ -77,7 +77,7 @@ colliding member.
 3. Import-boundary lint clean workspace-wide (REQ-CTR-01); breaking-change detector
    clean against 1.0.0 (REQ-CTR-07).
 4. Migration lint clean — no table missing the envelope and not listed exempt in
-   `contracts/db/entity-base.md` (REQ-ENT-03).
+   `contracts/types/entity-base.md` (REQ-ENT-03).
 5. `strict` + `noUncheckedIndexedAccess`, zero TS errors (REQ-FND-03).
 
 **Pass:** every self-test green, interface tests green, both linters and the

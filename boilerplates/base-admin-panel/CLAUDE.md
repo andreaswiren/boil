@@ -1,7 +1,7 @@
 # base-admin-panel — operating instructions
 
 You have been pointed at a boilerplate. It builds a multi-tenant Next.js admin
-panel from a short description, using a 23-agent fleet across 5 waves behind 9
+panel from a short description, using a 24-agent fleet across 5 waves behind 9
 gates.
 
 ## Start here

@@ -23,7 +23,7 @@ You are the only agent that writes inside `packages/contracts`. You collect ever
 | REQ-CTR-08 | You define the `_selftest` response contract every domain implements, so an integration failure names one owner. |
 | REQ-CTR-09 | You arbitrate additive CCRs yourself and assemble them. A breaking CCR goes to the orchestrator with your recommended additive alternative attached. |
 | REQ-CTR-10 | Interface tests live in `packages/contracts/tests/` and are run by both producer and consumer. When one fails, the contract is ambiguous — you write a clarifying CCR, not a patch on one side. |
-| REQ-ENT-01 | You author `entity-base`: `comment`, `created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`, plus the enumerated exemption list in `contracts/db/entity-base.md` with a justification per exemption. |
+| REQ-ENT-01 | You author `entity-base`: `comment`, `created_at`, `created_by`, `updated_at`, `updated_by`, `deleted_at`, `deleted_by`, plus the enumerated exemption list in `contracts/types/entity-base.md` with a justification per exemption. |
 | REQ-ENT-03 | You own the migration lint: CI fails on a table lacking the envelope and not listed as exempt. It reads every `db/migrations/<agent-id>/` tree. |
 | REQ-ENT-02, REQ-ENT-04, REQ-ENT-05 | The contract expresses soft delete as default, the actor-context shape that sets `*_by`, and the `deleted_at IS NULL` read predicate plus the permission that lifts it. Table owners implement; your schemas make the wrong shape untypeable. |
 | REQ-API-10 | You author `errors`: RFC 9457 `application/problem+json` problem types and the stable error-code taxonomy. Every code is unique and immutable once shipped. |
@@ -84,7 +84,7 @@ Every agent's published members, read from `packages/<domain>/contract.declarati
 1. Enumerate declarations: `ls packages/*/contract.declaration.ts services/*/contract.declaration.ts`. Cross-check against the roster in `spec/agents.md` and name any agent that owes one.
 2. Validate each declaration against the `ContractDeclaration` type: agent id matches the owning package per `contracts/ownership.md`, permission strings match `^[a-z]+\.[a-z0-9-]+\.[a-z]+$`, table names are `snake_case`, operation ids are `<domain>.<resource>.<verb>`.
 3. Run collision detection over the union. **Every collision is a hard failure that names both claimants and stops assembly** — duplicate permission string, duplicate i18n key, duplicate table name, duplicate operation id, duplicate error code. Never last-write-wins, never a rename by you.
-4. Author your four members: `entity-base`, `errors`, `pagination`, `time`. Write `contracts/db/entity-base.md` with the exemption list and a justification per row.
+4. Author your four members: `entity-base`, `errors`, `pagination`, `time`. Write `contracts/types/entity-base.md` with the exemption list and a justification per row.
 5. Assemble `packages/contracts/src/index.ts` from the validated union. Set the version to `1.0.0`.
 6. Generate fixtures: `pnpm contracts:fixtures` derives instances from each Zod schema, including two tenants and a global operator consistent with A23's seed contract (REQ-TST-07). Generate contract stubs that resolve every declared operation against the fixtures behind one config flag.
 7. Write the interface tests in `packages/contracts/tests/` — at minimum grid-params↔API-params, problem-envelope shape, entity-envelope presence, and time round-trips across both DST edges.
@@ -100,7 +100,7 @@ Every agent's published members, read from `packages/<domain>/contract.declarati
 - [ ] `pnpm contracts:fixtures` regenerates fixtures byte-identically from a clean tree (deterministic seed).
 - [ ] `pnpm -w test --filter contracts` passes, including both DST-edge time tests and the grid↔API interface test.
 - [ ] `grep -rnE "toLocaleString|Intl\.DateTimeFormat|date-fns" --include=*.ts --include=*.tsx apps packages | grep -v packages/contracts/time` returns nothing (REQ-TIM-04).
-- [ ] The migration lint fails on a table added without the entity envelope and not listed in `contracts/db/entity-base.md` (REQ-ENT-03).
+- [ ] The migration lint fails on a table added without the entity envelope and not listed in `contracts/types/entity-base.md` (REQ-ENT-03).
 - [ ] The breaking-change detector exits non-zero when a field is removed from a frozen type and when an optional field is made required.
 - [ ] `packages/contracts/package.json` reads `1.0.0` and `.baseline/1.0.0.json` exists.
 - [ ] Every Wave 3 agent's package pins `"@app/contracts": "^1.0.0"`.

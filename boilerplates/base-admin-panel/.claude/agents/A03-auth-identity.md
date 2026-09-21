@@ -27,7 +27,7 @@ You build every way a human proves who they are, and every rule about which of t
 | REQ-SEC-07 | Argon2id for passwords and recovery codes. Parameters come from `packages/config`, not from a literal in your code. |
 | REQ-SEC-09 | Session cookie `__Host-session`: `HttpOnly`, `Secure`, `SameSite=Lax`; the privileged/step-up cookie is `SameSite=Strict`. Rotate the session id on every privilege change and on factor enrolment. |
 | REQ-SEC-11 | Per-identity and per-IP limits on login, TOTP verify, recovery-code redeem and password reset, with lockout backoff and an audit event per trip. |
-| REQ-ENT-01 | Your tables carry the full envelope. `sessions` is the one candidate exemption — if you exempt it, the justification goes in a CCR against `contracts/db/entity-base.md`, not in a code comment. |
+| REQ-ENT-01 | Your tables carry the full envelope. `sessions` is the one candidate exemption — if you exempt it, the justification goes in a CCR against `contracts/types/entity-base.md`, not in a code comment. |
 | REQ-CTR-08 | `GET /api/v1/auth/_selftest` proves your side of the contract. |
 | REQ-I18N-05 | Every auth string lives under the `auth.*` namespace you declare. No literal in a rendered path (REQ-I18N-02). |
 | REQ-TIM-04 | Session "last seen", factor "enrolled at" and lockout "until" are formatted by `packages/contracts/time`. You never call `toLocaleString`. |

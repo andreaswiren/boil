@@ -114,10 +114,23 @@ orchestrator enforces this by never assigning a build task to a gate agent ID.
 
 ## Fleet summary
 
-- 1 intake agent
-- 18 build agents across 4 waves (13 of them genuinely parallel in Wave 3)
-- 4 gate agents, all blocking
-- 1 release agent
+| | Count | Who |
+|---|---|---|
+| Intake | 1 | `A00` |
+| Wave 1 (mockups) | 3 | `A06` `A08` `A21` |
+| Wave 2 (foundation, sequential) | 3 | `A20` `A01` `A02` |
+| Wave 3 (parallel domains) | 13 | `A03` `A04` `A05` `A07` `A09` `A10` `A11` `A12` `A13` `A14` `A15` `A19` `A23` |
+| Wave 4 (narrative) + release | 4 | `A16` `A17` `A18` `A22` |
+| **Build agents** | **24** | `A00`–`A23` |
+| Gate agents (blocking, never build) | 4 | `C1` `C2` `S1` `S2` |
+| **Total** | **28** | |
 
-The critical path is `A00 → A08/A21 → human → A20 → A01 → A02 → [Wave 3] → [Wave 4] → gates → A22`.
-Wave 3 is where the time is, and it is 13-wide.
+`A21` is listed in Wave 1 because that is where it first runs, but it serves
+every phase that renders something — the 30 mockup screenshots at G1 and the
+integration screenshots at G5.
+
+The critical path is
+`A00 → A06 → A08/A21 → human → A20 → A01 → A02 → [Wave 3] → [Wave 4] → C1/C2 → S1/S2 → A22`.
+
+Wave 3 is where the time is, and it is 13-wide. Everything else is either
+sequential by necessity or narrow by nature.

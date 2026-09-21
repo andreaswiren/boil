@@ -2,7 +2,7 @@
 
 Give it a paragraph. Get back a release-candidate admin panel.
 
-This is not a code template. It is a **prompt structure**: a fleet of 23 expert
+This is not a code template. It is a **prompt structure**: a fleet of 24 expert
 agents, a frozen contract they build against, an ownership map that lets thirteen
 of them work at the same time, and nine gates that refuse to pass work that is
 not finished.
@@ -96,7 +96,7 @@ law that makes the parallelism safe.
 | Path | What |
 |------|------|
 | [`prompts/`](prompts/) | The orchestrator and the phase prompts |
-| [`.claude/agents/`](.claude/agents/) | The 23-agent fleet plus 4 gate agents |
+| [`.claude/agents/`](.claude/agents/) | The 24-agent fleet plus 4 gate agents |
 | [`.claude/skills/`](.claude/skills/) | Orchestration, contract guard, version guard, visual QA, supply-chain audit, release |
 | [`spec/`](spec/) | 215 requirements, the fleet roster, and a spec per domain |
 | [`contracts/`](contracts/) | Contract law, the ownership map, types, events, OpenAPI, DB and RLS contracts |

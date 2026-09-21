@@ -1,0 +1,40 @@
+# Vendor A: flat payload, sane field names, status as a lowercase word.
+# Maps onto canonical.device. Ships no TypeScript (REQ-DAT-03).
+source: vendor-a
+version: 1
+canonicalModel: canonical.device
+description: >
+  Vendor A's /api/inventory/devices record. Flat, one device per object,
+  timestamps in RFC 3339 with an offset.
+
+identity:
+  sourceIdFrom: id
+  dedupeOn: [source_system, source_id]
+
+enums:
+  lifecycle:
+    onUnmapped: quarantine
+    table:
+      active: active
+      inactive: retired
+      rma: repair
+      decommissioned: retired
+
+fields:
+  hostname:      { op: copy,   from: name,            as: string }
+  vendor:        { op: const,  value: "Vendor A" }
+  model:         { op: copy,   from: model_name,      as: string }
+  serial_number: { op: copy,   from: serial,          as: string }
+  mgmt_ipv4:     { op: coerce, from: mgmt_ip,         as: ipv4 }
+  mac_address:   { op: coerce, from: mac,             as: mac }
+  os_version:    { op: copy,   from: firmware,        as: string }
+  lifecycle_state: { op: map,  from: status,          enum: lifecycle }
+  site:          { op: lookup, from: site_code, model: canonical.location, matchOn: external_code, onMissing: quarantine }
+  first_seen_at: { op: coerce, from: created,         as: timestamp, format: rfc3339 }
+  last_seen_at:  { op: coerce, from: last_checkin,    as: timestamp, format: rfc3339 }
+  label:         { op: template, pattern: "{name} ({model_name})" }
+
+required_fields:
+  - hostname
+  - serial_number
+  - lifecycle_state

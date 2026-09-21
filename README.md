@@ -14,7 +14,7 @@ Two halves:
 
 | Boilerplate | What it produces | Status |
 |-------------|------------------|--------|
-| [`base-admin-panel`](boilerplates/base-admin-panel/) | A multi-tenant Next.js admin panel: RBAC, MFA (password+OTP, passkeys, OIDC), full audit including read logging, PWA with push, SMTP, syslog forwarding, an advanced TanStack datagrid, EU CRA + CER compliance documentation. Driven by a 23-agent fleet across 5 waves behind 9 quality gates. | Prompt structure complete, unbuilt |
+| [`base-admin-panel`](boilerplates/base-admin-panel/) | A multi-tenant Next.js admin panel: RBAC, MFA (password+OTP, passkeys, OIDC), full audit including read logging, PWA with push, SMTP, syslog forwarding, an advanced TanStack datagrid, EU CRA + CER compliance documentation. Driven by a 24-agent fleet across 5 waves behind 9 quality gates. | Prompt structure complete, unbuilt |
 
 More boilerplates will be added alongside it. Each one is independent.
 
