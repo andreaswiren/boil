@@ -189,6 +189,8 @@ step-up by rule §3.2 and is not repeated per row.
 | `auth.oidc-provider.write` | yes | Configure a tenant OIDC provider (REQ-AUT-03). |
 | `auth.identity.link` | no | Link a method to own identity (REQ-AUT-09). |
 | `auth.identity.unlink` | no | Unlink a redundant method from own identity. |
+| `auth.profile.read` | no | Read own profile: display name, email, avatar (REQ-SET-03). |
+| `auth.profile.write` | no | Update own profile. Changing the email re-runs verification (REQ-MAIL-05). |
 
 ### rbac — A04
 
@@ -216,6 +218,7 @@ step-up by rule §3.2 and is not repeated per row.
 | `grid.prefs.read` | no | Read own per-grid preferences (REQ-GRD-08). |
 | `grid.prefs.write` | no | Persist own per-grid preferences. |
 | `grid.export.run` | yes | Run a grid export. Audited with row count, filters, columns (REQ-GRD-13). |
+| `grid.tenant-default.write` | yes | Set the tenant's default grid preferences, which seed a user's first visit and are overridden by their own saved state (REQ-SET-04, REQ-GRD-08). |
 
 ### audit — A13
 
@@ -313,6 +316,13 @@ step-up by rule §3.2 and is not repeated per row.
 
 ### global — A04 assembles; every row is step-up and tier `global`
 
+Eleven rows below were added by additive CCR after `spec/settings.md` enforced
+the rule that a `global`-scope settings panel must be gated by a `global.*`
+string (REQ-RBA-06). That rule turned a vague gap into a concrete list: five
+global panels had no permission at all, and would have shipped invisible,
+because an unresolved permission denies. Finding it by writing the panel
+inventory is cheaper than finding it at G6.
+
 | Permission | Allows |
 |------------|--------|
 | `global.tenant.create` | Create a tenant (REQ-RBA-06). |
@@ -332,6 +342,17 @@ step-up by rule §3.2 and is not repeated per row.
 | `global.user.recover` | Recover a locked-out account, reason-required and audited. |
 | `global.crypto-kek.rotate` | Rotate the KEK for envelope encryption (REQ-SEC-06). |
 | `global.collector.read-any` | Read collector inventory across tenants (REQ-OBS-04). |
+| `global.audit-sink.write` | Configure syslog forwarding targets and TLS material (REQ-AUD-07, REQ-SET-05). Declared by A13. |
+| `global.certificate.read` | Read the certificate inventory, expiry and renewal history (REQ-ACME-16). Declared by A25. |
+| `global.certificate.admin` | Request, renew, revoke and install certificates, and change renewal policy (REQ-ACME-06, REQ-ACME-08). Declared by A25. |
+| `global.normalizer-mapping.read` | Read mapping descriptors and quarantine (REQ-DAT-03, REQ-DAT-06). Declared by A10. |
+| `global.normalizer-mapping.write` | Add or version a mapping descriptor. Declared by A10. |
+| `global.telemetry.read` | Read the telemetry-disabled posture and its assertions (REQ-SUP-06). Declared by A19. |
+| `global.telemetry.admin` | Change telemetry posture. Exists so the change is auditable, not so it is convenient. Declared by A19. |
+| `global.compliance.read` | Read the CRA and CER document set and its evidence state (REQ-CRA-01, REQ-CER-01). Declared by A18. |
+| `global.compliance.write` | Fill declaration placeholders and record support and end-of-support dates (REQ-CRA-08, REQ-CRA-09). Declared by A18. |
+| `global.backup.read` | Read backup inventory and restore-rehearsal history (REQ-CER-04). Declared by A01. |
+| `global.backup.run` | Trigger a backup or a restore. The most destructive permission in the catalogue. Declared by A01. |
 
 ## 7. Evaluation
 

@@ -29,6 +29,7 @@ writer is what makes the hash chain and the redaction rules provable.
 | `target` | `{ kind, id, label }` | yes | What was acted on. `kind` is `<domain>.<resource>`. Null for a login. |
 | `diff` | `{ before, after }` | yes | Writes only, redacted (§4). Null for reads and auth events. |
 | `comment` | `text` | yes | The caller's reason, copied from the entity envelope (`entity-base.md` §1). |
+| `settingsScope` | `"personal" \| "tenant" \| "global" \| null` | The scope a settings change was made at (REQ-SET-09). `null` for non-settings events. Without it, "show me every global change" is not a query. |
 | `correlationId` | `uuid` | no | Joins to the problem body, the log record and the console frame. |
 | `ip` | `inet` | no | Source IP, server-derived. |
 | `userAgent` | `text` | no | Truncated at 512 chars. |
@@ -60,6 +61,19 @@ export const AuditEventSchema = z.object({
     .object({ before: z.record(z.unknown()), after: z.record(z.unknown()) })
     .nullable(),
   comment: z.string().max(2000).nullable(),
+  /**
+   * The settings scope a change was made at, when the event is a settings
+   * change (REQ-SET-09). null for every other event. Added as an optional
+   * field by additive CCR from A05: the envelope is `.strict()`, so without it
+   * no settings panel can record its scope, and a filter for "every global
+   * change last week" is impossible.
+   *
+   * Rejected alternatives, both of which look cheaper and are worse:
+   * encoding the scope inside `target.id` turns a column filter into a prefix
+   * match; emitting a correlated second event doubles the trail and adds a
+   * pairing that can break.
+   */
+  settingsScope: z.enum(["personal", "tenant", "global"]).nullable(),
   correlationId: z.string().uuid(),
   ip: z.string().ip(),
   userAgent: z.string().max(512),
