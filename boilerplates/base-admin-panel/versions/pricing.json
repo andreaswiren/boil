@@ -82,7 +82,7 @@
       "source": "https://dev.meta.ai/docs/pricing-rate-limits",
       "checkedAt": "2026-09-21T22:18:53Z",
       "confidence": "secondary",
-      "provenance": "Web search snippets citing dev.meta.ai and third-party pricing aggregators, retrieved 2026-09-21. Not confirmed against the live page.",
+      "provenance": "Web search snippets citing dev.meta.ai and third-party pricing write-ups, retrieved 2026-09-21. Meta's own hosts (dev.meta.ai, developer.meta.com) are blocked by this environment's egress proxy, so nothing here was read from the vendor. Confirm every figure and the active tier before deriving money.",
       "models": {
         "muse-spark-1.3": {
           "input": 1.25,
@@ -95,7 +95,10 @@
           "input": 0.1,
           "output": 0.2,
           "tier": "contributor",
-          "warning": "Meta may use prompts and outputs from this tier to improve its products. REQ-PORT-08: running this build on the contributor tier is an explicitly recorded decision, because the build handles security posture, credential guidance and compliance evidence. Roughly 10-20x cheaper is not a reason on its own."
+          "warning": "Meta may use prompts and outputs from this tier to improve its products. REQ-PORT-08: running this build on the contributor tier is an explicitly recorded decision, because the build handles security posture, credential guidance and compliance evidence. Roughly 10-20x cheaper is not a reason on its own.",
+          "cacheRead": 0.002,
+          "cacheReadConfidence": "unconfirmed",
+          "defaultTierWarning": "Multiple secondary sources report that Muse Code DEFAULTS to the contributor tier after install, so opting out is an active step the operator must take rather than a choice they are offered. Marked unconfirmed - verify before the first build with `cat ~/.config/muse/settings.json` and by checking which model id the session actually reports. If it is true, a build run on a fresh install has already sent its prompts to a training-eligible tier, and REQ-PORT-08's recorded decision must be made BEFORE the first run, not after."
         }
       }
     }
