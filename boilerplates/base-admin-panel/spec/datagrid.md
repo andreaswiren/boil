@@ -173,11 +173,12 @@ sees an empty table and reports a data-loss bug. Page number is transient for
 the same reason.
 
 ```sql
-user_grid_prefs (A07)                       -- tenant-scoped, RLS forced
-  user_id  uuid not null,
-  grid_key text not null,
-  prefs    jsonb not null,                  -- versioned payload, { v: 1, ... }
-  primary key (user_id, grid_key)
+user_grid_prefs (A07)                       -- tenantScoped: true, RLS forced
+  tenant_id uuid not null references tenants(id),
+  user_id   uuid not null,
+  grid_key  text not null,
+  prefs     jsonb not null,                 -- versioned payload, { v: 1, ... }
+  primary key (tenant_id, user_id, grid_key)
   -- entity-base minus `comment` (exempt, contracts/types/entity-base.md §6)
 ```
 

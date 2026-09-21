@@ -21,7 +21,7 @@ Repo version: **0.1.0**
 - [x] `README.md`, `SECURITY.md`, `CHANGELOG.md`, `VERSION`
 
 ### base-admin-panel — prompt structure
-- [x] `spec/requirements.md` — 215 requirements, 25 domains, stable IDs
+- [x] `spec/requirements.md` — 215 requirements, 25 domains, stable IDs (213 MUST, 1 SHOULD, 1 OPT)
 - [x] `spec/traceability.csv` — 215 rows, every requirement mapped to owner
       agent, contract member, gate and spec document; generated from the register
 - [x] `spec/agents.md` — 24 build agents in 5 waves, 4 gate agents
@@ -31,15 +31,17 @@ Repo version: **0.1.0**
       migration namespaces
 - [x] `contracts/types/`, `contracts/events/`, `contracts/openapi/`,
       `contracts/db/` — concrete contract artefacts
-- [x] `.claude/agents/` — 28 agent definitions
+- [x] `.claude/agents/` — 28 agent definitions (24 builders, 4 blocking reviewers)
 - [x] `gates/` — G0–G8 ladder, verdict schema, loop rules, Karpathy lens
 - [x] `.claude/skills/` — 6 operational skills
 - [x] `spec/` — 13 domain specifications
+- [x] `scripts/check-conventions.sh` — passes clean on the whole repo
 - [x] `versions/manifest.json` — 83 externally validated entries with source URL
       and check timestamp (REQ-VER-02, REQ-VER-03)
 - [x] `normalizers/` — engine contract, descriptor JSON Schema, two worked
       descriptors validated against it (REQ-DAT-02, REQ-DAT-03)
-- [x] `compliance/` — CRA and CER document sets
+- [x] `compliance/` — 11 CRA and CER documents
+- [x] `versions/traps.json` — 5 inherited compatibility traps (REQ-VER-05)
 
 ---
 

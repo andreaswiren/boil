@@ -253,8 +253,10 @@ stored  kind, prefix ("pk_live_7Kq2Xb9t"), sha256(secret), owner, scopes, …
 | Rate limit | Per key, independent of the owner's session limits (REQ-SEC-11) |
 | Step-up | 300 s to mint, rotate or change scopes (`spec/auth.md` §6) |
 
-**Lifecycle audit (REQ-API-08)**: `apikey.key.mint`, `apikey.key.first_use`,
-`apikey.key.rotate`, `apikey.key.revoke`, `apikey.key.expire`. `first_use` is a
+**Lifecycle audit (REQ-API-08)**: `apikey.key.mint`, `apikey.key.first-use`,
+`apikey.key.rotate`, `apikey.key.revoke`, `apikey.key.expire` — event names
+follow the permission grammar, kebab-case action included
+(`spec/rbac-tenancy.md` §1). `first-use` is a
 distinct event because the gap between minting and first use is the signal that
 a key leaked before it was ever deployed. `expire` is emitted by the expiry job,
 not lazily on the next attempted use — a key nobody tries again still expires on

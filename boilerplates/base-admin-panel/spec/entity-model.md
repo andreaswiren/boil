@@ -86,7 +86,7 @@ an exemption is granted, so the answer is not re-argued per table.
 | **Machine-written** | Written by a process with no human actor — browser lifecycle, queue worker, normalization engine | the actor columns it cannot fill | `push_subscriptions`, `mail_outbox`, `quarantine` |
 | **Insert/soft-delete only** | The row is created and revoked, never edited | `updated_*` | `user_roles` |
 | **UI state** | Per-user presentation preference with no audit interest | `comment` | `user_grid_prefs`, `user_preferences` |
-| **Migration bookkeeping** | Written by the migration runner before the app role exists | all seven | `schema_migrations` |
+| **Migration bookkeeping** | Written by the migration runner before the app role exists | all seven | `schema_migrations` (A01) |
 
 Class-level justifications, once, instead of per table:
 
@@ -100,7 +100,10 @@ Class-level justifications, once, instead of per table:
   keeps `created_*` and `updated_*` and loses `deleted_*` because a queue row
   leaves by retention purge, not by a user's delete.
 - **Migration bookkeeping** predates the DAL. `schema_migrations` is written by
-  the runner as `app_owner`; a DAL-set actor column is impossible there.
+  the runner as `app_owner`, before the app role exists, so a DAL-set actor
+  column is impossible there. It is A01's table and it is the one class member
+  with no row yet in the register — the row is filed as an additive CCR at the
+  freeze, because the table is created before the register is assembled.
 
 `ENTITY_BASE_EXEMPTIONS` in `packages/contracts/entity-base.ts` is the
 machine-readable form, and `contracts/types/entity-base.md` §6 is its register.
