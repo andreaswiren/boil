@@ -9,6 +9,136 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-09-21
+
+Four subsystems added to `base-admin-panel`: a first-run setup wizard,
+certificate automation, an HAProxy edge, and the settings surfaces. 57 new
+requirements (215 → 272), two new build agents (24 → 26), Wave 3 now 15-wide.
+
+### Added
+
+**First-run setup wizard (`REQ-WIZ-01` … `REQ-WIZ-14`, agent A24)**
+- A wizard that launches at first login and cannot be skipped. Every other route
+  redirects to it while setup is incomplete, and the API refuses non-wizard calls
+  with a distinct error code rather than a generic 403.
+- The shipped account is `admin@example.invalid` with a password **generated at
+  first boot** — never a fixed default, never in the repo or the image. It is
+  constrained to completing setup: it holds no tenant-data permission and cannot
+  call the API. It is not a global admin with a temporary password, which is the
+  failure this design exists to prevent.
+- Creating the real admin and destroying the bootstrap credential happen in one
+  transaction. MFA enrolment with recovery codes is mandatory before that step
+  can complete (`REQ-AUT-05`, `REQ-AUT-06`).
+- SMTP must pass a **live verification send** before email-based password and OTP
+  recovery is enabled. Configuration that has never delivered a message does not
+  count as configured.
+- Environment guidance reads actual runtime config through A01's env schema and
+  reports missing versus insecure-default, rather than printing a static
+  checklist.
+- Resumable: each step either completes and records, or leaves nothing behind.
+- Completion signs the session out, so the first real login is a real login.
+
+**Certificate automation (`REQ-ACME-01` … `REQ-ACME-18`, agent A25)**
+- All four validation paths: HTTP-01, DNS-01, TLS-ALPN-01 and **DNS-PERSIST-01**.
+  The last one is real and newly practical: Let's Encrypt announced it
+  2026-02-18, the record is a persistent TXT at `_validation-persist.<domain>`
+  binding an ACME account and CA, CA/B ballot SC-088v3 passed in October 2025,
+  and it suits multi-tenant platforms specifically.
+- Renewal is **ARI-driven** (ACME Renewal Information), not a fixed fraction of
+  lifetime. That distinction is load-bearing: Let's Encrypt's short-lived profile
+  is 160 hours and expects renewal every 2–3 days with at-least-daily ARI checks,
+  so a "renew at two-thirds of lifetime" rule is simply wrong there.
+- Check interval configurable down to 1 hour; safety margin configurable. Those
+  are the only two renewal knobs a user should ever need.
+- Full ACME protocol debug logs in the renewal settings screen — every step,
+  request, response, challenge transition, DNS lookup and error — reusing the
+  existing `console-stream` protocol rather than inventing a second one, and
+  subject to the same redaction rules.
+- Guided DNS setup checks propagation against the domain's **authoritative**
+  nameservers, because a cached negative answer from a recursive resolver makes a
+  correct record look wrong.
+
+**HAProxy edge (`REQ-PROX-01` … `REQ-PROX-12`, agent A01)**
+- HAProxy is the default and only shipped edge, present even when the stack sits
+  behind another proxy. Long-lived connections are load-bearing here — the debug
+  console streams over SSE — and a proxy that buffers or coalesces breaks that
+  feature while passing every short-request test.
+- `REQ-PROX-06` therefore asserts that events emitted 5s apart **arrive** 5s
+  apart, not that the endpoint returns 200.
+- Three topologies: `self` (default, we own the edge and ACME end to end),
+  `behind-proxy` (an upstream terminates public TLS), `delegated` (no HAProxy).
+  Challenge-type availability follows from the topology, so the wizard steers the
+  user rather than letting an order fail at issuance.
+- Hitless certificate installation via HAProxy's Runtime API (`set ssl cert` +
+  `commit ssl cert`). **Recorded trap:** Runtime API changes are in-memory only
+  and lost on stop, so the installer writes to disk *and* applies live, and the
+  test restarts the edge and re-asserts. Disk-only serves nothing; runtime-only
+  silently reverts to the expired certificate on the next restart.
+- Forwarded client address is trusted only from a configured trusted-proxy list.
+  The audit trail records source IP, so a wrong client address is an integrity
+  defect in the audit record, not a cosmetic one.
+
+**Settings surfaces (`REQ-SET-01` … `REQ-SET-12`, agent A05)**
+- Three always-distinguishable scopes: personal, tenant, global. Each panel
+  states its scope *before* the save, shows the effective value and its source,
+  and says so when a higher scope has locked it.
+- Panels are contributed by the domains that own the data through a registry. No
+  shared settings array exists — the same rule that keeps the parallel wave safe.
+- Owned by A05, which already owned the settings shell. Adding an agent for a
+  surface that already has an owner is the speculative generality the Karpathy
+  lens exists to catch.
+
+**Self-sufficiency (`REQ-FND-11`)**
+- `docker compose up` on a clean host with a domain pointed at it yields a
+  working HTTPS deployment: edge terminating TLS, certificate provisioned,
+  migrations applied, app serving. No PaaS, no external orchestrator, no manual
+  step between the command and a login page. A platform may sit on top; none is
+  required.
+
+### Changed
+
+- **Docker Compose is the deployment target; a PaaS is one supported platform on
+  top of it.** `REQ-WIZ-08` previously named a specific third-party platform as
+  the subject of a `MUST`, which is the wrong shape for a requirement. It is now
+  deployment guidance for the plain compose path, with platform notes as a
+  separated subsection. No requirement text names a deployment vendor.
+- `REQ-ACME-03` and `REQ-PROX-03` describe `behind-proxy` generically — a PaaS, a
+  load balancer, a CDN, a hand-rolled proxy. The mode was always the right
+  abstraction; the vendor was never part of it.
+- `REQ-FND-04` names the `edge` HAProxy service.
+- Every wave-width reference updated from 13 to 15 across 20 files.
+- Contract member index extended with `wizard-state`, `certificate`,
+  `settings-registry` and `edge-topology`.
+
+### Fixed
+
+Two additive CCRs, both surfaced by writing the settings panel inventory rather
+than by discovering a blank screen at G6:
+
+- **`AuditEvent.settingsScope`.** The envelope is `.strict()` and published no
+  scope field, so `REQ-SET-09` was unsatisfiable and "every global change last
+  week" was not a query. The two cheaper-looking alternatives are recorded as
+  rejected: scope inside `target.id` turns a column filter into a prefix match,
+  and a correlated second event doubles the trail and adds a breakable pairing.
+- **Thirteen missing permission strings.** Enforcing "a global-scope panel must
+  be gated by a `global.*` string" turned a vague gap into a list: five global
+  panels had no permission at all. Since an unresolved permission denies, they
+  would have shipped invisible — present in code, absent from the UI, nothing
+  failing.
+
+Also resolved: error message keys live at `<domain>.errors.<code_tail>` with
+A02's `errors` namespace reserved for cross-domain codes, because the domain
+that defines an error owns its wording; and `precision: "milli"` was added to the
+time contract because the console renders sub-second timestamps and would
+otherwise have formatted locally, breaking the single-formatter rule.
+
+### Notes
+
+- Still no generated application. Every claim remains a design claim.
+- `REQ-FND-11`'s guarantee is the one most worth testing first, because it is the
+  claim a user meets in their first thirty seconds.
+
+
 ## [0.1.0] — 2026-09-21
 
 First release. Establishes the repository as a collection of boilerplates and
@@ -144,5 +274,6 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/andreaswiren/boil/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/andreaswiren/boil/releases/tag/v0.1.0

@@ -26,12 +26,11 @@ You own the first ninety seconds of this product's life. Everything else in the 
 | REQ-WIZ-11 | Completion writes the record, destroys the setup cookie, and forces a real login. No continuation into `(app)` on the wizard's cookie. |
 | REQ-WIZ-12 | Re-running a step needs `global.setup-step.run`, step-up and typed confirmation, appends `run_ordinal = n+1`, and emits `setup.step.rerun` — never `setup.step.completed`. `create-admin` and `review-complete` are never re-runnable. |
 | REQ-WIZ-13 | Every non-setup route redirects; every non-setup `/api/v1` call returns `setup.incomplete` → 503. Health routes stay 200. |
-| REQ-WIZ-14 | `setup` i18n namespace, ICU, `en` + `sv`, usable at 390px including the ten recovery codes. It is the first screen anyone sees. |
-| REQ-ACME-03 | Step 4 surfaces the three-value termination mode explicitly (`self` default, `behind-proxy`, `delegated`) and records it. You store the decision; A25 honours it. |
-| REQ-PROX-03 | The topology is stored configuration, not an inference. `self` is the default because `docker compose up` must yield working HTTPS on its own (REQ-FND-04). |
+| REQ-WIZ-14 | `setup` i18n namespace, ICU, `en` + `sv`, usable at 390px including the ten recovery codes. It is the first screen anyone sees. Every timestamp goes through `packages/contracts/time` (REQ-TIM-04); no `toLocaleString`. |
+| REQ-ACME-03 | Step 4 asks the three-value termination mode explicitly (`self` default, `behind-proxy`, `delegated`) and records the answer. The authoritative value is `TLS_TERMINATION_MODE` in A01's env schema — you never store the mode in your own table (`spec/acme-tls.md` §2). |
+| REQ-PROX-03 | `self` is the pre-selected answer because `docker compose up` must yield working HTTPS on its own (REQ-FND-04, REQ-FND-11). The step completes only when the parsed env matches the answer; a `behind-proxy` answer also needs the upstream's address for the trusted-proxy list (REQ-PROX-10). |
 | REQ-SET-08 | Your settings panel is declared inside `packages/setup` and rendered by A05's shell. You never open a file under `app/(app)/settings/`. |
 | REQ-CTR-08 | `GET /api/v1/setup/_selftest` proves your side of the contract. |
-| REQ-TIM-04 | Every timestamp you render goes through `packages/contracts/time`. No `toLocaleString`. |
 
 ## Files you own
 
@@ -127,7 +126,9 @@ export const declaration = {
     { name: "setup_steps", tenantScoped: false },
   ],
   env: [
-    { name: "SETUP_DEPLOY_TARGET", schema: z.enum(["compose", "dokploy", "other"]).default("compose") },
+    // Which platform-notes panel step 4 offers. The topology itself is
+    // TLS_TERMINATION_MODE, owned by A25 — you read it, you never declare it.
+    { name: "SETUP_PLATFORM_NOTES", schema: z.enum(["none", "dokploy"]).default("none") },
     { name: "SETUP_BOOTSTRAP_ROTATE", schema: z.coerce.boolean().default(false) },
     { name: "SETUP_SMTP_VERIFY_MAX_PER_HOUR", schema: z.coerce.number().int().positive().max(20).default(5) },
   ],
@@ -136,7 +137,7 @@ export const declaration = {
 
 ## Contract you consume
 
-You read `entity-base`, `errors`, `time` (A02), `Actor`/`ActorRef`/`Session` (A03), `rbac` permission strings (A04), `SettingsPanel` (A05), `SenderIdentity`/`OutboxEntry`/`mail-template` (A12), `audit-event` (A13), `theme-tokens` (A06), `env-schema` (A01) and the `setup` namespace (A14). All through `packages/contracts@^1.0.0`. You import no domain package (REQ-CTR-01).
+You read `entity-base`, `errors`, `time` (A02), `Actor`/`ActorRef`/`Session` (A03), `rbac` strings (A04), `SettingsPanel` (A05), `theme-tokens` (A06), `SenderIdentity`/`OutboxEntry` (A12), `audit-event` (A13), `env-schema` (A01) and the `setup` namespace (A14) — all through `packages/contracts@^1.0.0`. You import no domain package (REQ-CTR-01).
 
 You wait for nobody. Build against `packages/fixtures/contracts/identity.fixture.ts` for `provisionGlobalAdmin` and the returned `ActorRef` (including the replay case that must return the same actor), `rbac.fixture.ts` for the re-run permission decision and the empty-permission-set case, `mail-target.fixture.ts` for the relay variants — implicit TLS, mandatory STARTTLS, no-STARTTLS and untrusted-certificate (both must fail closed), and accept-then-4xx-defer, which is exactly the case that proves a `250` is not a delivery — `audit-event.fixture.ts` for emission shape, `nav-registry.fixture.ts` for the `SettingsPanel` contribution, and A01's `packages/config/contract.declaration.ts` for the env keys your report classifies. Everything else goes through A11's generated client with `CONTRACT_STUBS=1`.
 
@@ -144,7 +145,7 @@ You wait for nobody. Build against `packages/fixtures/contracts/identity.fixture
 
 ## How to work
 
-1. Read `build/intake.md` for the deploy target, locales and app name, and `build/approvals.md` for the approved layout — the wizard renders inside it (REQ-WIZ-14).
+1. Read `build/intake.md` for the platform notes to ship, the locales and the app name, and `build/approvals.md` for the approved layout — the wizard renders inside it (REQ-WIZ-14).
 2. Write `packages/setup/contract.declaration.ts` first, in one commit, before implementation. A02 needs it and your own code then imports the schemas from `packages/contracts`.
 3. Write `db/migrations/A24/`: `setup_state` as a singleton (a `CHECK (id = 1)` column or a unique partial index — one row, enforced by the database), `setup_steps` append-only with primary key `(step, run_ordinal)` and no `UPDATE` grant. Both carry the REQ-ENT-01 envelope. Declare `tenantScoped: false`; write no policy.
 4. Implement first-boot generation: find-or-create `setup_state`, generate only when absent, print one framed block to stdout, store the Argon2id hash. Then the `SETUP_BOOTSTRAP_ROTATE=1` path, refusing when `completed_at` is set.
@@ -153,11 +154,10 @@ You wait for nobody. Build against `packages/fixtures/contracts/identity.fixture
 7. Implement the teardown in one transaction with the guarded `WHERE`, and write the crash-injection test in the same commit. This is the most dangerous code you own.
 8. Implement the SMTP step: config hash, one verification token per hash, `idempotencyKey` on the enqueue, the typed-code confirmation, and the rate limit. Keep the relay password out of `draft` and out of every error surface (REQ-MAIL-06).
 9. Implement the environment report over A01's assembled schema, with `env-rules.ts` for the known-dev-value digests. Assert in a test that no report response contains a live value.
-10. Implement step 4: topology selection, the challenge consequence read from A25's published availability matrix, and the platform subsection. Generic Docker Compose path first; Dokploy is an example, not the frame.
+10. Implement step 4: the topology question pre-selected from A25's detection result, the challenge consequence read from A25's published availability matrix, the parsed-env comparison that gates completion, the trusted-proxy address when the answer is `behind-proxy`, and the platform subsection. Generic Docker Compose path first; Dokploy is an example, not the frame.
 11. Implement the lockout: register `readSetupGate()` on the contract at boot, and answer `setup.incomplete` from the route kit for everything outside `/api/v1/setup/**`.
-12. Build `(setup)` routes from A06's tokens and the `setup` namespace, every timestamp through `packages/contracts/time`, tested at 390px.
-13. Register your settings panel inside `packages/setup` for A05's shell to read. Registry, never a shared list — do not go looking for an array in A05's files, because that array does not exist.
-14. Ship `GET /api/v1/setup/_selftest`, then run `pnpm --filter @app/setup test` and the contract interface tests (REQ-CTR-10).
+12. Build `(setup)` routes from A06's tokens and the `setup` namespace, every timestamp through `packages/contracts/time`, tested at 390px. Register your settings panel inside `packages/setup` for A05's shell to read — registry, never a shared list; do not go looking for an array in A05's files, because that array does not exist.
+13. Ship `GET /api/v1/setup/_selftest`, then run `pnpm --filter @app/setup test` and the contract interface tests (REQ-CTR-10).
 
 ## Definition of done
 
@@ -166,18 +166,13 @@ You wait for nobody. Build against `packages/fixtures/contracts/identity.fixture
 - [ ] `GET /api/v1/setup/_selftest` returns 200 asserting: all five schemas parse, all 8 permission strings resolve, both tables carry the REQ-ENT-01 envelope, `setup_steps` has no `UPDATE` grant, `setup_state` holds at most one row, and all 3 env vars are present (REQ-CTR-08).
 - [ ] Test: first boot prints exactly one credential block; a second boot prints none and changes no hash; `SETUP_BOOTSTRAP_ROTATE=1` rotates before completion and exits non-zero after it (REQ-WIZ-02).
 - [ ] Test: `grep -rn "example.invalid" packages apps db | grep -v test` finds no password literal, and the generated password appears in no table column (REQ-WIZ-02, REQ-FND-08).
-- [ ] Test: the bootstrap cookie against every non-setup operation in the OpenAPI document returns `setup.incomplete`; against 20 tenant-scoped reads it returns zero rows or raises (REQ-WIZ-03, REQ-WIZ-13).
-- [ ] Test: a crash between `provisionGlobalAdmin` and the teardown commit leaves the credential valid, no step-2 row, and a retry that returns the same actor id (REQ-WIZ-04, REQ-WIZ-09).
-- [ ] Test: no code path re-enables the bootstrap account — asserted by calling every exported mutator against a completed `setup_state` and expecting refusal (REQ-WIZ-04).
-- [ ] Test: step 2 cannot complete without an enrolled factor and 10 issued recovery codes (REQ-WIZ-05).
-- [ ] Test: against the accept-then-defer relay fixture the step stays incomplete; against the no-STARTTLS and untrusted-certificate fixtures the send fails closed; a replayed enqueue produces one outbox row (REQ-WIZ-06, REQ-MAIL-04).
-- [ ] Test: the env report classifies a known dev `CRYPTO_KEK` as `insecure_default` and blocking, and no response body contains a live env value (REQ-WIZ-07).
-- [ ] Test: in `behind-proxy`, HTTP-01 and TLS-ALPN-01 are refused at selection with the reason, and the recorded mode is what A25 reads (REQ-ACME-03, REQ-PROX-03).
-- [ ] Test: completion destroys the cookie, a subsequent wizard request returns `setup.already_complete`, and the first real login succeeds with password + TOTP (REQ-WIZ-11).
-- [ ] Test: a re-run without `global.setup-step.run` or without step-up is refused; a permitted one appends `run_ordinal = 2` and emits `setup.step.rerun`; `create-admin` refuses at every tier (REQ-WIZ-12).
+- [ ] Test: the bootstrap cookie against every non-setup operation in the OpenAPI document returns `setup.incomplete`; against 20 tenant-scoped reads it returns zero rows or raises (REQ-WIZ-03, REQ-WIZ-13). The env report classifies a known dev `CRYPTO_KEK` as `insecure_default` and blocking, and no response body holds a live env value (REQ-WIZ-07).
+- [ ] Test: a crash between `provisionGlobalAdmin` and the teardown commit leaves the credential valid, no step-2 row, and a retry that returns the same actor id; and every exported mutator called against a completed `setup_state` refuses, so no path re-enables the account (REQ-WIZ-04, REQ-WIZ-09).
+- [ ] Test: step 2 cannot complete without an enrolled factor and 10 issued recovery codes (REQ-WIZ-05); against the accept-then-defer relay fixture step 3 stays incomplete; against the no-STARTTLS and untrusted-certificate fixtures the send fails closed; a replayed enqueue produces one outbox row (REQ-WIZ-06, REQ-MAIL-04).
+- [ ] Test: in `behind-proxy`, HTTP-01 and TLS-ALPN-01 are refused at selection with the reason; step 4 stays incomplete while the recorded answer differs from the parsed `TLS_TERMINATION_MODE` and completes after a restart that matches them; and a `behind-proxy` answer without an upstream address is refused (REQ-ACME-03, REQ-PROX-03, REQ-PROX-10).
+- [ ] Test: completion destroys the cookie, a later wizard request returns `setup.already_complete`, and the first real login succeeds with password + TOTP (REQ-WIZ-11); a re-run without `global.setup-step.run` or without step-up is refused; a permitted one appends `run_ordinal = 2` and emits `setup.step.rerun`; `create-admin` refuses at every tier (REQ-WIZ-12).
 - [ ] Test: every event in `spec/setup-wizard.md` §11 fires exactly once per trigger with actor, result and correlation id (REQ-WIZ-10, REQ-AUD-04).
-- [ ] `pnpm i18n:check` finds no hardcoded user-visible literal under `packages/setup` or `app/(setup)`, and `pnpm test:visual` passes at 390/834/1440 in both themes with axe AA (REQ-WIZ-14, REQ-TST-06).
-- [ ] `grep -rn "toLocaleString\|toLocaleDateString\|Intl.DateTimeFormat" packages/setup apps/*/app/\(setup\)` returns nothing (REQ-TIM-04).
+- [ ] `pnpm i18n:check` finds no hardcoded user-visible literal under `packages/setup` or `app/(setup)`; `pnpm test:visual` passes at 390/834/1440 in both themes with axe AA (REQ-WIZ-14, REQ-TST-06); and `grep -rn "toLocaleString\|Intl.DateTimeFormat" packages/setup apps/*/app/\(setup\)` returns nothing (REQ-TIM-04).
 - [ ] `git diff --name-only` touches only paths in "Files you own".
 
 ## Hand-off
@@ -189,7 +184,7 @@ Write to `build/agents/A24/`:
 - `declaration.json` — the serialised contract declaration A02 assembles.
 - `env.md` — your three env vars with type, default and whether a missing value must fail boot (A01 writes `.env.example` from this).
 - `threats.md` — for S1 and S2: the bootstrap credential's exposure window, the log-print decision, the lockout bypass surface you considered, and what you did not defend against and why.
-- `operator-notes.md` — the first-boot log line's exact shape and the rotation procedure, for A16's help topic and A22's README section. You do not edit `README.md`.
+- `operator-notes.md` — the first-boot log line's shape and the rotation procedure, for A16's help topic and A22's README section. You do not edit `README.md`.
 - Any CCR as `build/ccr/<n>-<slug>.md`, starting with `identity.provisionGlobalAdmin` if it is absent from the freeze. Do not edit `packages/contracts` yourself.
 
 C1, C2, S1 and S2 vote on this work. You do not vote on it (REQ-GAT-07).

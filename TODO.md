@@ -3,7 +3,7 @@
 Live status for the `boil` repository. Updated in the same commit as the work it
 describes (`CLAUDE.md` hard rule 4).
 
-Repo version: **0.1.0**
+Repo version: **0.2.0**
 
 ---
 
@@ -21,20 +21,19 @@ Repo version: **0.1.0**
 - [x] `README.md`, `SECURITY.md`, `CHANGELOG.md`, `VERSION`
 
 ### base-admin-panel — prompt structure
-- [x] `spec/requirements.md` — 215 requirements, 25 domains, stable IDs (213 MUST, 1 SHOULD, 1 OPT)
-- [x] `spec/traceability.csv` — 215 rows, every requirement mapped to owner
+- [x] `spec/requirements.md` — 272 requirements, 29 domains, stable IDs (270 MUST, 1 SHOULD, 1 OPT)
+- [x] `spec/traceability.csv` — 272 rows, every requirement mapped to owner
       agent, contract member, gate and spec document; generated from the register
-- [x] `spec/agents.md` — 24 build agents in 5 waves, 4 gate agents
+- [x] `spec/agents.md` — 26 build agents in 5 waves, 4 gate agents; Wave 3 is 15-wide
 - [x] `prompts/00-master-orchestrator.md` — dispatch, gates, CCRs, loop discipline
 - [x] `contracts/README.md` — contract law (REQ-CTR-01 … REQ-CTR-10)
 - [x] `contracts/ownership.md` — single-owner map for paths, routes, tables,
       migration namespaces
-- [x] `contracts/types/`, `contracts/events/`, `contracts/openapi/`,
-      `contracts/db/` — concrete contract artefacts
-- [x] `.claude/agents/` — 28 agent definitions (24 builders, 4 blocking reviewers)
+- [x] `contracts/` — 21 artefacts across `types/`, `events/`, `openapi/`, `db/`
+- [x] `.claude/agents/` — 30 agent definitions (26 builders, 4 blocking reviewers)
 - [x] `gates/` — G0–G8 ladder, verdict schema, loop rules, Karpathy lens
 - [x] `.claude/skills/` — 6 operational skills
-- [x] `spec/` — 13 domain specifications
+- [x] `spec/` — 17 domain specifications, incl. setup wizard, ACME/TLS, edge proxy and settings
 - [x] `scripts/check-conventions.sh` — passes clean on the whole repo
 - [x] `versions/manifest.json` — 83 externally validated entries with source URL
       and check timestamp (REQ-VER-02, REQ-VER-03)
@@ -42,6 +41,41 @@ Repo version: **0.1.0**
       descriptors validated against it (REQ-DAT-02, REQ-DAT-03)
 - [x] `compliance/` — 11 CRA and CER documents
 - [x] `versions/traps.json` — 5 inherited compatibility traps (REQ-VER-05)
+
+---
+
+## Must resolve before the contract freeze (G3)
+
+Three contract members that the setup wizard's steps legally depend on. They are
+not design gaps — `spec/setup-wizard.md` specifies all three fully and builds
+against fixtures — but each is a member no agent has declared yet, and
+REQ-CTR-01 forbids A24 reaching into another package to do the work itself.
+A02 assembles them at G3, or Wave 3 starts with a step that cannot be
+implemented.
+
+- [ ] **`identity.provisionGlobalAdmin`** (A03 publishes, A24 consumes). Creating
+      the real admin writes `users`, `credentials`, `mfa_factors` and
+      `recovery_codes` — all A03's tables. Without this member, REQ-WIZ-05 has no
+      legal implementation. Specified as: idempotency key
+      `(setup_state.id, lower(email))`, atomic, returns `ActorRef`.
+- [ ] **A shared transaction handle, or an accepted invariant** (A02 decides).
+      REQ-WIZ-04 says the real admin is created and the bootstrap credential
+      destroyed "in one transaction", but the contract publishes no cross-package
+      transaction handle. A24 specified the invariant instead — strict ordering,
+      a guarded `WHERE` that makes teardown a no-op on replay, and a
+      crash-injection test — so the property held is "the credential is destroyed
+      only after a reachable admin exists". If a shared `tx` handle lands in
+      contracts, this collapses to a true single transaction with no spec change.
+      Either outcome is fine; leaving it undecided is not.
+- [ ] **`readSetupGate()`** (A02 publishes, A01 and A05 call). REQ-WIZ-13's
+      route-level redirect runs in `middleware.ts` (A01) and `(app)/layout.tsx`
+      (A05), and neither may import `packages/setup`. Specified using the same
+      boot-registration pattern A13 uses for `emitAuditEvent`. The API half needs
+      no new member — `setup.incomplete` → 503 already comes from A11's route kit.
+
+Two additive CCRs from this work are already assembled, so they are not on this
+list: `AuditEvent.settingsScope` and the `acme` / `edge` values on the
+`console-stream` domain enum.
 
 ---
 
@@ -69,6 +103,15 @@ is a design claim, not an observed one.
       structure, not just into the generated app.
 
 ### Gaps known now
+- [ ] `REQ-FND-11` is the claim most worth testing first: `docker compose up` on
+      a clean host yielding working HTTPS with nothing else installed. It is what
+      a user meets in their first thirty seconds, and nothing has verified it.
+- [ ] `DNS-PERSIST-01` production availability must be re-confirmed at build time
+      (`REQ-ACME-05`). Let's Encrypt targeted Q2 2026; A25 checks rather than
+      assumes.
+- [ ] The HAProxy Runtime API certificate flow needs a restart-survival test, not
+      just an install test — Runtime API changes are in-memory only
+      (`REQ-PROX-09`).
 - [ ] `spec/screenspace.md` surface budgets are starting numbers, not measured
       ones. They will be wrong until a real build argues with them (REQ-UI-10).
 - [ ] `typescript` is at its 7.x native-rewrite line. Needs the REQ-VER-04

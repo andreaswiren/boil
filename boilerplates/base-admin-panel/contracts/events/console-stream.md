@@ -52,6 +52,15 @@ export const ConsoleFrameSchema = z.object({
   domain: z.enum([
     "auth", "rbac", "tenancy", "grid", "audit", "api", "mail", "notify",
     "pwa", "canonical", "collector", "help", "platform", "global",
+    // Additive CCR from A25. REQ-ACME-10 surfaces the full ACME protocol
+    // trace in the certificate settings screen, and it reuses this stream
+    // rather than introducing a second console protocol. Without the enum
+    // value there is nothing to filter on, which is the one control an
+    // operator debugging a failed renewal actually needs.
+    "acme",
+    // Additive CCR from A01. REQ-PROX-12 puts HAProxy's runtime state -
+    // reloads, certificate load status, backend health - on the same stream.
+    "edge",
   ]),
   /** Dot-separated event name, same grammar as an audit action. */
   event: z.string().max(80),

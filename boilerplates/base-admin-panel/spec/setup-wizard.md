@@ -12,7 +12,7 @@ decisions and emits events.
 
 REQ-WIZ-01 … REQ-WIZ-14, REQ-PROX-03, REQ-PROX-08, REQ-ACME-03, REQ-AUT-05,
 REQ-AUT-06, REQ-SEC-07, REQ-SEC-11, REQ-MAIL-04, REQ-MAIL-06, REQ-FND-04,
-REQ-FND-07, REQ-AUD-04, REQ-SET-08, REQ-I18N-01, REQ-UI-07.
+REQ-FND-07, REQ-PROX-10, REQ-AUD-04, REQ-SET-08, REQ-I18N-01, REQ-UI-07.
 
 ## 1. The step machine (REQ-WIZ-01)
 
@@ -25,7 +25,7 @@ whose entry condition is unmet returns `setup.step_out_of_order` (409).
 | 1 | `welcome-preflight` | bootstrap session valid, `setup_state.completed_at IS NULL` | `setup_steps` row with the preflight snapshot; chosen locale into `setup_state.draft` | every blocking check green | nothing recorded; re-check action; failed checks listed with their REQ ID |
 | 2 | `create-admin` | step 1 complete | real global admin via `identity.provisionGlobalAdmin`; `setup_state.real_admin_actor_id`; bootstrap credential destroyed (§4) | the admin exists **with** an MFA factor enrolled and 10 recovery codes issued (REQ-AUT-05, REQ-AUT-06) | bootstrap credential still works, no admin half-exists, no record; retry idempotent on the same email |
 | 3 | `smtp` | step 2 complete | `SenderIdentity` through A12's interface; verification token in `setup_state.draft` | a real message was **delivered** and its code entered (REQ-WIZ-06) | sender config not persisted, email-based password/OTP recovery stays disabled, relay error shown credential-free (REQ-MAIL-06) |
-| 4 | `edge-environment` | step 3 complete | topology mode and certificate plan into the settings registry; environment report snapshot | a mode is chosen and every `blocking` environment row is cleared | mode unchanged, no partial write; an `insecure_default` row cannot be waived |
+| 4 | `edge-environment` | step 3 complete | the operator's topology answer, A25's detection result and the environment report into the `setup_steps` row; nothing outside my tables | the answer matches the parsed `TLS_TERMINATION_MODE`, the upstream's address is recorded when the answer is `behind-proxy` (REQ-PROX-10), and every `blocking` environment row is cleared | no record; the step shows the env lines to apply and stays incomplete until the restart that applies them (§8) |
 | 5 | `review-complete` | steps 1–4 complete | `setup_state.completed_at`, `completed_by`, `required_steps`, `steps_digest` | completion record committed and the operator is at `/sign-in` | no completion record; the wizard is still the only surface |
 
 Step 2 precedes step 3 deliberately: step 3's verification send goes to the real
@@ -120,13 +120,14 @@ pending verification token — never a credential: the relay password arrives in
 the request that completes step 3 and goes into A12's envelope-encrypted
 `credentialRef` (REQ-SEC-06).
 
-Three steps have effects outside my tables and are made idempotent one by one:
+Two steps have effects outside my tables, and each carries its own idempotency
+key. Step 4 has none: its output is an env change the operator applies, so the
+step writes only its own row (§8).
 
 | Step | External effect | Idempotency mechanism |
 |---|---|---|
 | 2 `create-admin` | rows in A03's identity tables | idempotency key `(setup_state.id, lower(email))` on `provisionGlobalAdmin`; a replay returns the same actor and writes nothing new |
 | 3 `smtp` | **a real email leaves the building** | a 128-bit token generated once per `(step, sha256(sender_config))`; the enqueue carries `idempotencyKey = "setup.smtp." + config_hash + "." + token` (REQ-MAIL-04), so a crash-and-resume re-enqueues nothing. Editing the config changes the hash, voids the token and forces a new send. Max 5 sends per hour per config hash (REQ-SEC-11) |
-| 4 `edge-environment` | settings-registry values A25 and A01 read | a keyed upsert of one value per key, not an append — replaying it is a no-op |
 
 Step 3 completes on **confirmation of delivery**, not on a `250` from the relay:
 a relay accepting a message is not a delivered message. The operator enters the
@@ -174,41 +175,56 @@ to my table.
 Docker Compose is the deployment target (REQ-FND-04), and the path step 4 walks
 by default is `docker compose up` on a clean host with DNS pointed at it: our
 HAProxy edge terminates TLS, our ACME client provisions the certificate, nothing
-else installed. That is REQ-PROX-03 `self` mode and it is pre-selected. HAProxy
-is ours and always in the path (REQ-PROX-01); the question is which of three
-topologies this deployment is, asked explicitly, never inferred (REQ-ACME-03):
+else installed. That is REQ-PROX-03 `self` mode, and it is the answer pre-selected
+when A25's detection finds nothing in front of us. HAProxy is ours and always in
+the path (REQ-PROX-01); which of the three topologies applies is asked
+explicitly, never inferred silently (REQ-ACME-03):
 
-| Mode | Path | Public certificate | Internal ACME | Challenges for the public name |
-|---|---|---|---|---|
-| `self` (**default**) | client → our HAProxy → app | ours | enabled, all four paths (REQ-ACME-01) | HTTP-01, TLS-ALPN-01, DNS-01, DNS-PERSIST-01 |
-| `behind-proxy` | client → an upstream proxy → our HAProxy → app | the upstream's | disabled **for the public hostname only** | DNS-01, DNS-PERSIST-01 |
-| `delegated` | client → external proxy → app | the external proxy's | fully disabled | none — the app orders no certificate |
+| Mode | Path | Who owns the public certificate | Internal ACME |
+|---|---|---|---|
+| `self` (**default**) | client → our HAProxy → app | us, end to end via A25 | enabled, all four paths (REQ-ACME-01) |
+| `behind-proxy` | client → an upstream proxy → our HAProxy → app | the upstream | disabled **for the public hostname only** |
+| `delegated` | client → external proxy → app | the external proxy | fully disabled |
+
+Which challenges each mode leaves available is A25's matrix in
+`spec/acme-tls.md` §2.5, read by the picker — step 4 never restates it.
 
 `behind-proxy` is the generic case where something upstream already terminates
 public TLS: a PaaS, a corporate load balancer, a CDN, a hand-rolled nginx. That
 upstream answers on port 80 and owns the 443 handshake, so **HTTP-01 and
 TLS-ALPN-01 for the public name cannot succeed**; they are refused at selection
-rather than at issuance (REQ-ACME-02) and the step steers the operator to DNS-01
-or DNS-PERSIST-01, with the reason stated. A25's `spec/acme-tls.md` holds the
-authoritative availability matrix; step 4 reads it and does not restate it. The
+rather than at issuance (REQ-ACME-02) and the step names DNS-01 or
+DNS-PERSIST-01 as the answer, with the reason stated. The
 HAProxy↔app hop is TLS in `self` and `behind-proxy` alike — REQ-SEC-01 and
 REQ-PROX-08 have no exemption for traffic inside the compose network — so
 `behind-proxy` means the upstream owns the public certificate, not that our proxy
 stops doing TLS.
 
+**A24 asks; it does not store the mode.** The authoritative value is
+`TLS_TERMINATION_MODE` in A01's env schema, because it decides which ports are
+bound and which HAProxy config is rendered at boot (`spec/acme-tls.md` §2,
+`spec/edge-proxy.md` §2); a row of mine would be writable by a request but
+effective only after a rebuild, so the screen would show a value the running
+stack is not using. Step 4 records the answer and completes only when the parsed
+env equals it; when they differ it emits the copy-paste line, states that a
+restart is required, and stays incomplete — the restart is expected, and the
+wizard resumes at step 4 (REQ-WIZ-09). A `behind-proxy` answer also needs the
+upstream's address for the trusted-proxy list, because there is no safe default
+for trusting a hop (REQ-PROX-10).
+
 The step then shows the environment report (§7), the DNS records the chosen
 challenge needs (name, type, value, TTL — REQ-ACME-04), and what to verify: a
-certificate loaded at `edge`, HTTPS answering on the public name, an SSE stream
-surviving the proxy (REQ-PROX-05).
+certificate at `edge`, HTTPS on the public name, an SSE stream surviving the
+proxy (REQ-PROX-05).
 
 ### If a PaaS already fronts your containers (REQ-WIZ-08)
 
-Shown when the mode is `behind-proxy`, one worked example per platform the intake
-names. Dokploy is the shipped example:
+Shown when the answer is `behind-proxy`, one worked example per platform, chosen
+by `SETUP_PLATFORM_NOTES`. Dokploy is the shipped example:
 
 | What | Dokploy |
 |---|---|
-| Where variables are set | The **Environment editor** in project settings. Dokploy writes the `.env`; values are referenced as `${VAR_NAME}`. Do not hand-edit `.env` inside the container |
+| Where variables are set | The **Environment editor** in project settings — including `TLS_TERMINATION_MODE=behind-proxy`. Dokploy writes the `.env`; values are referenced as `${VAR_NAME}`. Do not hand-edit `.env` inside the container |
 | After changing a variable | **A container rebuild is required.** Changes are not picked up automatically. Every copy-paste block in this panel repeats that line, because this is what trips people |
 | Where the domain is set | The **Domains tab**, not the compose file — Dokploy injects the Traefik labels at deploy time, so hand-written labels are the wrong layer. The domain points at **our `edge` service**, not the app container (REQ-PROX-02) |
 | Networking | Every service is attached to the `dokploy-network` network |
@@ -264,7 +280,7 @@ tenant, so they join the global hash chain (REQ-AUD-06) — A13 owns the chain.
 | `setup.bootstrap.disabled` | **critical** | same transaction as the above (§4) |
 | `setup.smtp.verification_sent` / `_confirmed` | info | config hash, never the credential |
 | `setup.smtp.configured` | warning | diff with `credentialRef` redacted |
-| `setup.topology.set` | warning | diff: mode, challenge plan, platform, and the environment-report state counts per class — never a value |
+| `setup.topology.answered` | warning | the recorded answer, A25's detection result, the parsed env value, the trusted-proxy address, and the environment-report state counts per class — never a value |
 | `setup.wizard.completed` | **critical** | the completion-record digest |
 | `setup.step.rerun` | warning | step id, `run_ordinal`, actor, reason |
 | `setup.bootstrap.rejected` | warning | a bootstrap cookie presented after teardown |
@@ -275,13 +291,13 @@ Namespace `setup`, ICU, `en` and `sv` at ship (REQ-I18N-03, REQ-I18N-06), no
 user-visible literal in a rendered path (REQ-I18N-02) — platform notes and error
 details included. With no user preference and no tenant yet, locale resolves
 `Accept-Language` → system default (REQ-I18N-04); step 1 offers a switcher whose
-choice persists in `setup_state.draft`, so a resume keeps the operator's language.
-At 390px: one step per screen, single column, 44px targets (REQ-UI-07), copy-paste
-blocks scrolling inside their own container so the page never scrolls
-horizontally, and the ten recovery codes fitting at 390×664 with no truncation and
-no hidden scroll region — a code the operator cannot see is a code they did not
-save. The `setup.wizard` surface budget is asserted at every breakpoint
-(REQ-UI-10); every timestamp goes through `packages/contracts/time` (REQ-TIM-04).
+choice persists in `setup_state.draft`. At 390px: one step per screen, single
+column, 44px targets (REQ-UI-07), copy-paste blocks scrolling inside their own
+container so the page never scrolls horizontally, and the ten recovery codes
+fitting at 390×664 with no truncation and no hidden scroll region — a code the
+operator cannot see is a code they did not save. The `setup.wizard` surface budget
+is asserted at every breakpoint (REQ-UI-10); every timestamp goes through
+`packages/contracts/time` (REQ-TIM-04).
 
 ## Decisions and defaults
 
@@ -293,6 +309,7 @@ save. The `setup.wizard` surface budget is asserted at every breakpoint
 | SMTP step completion | Operator confirms a delivered code; 5 sends/hour per config hash | A `250` is not a delivery (REQ-WIZ-06, REQ-SEC-11) | Rate, lower only |
 | Lockout API code | `setup.incomplete` → 503, retryable; health routes stay 200 | Not an authorisation failure (REQ-WIZ-13, REQ-FND-10) | No |
 | Primary deployment path | `docker compose up`, topology `self` | REQ-FND-04; one command must yield working HTTPS | Yes, per deployment |
+| Where the mode lives | `TLS_TERMINATION_MODE` env, never a row of mine | A row is writable by a request but effective only after a rebuild (`spec/acme-tls.md` §2) | No |
 | Platform guidance | A subsection under `behind-proxy`, Dokploy as the worked example | A PaaS is one instance of "an upstream terminates TLS", not the expected case | Yes, more examples |
 | Challenges in `behind-proxy` | DNS-01 or DNS-PERSIST-01, refused at selection | Port 80 and the 443 handshake belong to the upstream (REQ-ACME-02) | No |
 | Setup-state tenancy | Not tenant-scoped (`contracts/types/wizard-state.md`) | No tenant exists yet, and the tenant comes from a session (REQ-RBA-03) | No |
