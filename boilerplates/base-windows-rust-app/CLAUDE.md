@@ -2,7 +2,8 @@
 
 You have been pointed at a boilerplate. It builds a Windows desktop application
 in Rust — tray-resident, self-installing, self-updating, optionally a service —
-using a 19-agent fleet across 5 waves behind 9 gates.
+using a 23-agent fleet (19 builders, 4 reviewers) across 5 waves behind 9
+gates.
 
 ## Start here
 
@@ -28,7 +29,7 @@ document. Do not start a build to answer a question.
 | File | What it is |
 |------|------------|
 | `prompts/00-master-orchestrator.md` | How the build runs. Read this first. |
-| `spec/requirements.md` | 165 requirements with stable IDs. The source of truth. |
+| `spec/requirements.md` | 175 requirements with stable IDs. The source of truth. |
 | `spec/agents.md` | The fleet: `B00`–`B18`, `D1`, `D2`, `T1`, `T2`, and the waves. |
 | `contracts/ownership.md` | Who owns which path. The routing table for tasks and findings. |
 | `gates/gate-ladder.md` | `H0`–`H8`. |

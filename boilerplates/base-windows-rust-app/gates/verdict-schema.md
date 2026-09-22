@@ -80,7 +80,7 @@ with no `evidence` is not a finding, and one with no `fix` is a complaint.
             "description": "Mandatory in every D1 and D2 verdict, every round (REQ-GAT-06, karpathy-lens.md).",
             "required": ["overcomplication", "surgical", "assumptions", "verifiable"], "properties": {
               "overcomplication": { "enum": ["pass", "fail"] }, "surgical":   { "enum": ["pass", "fail"] },
-              "assumptions":      { "enum": ["pass", "fail"] }, "verifiable": { "enum": ["pass", "fail"] } } } } },
+              "assumptions":      { "enum": ["pass", "fail"] }, "verifiable": { "enum": ["pass", "fail"] } } } } } },
     "decision": { "type": "object", "required": ["blocking", "rationale"], "properties": {
         "blocking":     { "type": "boolean", "description": "true if any open finding is critical or high." },
         "rationale":    { "type": "string", "minLength": 30 },

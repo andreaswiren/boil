@@ -95,9 +95,61 @@ impl Elevation {
     };
 }
 
+/// REQ-DSN-10's seven states, as data. `contracts/README.md` promises this
+/// member carries per-state tokens; without them each of the nine Wave 3 crates
+/// decides for itself what "hover" costs, and `disabled` arrives as whatever the
+/// framework's default opacity happens to be.
+pub enum State { Rest, Hover, FocusVisible, Active, Disabled, Busy, Error }
+
+/// Which palette role draws the stroke. An enum rather than an `Rgba8` so that
+/// a state's stroke follows the theme instead of being frozen at one colour.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum BorderRole { Border, Danger, Accent }
+
+#[derive(Clone, Copy)]
+pub struct StateStyle {
+    /// Overlay of `palette.text_primary` composited over the control's own fill.
+    /// Expressed as an alpha, not a colour, so one number works in both themes:
+    /// `text_primary` is near-black in `LIGHT` and near-white in `DARK`, so the
+    /// same 0.08 darkens a light control and lightens a dark one. Tinting toward
+    /// a fixed grey is the shortcut that produces a third palette nobody designed.
+    pub layer_alpha: f32,
+    pub border_pt: f32,
+    pub border_role: BorderRole,
+    /// A dashed stroke, which is the only `disabled` cue that survives high
+    /// contrast: there `text_muted == text_primary` and the palette is two
+    /// colours, so neither muting nor 38% opacity can carry the state (§4).
+    pub border_dashed: bool,
+    /// Multiplies the whole control, including its text and its icon.
+    pub opacity: f32,
+    /// The two-tone focus ring (§5). `0.0` means no ring is drawn.
+    pub ring_pt: f32,
+    pub ring_gap_pt: f32,
+    /// `false` = the control ignores input. `busy` is non-interactive and still
+    /// focusable, because a screen reader must be able to read the state
+    /// (REQ-UI-05); the two flags are separate for exactly that case.
+    pub interactive: bool,
+    pub focusable: bool,
+    /// `true` = the control must carry a tooltip saying why it is in this state.
+    /// Asserted by the accessibility test, not left to each view (REQ-DSN-07).
+    pub tooltip_required: bool,
+}
+
+#[derive(Clone, Copy)]
+pub struct StateSet {
+    pub rest: StateStyle, pub hover: StateStyle, pub focus_visible: StateStyle,
+    pub active: StateStyle, pub disabled: StateStyle, pub busy: StateStyle,
+    pub error: StateStyle,
+}
+
+/// Selection is not an eighth state — REQ-DSN-10 names seven and a selected row
+/// can also be hovered, focused or in error. It composites on top.
+pub struct Selection { pub fill_alpha: f32, pub leading_bar_pt: f32 }
+
 pub struct Tokens {
     pub id: ThemeId, pub version: u32, pub palette: Palette, pub space: Spacing,
     pub radius: Radii, pub text: TypeScale, pub elevation: Elevation, pub motion: Motion,
+    pub state: StateSet, pub selection: Selection,
 }
 ```
 
@@ -138,6 +190,54 @@ const BASE_TYPE: TypeScale = TypeScale {
     caption:     TypeStyle { size: 12.0, line: 16.0, weight: 400, tracking:  0.1 },
     mono:        TypeStyle { size: 13.0, line: 18.0, weight: 400, tracking:  0.0 },
 };
+/// The seven states, straight out of `spec/design-system.md` §"Every state of
+/// every control". Shared by `LIGHT` and `DARK`: the values are alphas, weights
+/// and roles, so they resolve per theme without being restated per theme.
+impl StateStyle {
+    /// Every field at its resting value. Each state below states only what it
+    /// changes, so "hover costs an 8% layer and nothing else" is readable as one
+    /// line instead of being inferred by diffing ten fields against six siblings.
+    pub const REST: Self = Self {
+        layer_alpha: 0.0, border_pt: 1.0, border_role: BorderRole::Border, border_dashed: false,
+        opacity: 1.0, ring_pt: 0.0, ring_gap_pt: 0.0,
+        interactive: true, focusable: true, tooltip_required: false,
+    };
+}
+
+/// The seven states, straight out of `spec/design-system.md` §"Every state of
+/// every control". Shared by `LIGHT` and `DARK`: every value is an alpha, a
+/// weight or a role, so it resolves per theme without being restated per theme.
+const BASE_STATES: StateSet = StateSet {
+    rest:          StateStyle::REST,
+    hover:         StateStyle { layer_alpha: 0.08, ..StateStyle::REST },
+    focus_visible: StateStyle { ring_pt: 2.0, ring_gap_pt: 1.0, ..StateStyle::REST },
+    active:        StateStyle { layer_alpha: 0.12, ..StateStyle::REST },
+    disabled:      StateStyle { opacity: 0.38, interactive: false, focusable: false,
+                                tooltip_required: true, ..StateStyle::REST },
+    busy:          StateStyle { interactive: false, ..StateStyle::REST },
+    error:         StateStyle { border_pt: 2.0, border_role: BorderRole::Danger, ..StateStyle::REST },
+};
+/// `busy` keeps `opacity: 1.0` deliberately. Dimming a busy control is the
+/// obvious move and it is wrong: the control is not unavailable, it is working,
+/// and dimming it makes a 30-second operation look like a dead button.
+///
+/// High contrast cannot use `layer_alpha` or `opacity` at all — an 8% grey over
+/// a two-colour palette is the tint §4 forbids, and 38% of black on white is a
+/// grey that fails the contrast test the theme exists to pass. So weight and a
+/// dashed stroke carry every state instead, and the ring goes to 3pt because it
+/// is the only focus cue left.
+const HIGH_CONTRAST_STATES: StateSet = StateSet {
+    rest:          StateStyle::REST,
+    hover:         StateStyle { border_pt: 2.0, ..StateStyle::REST },
+    focus_visible: StateStyle { ring_pt: 3.0, ring_gap_pt: 1.0, ..StateStyle::REST },
+    active:        StateStyle { border_pt: 3.0, ..StateStyle::REST },
+    disabled:      StateStyle { border_dashed: true, interactive: false, focusable: false,
+                                tooltip_required: true, ..StateStyle::REST },
+    busy:          StateStyle { interactive: false, ..StateStyle::REST },
+    error:         StateStyle { border_pt: 2.0, border_role: BorderRole::Danger, ..StateStyle::REST },
+};
+const BASE_SELECTION: Selection = Selection { fill_alpha: 0.12, leading_bar_pt: 3.0 };
+
 pub const LIGHT: Tokens = Tokens {
     id: ThemeId::Light, version: TOKENS_VERSION, palette: LIGHT_PALETTE, text: BASE_TYPE,
     space:  Spacing { xxs: 2.0, xs: 4.0, sm: 8.0, md: 12.0, lg: 16.0, xl: 24.0, xxl: 32.0 },
@@ -149,6 +249,7 @@ pub const LIGHT: Tokens = Tokens {
         modal:   Shadow { y: 8.0, blur: 28.0, spread: -4.0, color: Rgba8::hexa(0x0F141F3D) },
     },
     motion: Motion { instant: 0, fast: 90, normal: 160, slow: 260, ease_out: [0.16, 1.0, 0.3, 1.0] },
+    state: BASE_STATES, selection: BASE_SELECTION,
 };
 /// The remaining three share `BASE_TYPE`, `space`, `radius` and `motion` with
 /// `LIGHT` and differ only where the comment says. Spelled out rather than
@@ -177,11 +278,11 @@ pub const DARK: Tokens = Tokens {
 /// ask for that.
 pub const HIGH_CONTRAST_LIGHT: Tokens = Tokens {
     id: ThemeId::HighContrastLight, palette: HIGH_CONTRAST_LIGHT_PALETTE,
-    elevation: Elevation::FLAT_ALL, ..LIGHT
+    elevation: Elevation::FLAT_ALL, state: HIGH_CONTRAST_STATES, ..LIGHT
 };
 pub const HIGH_CONTRAST_DARK: Tokens = Tokens {
     id: ThemeId::HighContrastDark, palette: HIGH_CONTRAST_DARK_PALETTE,
-    elevation: Elevation::FLAT_ALL, ..LIGHT
+    elevation: Elevation::FLAT_ALL, state: HIGH_CONTRAST_STATES, ..LIGHT
 };
 ```
 
@@ -217,7 +318,7 @@ are the **fallback** — the live scheme is the user's own, read through B01's F
 wrapper (§6) — and they exist so the §5 test has something compiled to assert
 over when no Windows session is present, which is every CI run.
 
-## 5. The contrast test contract (REQ-DSN-06, REQ-TST-05)
+## 5. The tests this contract owes (REQ-DSN-06, REQ-DSN-10, REQ-TST-05)
 
 WCAG 2.2 relative luminance, per channel, over the 8-bit sRGB value:
 
@@ -269,6 +370,42 @@ on `surface`), `NonText` 3.06 (`DARK.border` on `surface_raised`), `Adjacent`
 6.02. The `NonText` margin is thin on purpose — a border nudged one step lighter
 fails the test.
 
+The state set gets a test too, because REQ-DSN-10's failure mode is silence: an
+unstyled state compiles, renders, and looks approximately right until someone
+tries to use it.
+
+```rust
+#[test]
+fn every_state_is_reachable_and_distinguishable() {
+    for t in [LIGHT, DARK, HIGH_CONTRAST_LIGHT, HIGH_CONTRAST_DARK] {
+        let s = &t.state;
+        // busy is non-interactive and still focusable (REQ-UI-05). This is the
+        // pair most likely to be "simplified" into one flag.
+        assert!(!s.busy.interactive && s.busy.focusable, "{:?}", t.id);
+        // a control the user cannot use must say why (REQ-DSN-07)
+        assert!(s.disabled.tooltip_required, "{:?}", t.id);
+        // the ring is two-tone or it is not a ring (§5)
+        assert!(s.focus_visible.ring_pt > 0.0 && s.focus_visible.ring_gap_pt > 0.0, "{:?}", t.id);
+        // no state may be a no-op against rest: it would be an undesigned state
+        for (name, st) in [("hover", &s.hover), ("active", &s.active),
+                           ("disabled", &s.disabled), ("busy", &s.busy), ("error", &s.error)] {
+            assert!(differs_from_rest(st, s), "{:?}: {name} renders identically to rest", t.id);
+        }
+        // high contrast carries state by weight, never by alpha (§4)
+        if matches!(t.id, ThemeId::HighContrastLight | ThemeId::HighContrastDark) {
+            for st in [&s.rest, &s.hover, &s.focus_visible, &s.active, &s.disabled, &s.busy, &s.error] {
+                assert!(st.layer_alpha == 0.0 && st.opacity == 1.0, "{:?}: tinted state", t.id);
+            }
+        }
+    }
+}
+```
+
+The `differs_from_rest` assertion is the one that earns its keep. Every other
+check here fails loudly the moment someone writes the wrong value; that one fails
+when someone writes **no** value, which is how `busy` became a dimmed button and
+`disabled` became the framework default in every desktop app that has the bug.
+
 ## 6. Resolving a theme at runtime
 
 ```rust
@@ -315,6 +452,8 @@ Three rules for one requirement, because one rule has three holes.
 | A role's **value** changed | **breaking** | Every screenshot baseline (B15) and every `PAIRS` assertion. Bump `TOKENS_VERSION`, re-run the contrast test, re-take both themes at every DPI step (REQ-TST-08). |
 | A role's **meaning** changed, name kept | **breaking, worst case** | Nothing fails to compile and no test fails. Every call site is now wrong in a way only a human looking at the screen can see. Add a role, migrate the call sites, delete the old role in a separate change. |
 | A `Motion` duration changed | additive | Nothing asserts it, but `reduced()` must still return zeros. |
+| A new `StateStyle` field | **additive** | A CCR B02 assembles. It must be given a resting value on `StateStyle::REST`, or the six states that inherit from it change meaning silently. |
+| A new `State` or `BorderRole` variant | **breaking** | Every renderer's `match`. A state nobody styled must not fall through to `rest`, which is precisely how an unstyled `busy` becomes a button that ignores clicks and looks fine. |
 
 `TOKENS_VERSION` is compiled into the binary and shown in the diagnostics view
 (B12, REQ-OBS-03), so a screenshot in a support bundle can be matched to the

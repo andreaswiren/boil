@@ -20,7 +20,7 @@ Requirements: REQ-GAT-01 … REQ-GAT-08, plus the per-gate IDs cited in
 | H0 | Intake resolved | everything | yes — answers the scope questions |
 | H1 | Design approved | **all feature work** (REQ-GAT-08) | yes — **names the winner** |
 | H2 | Version validation | every `Cargo.toml` dependency line (REQ-VER-02) | only on a major jump (REQ-VER-04) |
-| H3 | Contract freeze | the launch of Wave 3 | only to arbitrate a breaking CCR |
+| H3 | Contract freeze | the launch of Wave 3 (REQ-CTR-02) | only to arbitrate a breaking CCR |
 | H4 | Crate self-test | H5 | no |
 | H5 | Integration | H6 and H7 | no |
 | H6 | Design & function critique | H8 | only on escalation (REQ-GAT-05) |
@@ -44,10 +44,11 @@ The order is strict. There is no "we will come back to H2".
   `versions/manifest.json` carries a source URL and a timestamp per entry
   (REQ-VER-03).
 - **H3 is a hard stop on collisions.** Wave 3 is nine agents wide. It launches
-  against a frozen `contracts 1.0.0` or it does not launch (`contracts/README.md`
-  §4).
+  against a frozen `contracts 1.0.0` or it does not launch (REQ-CTR-02,
+  `contracts/README.md` §4).
 - **H4 localises failure.** Each crate proves its own side of the contract before
-  anything is wired together, so an H5 failure names one owner instead of nine.
+  anything is wired together — interface tests run by both sides (REQ-CTR-10) — so
+  an H5 failure names one owner instead of nine.
 - **H5 is the honest gate.** Two targets built, a clean Windows image, a real
   signed manifest, and the upgrade path from the **previous released version**
   (REQ-TST-02). Everything before H5 can be true on a developer's machine and

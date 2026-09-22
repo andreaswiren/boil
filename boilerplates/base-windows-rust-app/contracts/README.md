@@ -4,14 +4,14 @@ Nine agents build this app at the same time and never speak to each other. They
 speak to one crate. This file is the law that governs that crate: what may be in
 it, who may put it there, when it freezes, and what may change afterwards.
 `contracts/ownership.md` says who owns which path; this file says what crosses
-between owners.
+between owners. Requirements: REQ-CTR-01 … REQ-CTR-10.
 
 ---
 
 ## 1. One coupling point
 
-`crates/contracts` is the **only** crate two other crates may share. No crate
-depends on another crate an agent owns. `crates/update` does not depend on
+`crates/contracts` is the **only** crate two other crates may share, and no crate
+depends on another crate an agent owns (REQ-CTR-01, REQ-CTR-04). `crates/update` does not depend on
 `crates/service`; it depends on `crates/contracts` and on the `service-state`
 member declared there.
 
@@ -20,14 +20,14 @@ ui · tray · install · service · update · obs ──▶ crates/contracts
                                           └───▶ crates/ffi  (Win32 only, §6)
 ```
 
-Two reasons, and the second bites hardest. Ownership: a crate-to-crate
-dependency is two agents editing one interface with no arbitration. Cargo: a
-dependency cycle does not compile, so by the time `crates/service` and
-`crates/update` each want the other, one is rewritten rather than patched.
+Two reasons, and the second bites hardest. Ownership: a crate-to-crate dependency
+is two agents editing one interface with no arbitration. Cargo: a dependency cycle
+does not compile, so by the time `crates/service` and `crates/update` each want the
+other, one is rewritten rather than patched.
 
-Checked at H4 over the workspace manifests — an agent-owned crate named in
-another crate's `[dependencies]` fails the gate. An agent that "just needs one
-type from `crates/service`" has found a missing member, not an exception.
+Checked at H4 over the workspace manifests: an agent-owned crate named in another
+crate's `[dependencies]` fails the gate. An agent that "just needs one type from
+`crates/service`" has found a missing member, not an exception.
 
 ## 2. What lives in the contract
 
@@ -84,8 +84,8 @@ does not resolve by last write.
 
 ## 4. The freeze (gate H3)
 
-At H3, B02 publishes `contracts 1.0.0` and the surface is frozen. Wave 3 launches
-against the frozen version or it does not launch. `config`, `errors`, `version`,
+At H3, B02 publishes `contracts 1.0.0` and the surface is frozen (REQ-CTR-02).
+Wave 3 launches against the frozen version or it does not launch. `config`, `errors`, `version`,
 `paths`, `ffi-boundary` and `design-tokens` must all be present first: every Wave 3 crate consumes one of them on its first task.
 A member missing at H3 becomes a CCR in the middle of a nine-wide wave, and CCR
 volume is the measurement of how well H3 was run.
@@ -95,9 +95,9 @@ not available.
 
 ## 5. Additive-only, and what "additive" means for a compiled binary
 
-There is no wire here. There is one binary with every crate compiled into it, so
-changes that are additive on an HTTP API are breaking in Rust — and the compiler
-catches most of them, but not all.
+Contract change is additive only (REQ-CTR-03). But there is no wire here — one
+binary, every crate compiled into it — so changes that are additive on an HTTP API
+are breaking in Rust, and the compiler catches most of them, not all.
 
 **Allowed** — a new type, error code, exit code, config key, path id, token, IPC
 message type, setting descriptor, function or wrapper; a new field on a struct
@@ -108,8 +108,8 @@ already `#[non_exhaustive]`; a new trait method **with** a default body.
 - **Adding a variant to an enum that is not `#[non_exhaustive]`.** Every
   exhaustive `match` in every other crate stops compiling. This is the trap: the
   author sees an addition, four consumers see a break. Every contract enum is
-  declared `#[non_exhaustive]` at H3 — after the freeze you cannot add the
-  attribute, because adding it breaks the same matches.
+  `#[non_exhaustive]` from the start (REQ-CTR-06) — after the freeze the attribute
+  cannot be added, because adding it breaks the same matches.
 - **Adding a field to a struct without `#[non_exhaustive]`.** Struct-literal
   construction elsewhere stops compiling.
 - Making an `Option` required, narrowing a numeric type, renaming anything,
@@ -123,15 +123,15 @@ already `#[non_exhaustive]`; a new trait method **with** a default body.
 
 Rule of thumb: if your edit could make `cargo check --workspace` fail in a crate
 you do not own, it is not additive. If it could *succeed* and change behaviour
-there, it is worse than not additive. H4 runs the check against the 1.0.0 baseline — a `cargo public-api` diff over
-`crates/contracts` plus an assertion that every serialised discriminant still
-matches the frozen table. It is not advisory.
+there, it is worse than not additive. The breaking-change detector runs on every commit and at H4 against the 1.0.0
+baseline (REQ-CTR-09): a `cargo public-api` diff over `crates/contracts`, plus an
+assertion that every serialised discriminant still matches the frozen table.
 
 ## 6. The FFI boundary is a contract member
 
-`crates/ffi` is the only crate that calls `windows-rs` (REQ-FND-03), and the
-wrapper surface it exposes is a contract member like any other. Needing a new
-Win32 call is a **CCR for a wrapper**, not a `use` statement.
+`crates/ffi` is the only crate that calls `windows-rs` (REQ-FND-03, REQ-CTR-07),
+and the wrapper surface it exposes is a contract member like any other. Needing a
+new Win32 call is a **CCR for a wrapper**, not a `use` statement.
 
 This is stricter than ordinary layering, and the reason is the failure mode, not
 tidiness. Nine agents writing their own `unsafe` calls produce nine independent
@@ -164,9 +164,9 @@ any `Cargo.toml` but `crates/ffi`'s, or a `use windows::` anywhere else, fails.
 
 ## 7. A state transition is a contract member
 
-The stop/start transition B08 publishes under `service-state` is the interface
-B09 calls during an update (REQ-UPD-10). A type is not the only thing that can be
-a member; an ordering is one too.
+The stop/start transition B08 publishes under `service-state` is the interface B09
+calls during an update (REQ-CTR-08, REQ-UPD-10). A type is not the only thing that
+can be a member; an ordering is one too.
 
 ```rust
 contracts::service::stop_then_start(timeout, TransitionReason::Update { to: version })
@@ -210,25 +210,28 @@ the agents who filed them.
 
 ## 9. Nobody waits
 
-No agent calls another agent's code and none waits for another to finish.
-Consumption is through artefacts that exist at H3:
+No agent calls another agent's code and none waits for another to finish
+(REQ-CTR-05). Consumption is through artefacts that exist at H3:
 
 1. **Generated types** from the declarations, present before any behaviour is.
-2. **Fixtures** in `crates/fixtures`, generated by B14 from the same declarations
-   so a fixture cannot drift from its member: a signed test manifest and its test
-   key pair, one with a bad signature, a tampered artefact, a downgrade manifest,
-   both install layouts, an IPC transcript per message type, a record per level.
+2. **Fixtures** in `crates/fixtures`, generated by B14 from the same declarations so
+   a fixture cannot drift from its member: a signed test manifest and its key pair,
+   one with a bad signature, a tampered artefact, a downgrade manifest, both install
+   layouts, an IPC transcript per message type, a record per level.
 3. **Stub transitions.** `stop_then_start` resolves against a scripted service in
    the fixture until B08 lands the real one. Swapping stub for real is a flag in
    the test harness, not an edit in B09.
 
-B09 finishes the updater without `crates/service` existing: it was never
-consuming `crates/service`, it was consuming `service-state` plus a fixture.
-It is also why the negative update cases (REQ-UPD-02, REQ-TST-03) are testable on
-day one: the bad-signature fixture is generated at H3, not written by hand at H5
-when somebody remembers. Where a fixture and the real implementation disagree at
-H5, the contract was ambiguous, and the fix is a clarifying CCR rather than a
-patch on whichever side was looked at first.
+B09 finishes the updater without `crates/service` existing: it was never consuming
+`crates/service`, it was consuming `service-state` plus a fixture. It is also why
+the negative update cases (REQ-UPD-02, REQ-TST-03) are testable on day one — the
+bad-signature fixture is generated at H3, not written by hand at H5 when somebody
+remembers.
+
+An interface test belongs to the contract, not to either side, and **both**
+producer and consumer run it (REQ-CTR-10). When one fails, the contract was
+ambiguous: the fix is a clarifying CCR, not a patch on whichever side was looked
+at first.
 
 ## 10. Versioning the contract crate
 

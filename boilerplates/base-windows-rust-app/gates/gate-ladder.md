@@ -95,13 +95,12 @@ externally is a hard fail, never a fallback to memory.
 **Human:** only to arbitrate a breaking CCR (`contracts/README.md` §8).
 1. Every `crates/<name>/contract.decl.toml` collected (`contracts/README.md` §3),
    with **zero collisions**: a duplicate type name, error code, exit code, config
-   key, path id, IPC message tag or setting id stops assembly naming both
-   claimants.
+   key, path id, IPC message tag or setting id stops assembly naming both claimants.
 3. `config`, `errors`, `version`, `paths`, `ffi-boundary` and `design-tokens` all
    published, `contracts 1.0.0` published, Wave 3 pinning a caret range.
-4. **Every contract enum is `#[non_exhaustive]`.** After the freeze the attribute
-   cannot be added, because adding it breaks the same exhaustive `match` statements
-   a new variant would (`contracts/README.md` §5).
+4. **Every contract enum is `#[non_exhaustive]`** (REQ-CTR-06). After the freeze the
+   attribute cannot be added, because adding it breaks the same exhaustive `match`
+   statements a new variant would (`contracts/README.md` §5).
 5. Fixtures generated from the declarations, the update negatives included: bad
    signature, tampered artefact, downgrade manifest, interrupted swap (REQ-TST-03).
    The FFI-boundary lint configured and failing on a `windows` import outside
@@ -109,7 +108,8 @@ externally is a hard fail, never a fallback to memory.
 
 **Pass:** 1.0.0 published, zero collisions, fixtures generated, both checks armed.
 **Blocks:** the launch of Wave 3 — nine agents do not start against a moving
-contract. **Fail →** B02 plus the agent that declared the colliding member.
+contract (REQ-CTR-02). **Fail →** B02 plus the agent that declared the colliding
+member.
 
 ## H4 — Crate self-test
 
@@ -117,15 +117,16 @@ contract. **Fail →** B02 plus the agent that declared the colliding member.
 **Entry:** Wave 3 reported complete. **Human:** no.
 
 1. `cargo test -p <crate>` green for every Wave 3 crate and B14's interface tests
-   green (REQ-TST-01); `cargo clippy --all-targets -- -D warnings` and
-   `cargo fmt --check` clean workspace-wide (REQ-FND-07).
+   green, run by both producer and consumer (REQ-TST-01, REQ-CTR-10);
+   `cargo clippy --all-targets -- -D warnings` and `cargo fmt --check` clean
+   workspace-wide (REQ-FND-07).
 2. **FFI-boundary lint clean:** no `windows` or `windows-sys` entry in any
    `Cargo.toml` but `crates/ffi`'s, no `use windows::` anywhere else
    (REQ-FND-03), `#![forbid(unsafe_op_in_unsafe_fn)]` present, every `unsafe`
    block carrying its invariant comment (REQ-FND-06).
 3. **No raw colour literal outside the token module** (REQ-DSN-09, REQ-TST-05) and
    contrast green in both themes (REQ-DSN-06); no dependency between agent-owned
-   crates; breaking-change check clean against 1.0.0 (`contracts/README.md` §1, §5).
+   crates (REQ-CTR-01); breaking-change check clean against 1.0.0 (REQ-CTR-09).
 4. `cargo deny` clean on licences, duplicates and advisories (REQ-SBM-07);
    `Cargo.lock` committed, build `--locked` (REQ-SBM-08); the no-telemetry
    assertion green including build-time network access (REQ-SBM-06, REQ-FND-10).
