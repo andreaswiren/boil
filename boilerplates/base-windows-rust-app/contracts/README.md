@@ -50,8 +50,8 @@ One publishing agent per member. Nobody else declares it, not even additively.
 | `view-registry` | the view descriptors the shell and the tray both address, plus `settings-registry` (REQ-UI-09) | B05 |
 | `tray-state` | the live state the menu renders — running, paused, updating, error, service mode (REQ-TRY-04) | B06 |
 
-Deliberately not members: signing keys (nobody's), the release workflow (B10's
-alone, consumed by nothing in the binary), anything under `build/`.
+Not members, deliberately: signing keys (nobody's), the release workflow, and
+anything under `build/`.
 
 ## 3. Declaration, then assembly
 
@@ -61,19 +61,16 @@ one declaration inside its own crate, `crates/<name>/contract.decl.toml`:
 ```toml
 agent = "B08"
 requirements = ["REQ-SVC-04", "REQ-SVC-06", "REQ-SVC-10"]
-
 [[types]]
 name = "ServiceState"; kind = "enum"; non_exhaustive = true
 variants = ["Stopped", "StartPending", "Running", "StopPending", "Paused",
             "Failed { code: u32 }"]
-
 [[transitions]]
 name = "stop_then_start"
 inputs = ["timeout: Duration", "reason: TransitionReason"]
 guarantees = ["restart policy suspended for the window",
               "crash-loop counter not incremented",
               "Err rather than a service left stopped"]
-
 [[errors]]
 code = "SVC_STOP_TIMEOUT"; exit = 40
 ```
@@ -106,12 +103,10 @@ There is no wire here. There is one binary with every crate compiled into it, so
 changes that are additive on an HTTP API are breaking in Rust — and the compiler
 catches most of them, but not all.
 
-**Allowed**
-- A new type, error code, exit code, config key, path id, token, IPC message
-  type, setting descriptor, function or wrapper.
-- A new field on a struct already `#[non_exhaustive]` and carrying a `Default`.
-- A new variant on an enum already `#[non_exhaustive]`.
-- A new trait method **with** a default implementation.
+**Allowed** — a new type, error code, exit code, config key, path id, token, IPC
+message type, setting descriptor, function or wrapper; a new field on a struct
+already `#[non_exhaustive]` and carrying a `Default`; a new variant on an enum
+already `#[non_exhaustive]`; a new trait method **with** a default body.
 
 **Breaking, whatever it looks like**
 - **Adding a variant to an enum that is not `#[non_exhaustive]`.** Every
@@ -131,10 +126,8 @@ catches most of them, but not all.
   semantic change gets a new name.
 
 Rule of thumb: if your edit could make `cargo check --workspace` fail in a crate
-you do not own, it is not additive. If it could *succeed* and change behaviour in
-a crate you do not own, it is worse than not additive.
-
-H4 runs the check against the 1.0.0 baseline — a `cargo public-api` diff over
+you do not own, it is not additive. If it could *succeed* and change behaviour
+there, it is worse than not additive. H4 runs the check against the 1.0.0 baseline — a `cargo public-api` diff over
 `crates/contracts` plus an assertion that every serialised discriminant still
 matches the frozen table. It is not advisory.
 
@@ -246,8 +239,7 @@ patch on whichever side was looked at first.
 
 `crates/contracts` carries its own semver, mechanically rather than by judgement:
 additive member → minor; clarification, doc, fixture or test → patch; anything
-the breaking-change check flags → major, with orchestrator sign-off.
-
-Wave 3 pins a caret range on the minor. A major bump mid-wave is a build incident
-with a written cause, and the cause is almost always an enum frozen without
+the breaking-change check flags → major, with orchestrator sign-off. Wave 3 pins
+a caret range on the minor. A major bump mid-wave is a build incident with a
+written cause, and the cause is almost always an enum frozen without
 `#[non_exhaustive]`.
