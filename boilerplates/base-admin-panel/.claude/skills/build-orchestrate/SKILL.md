@@ -11,7 +11,9 @@ file under `apps/` or `packages/`, stop — that is an owning agent's task.
 
 ## Working layout
 
-Create `build/` before anything else. It is orchestrator-owned and gitignored.
+Create `build/` before anything else. It is orchestrator-owned and **committed**
+— the CRA matrix cites paths under it as conformity evidence
+(`contracts/ownership.md`).
 
 ```bash
 mkdir -p build/{ccr,gates/{G0,G1,G2,G3,G4,G5,G6,G7,G8,escalations},screenshots}

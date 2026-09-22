@@ -116,9 +116,13 @@ how REQ-RBA-04 and REQ-RBA-05 stay provable.
 C1, C2, S1 and S2 write only to `build/gates/`. They never edit product code —
 they produce findings, and the owning agent fixes them (REQ-GAT-07).
 
-`build/` as a whole is orchestrator-owned working state and is gitignored at the
-repository root; the record that survives is the commit, the changelog and the
-gate verdicts copied into the release notes.
+`build/` as a whole is orchestrator-owned working state and it is **committed**,
+not gitignored. `compliance/cra/obligations-matrix.md` cites
+`build/gates/<gate>/<reviewer>-<dimension>-r<round>.json` as the Annex I II(3)
+evidence, and `compliance/cra/technical-documentation.md` cites it again as the
+Annex VII §6 test report. An auditor cannot check a path that is not in the
+repository, so the path is in the repository. `node_modules/`, `.next/` and
+`build/screenshots/*.tmp.png` are gitignored; `build/` is the record.
 
 ## Conflict resolution
 

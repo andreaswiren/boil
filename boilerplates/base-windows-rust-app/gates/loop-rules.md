@@ -114,9 +114,11 @@ build/gates/escalations/updater-unsigned-manifest.md
 
 Nothing is overwritten. Round 2 is a new file; round 1 stays as written, wrong
 predictions included. A build whose gate history cannot be reconstructed has no
-evidence, and evidence is the point of the ladder. `build/` is gitignored working
-state, so what survives is the commit, the changelog, and the verdict outcomes
-B17 carries into the release record.
+evidence, and evidence is the point of the ladder — so `build/` is committed
+(`contracts/ownership.md`), and the round-1 verdict that turned out to be wrong
+is committed with the rest. `compliance/cra/obligations-matrix.md` cites
+`build/gates/H7-security-alpha.md` as evidence an auditor can check, which only
+holds if it is in the repository.
 
 ## 7. Worked example — three rounds to escalation
 

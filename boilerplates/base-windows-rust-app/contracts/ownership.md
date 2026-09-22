@@ -84,7 +84,12 @@ do the wrong job.
 `D1`, `D2`, `T1` and `T2` write only to `build/gates/`. They never edit product
 code — they produce findings, and the owning agent fixes them (REQ-GAT-07).
 
-`build/` is orchestrator-owned working state, gitignored at the repository root.
+`build/` is orchestrator-owned working state and it is **committed**, not
+gitignored. It holds the intake, the human's design approval (REQ-MOC-08), every
+gate verdict and the cost ledger, and `compliance/cra/obligations-matrix.md`
+cites paths under it as `build-output` evidence — the strongest tier, on the
+grounds that an auditor can check a path. An auditor cannot check a path that is
+not in the repository. `target/` is gitignored; `build/` is the record.
 
 ## Conflict resolution
 

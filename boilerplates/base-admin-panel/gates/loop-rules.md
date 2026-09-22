@@ -102,9 +102,11 @@ build/gates/escalations/grid-toolbar-budget.md
 
 Nothing is overwritten. Round 2 is a new file; round 1 stays as written, wrong
 predictions included. **A build whose gate history is not reconstructable has no
-evidence**, and evidence is the point of the ladder. `build/` is gitignored
-working state, so what survives is the commit, the changelog and the verdicts A22
-copies into the release notes (REQ-REL-03, REQ-REL-08).
+evidence**, and evidence is the point of the ladder — so `build/` is committed
+(`contracts/ownership.md`), round-1 verdicts that turned out wrong included, and
+A22 additionally carries the outcomes into the release notes (REQ-REL-03,
+REQ-REL-08). The CRA matrix cites these files as conformity evidence, which only
+holds while they are in the repository.
 
 ## 7. Worked example — three rounds to escalation
 

@@ -20,7 +20,7 @@ one that costs a whole wave: a contract that looked additive, broke an exhaustiv
 | REQ ID | What it means for you concretely |
 |--------|----------------------------------|
 | REQ-CTR-01 | `crates/contracts` is the only cross-crate coupling. You reject a declaration that imports a sibling domain crate, and `cargo tree` proves no two domain crates depend on each other. |
-| REQ-CTR-02 | The freeze happens at H3, before Wave 3 is dispatched. After it, `contracts/frozen.json` plus a CI check make an un-CCR'd edit fail the build. |
+| REQ-CTR-02 | The freeze happens at H3, before Wave 3 is dispatched. After it, `build/contract-freeze.json` plus a CI check make an un-CCR'd edit fail the build. |
 | REQ-CTR-03 | Additive only. A published type, field, error variant, exit code or state transition is never edited in place — you add the new one and mark the old `#[deprecated(note = "removed in <version>")]`. |
 | REQ-CTR-04 | You write only inside your owned paths, and a collision between two claimants is reported to the orchestrator rather than resolved by you. |
 | REQ-CTR-05 | `contracts::fixtures` is what makes "no agent waits on another" true. Every consumer builds against a fixture, never against a running instance or a sibling's internals. |
@@ -39,7 +39,7 @@ one that costs a whole wave: a contract that looked additive, broke an exhaustiv
 ## Files you own
 
 - `crates/contracts/**` — frozen at H3, CCR-only and additive afterwards
-- `contracts/frozen.json` — the per-file SHA-256 manifest of the freeze
+- `build/contract-freeze.json` — the per-file SHA-256 manifest of the freeze
 
 You write nowhere else. Writing outside this list is a build defect, not a merge
 conflict. You never edit another crate to make it compile against the contract;
@@ -145,7 +145,7 @@ does — that is what lets you run before Wave 3. Plus `build/scope.md` (B00),
    `paths`, `ffi-boundary` and `design-tokens` all published, and every Wave 3
    agent's declared members present. A member missing here becomes a mid-wave
    CCR, and CCR volume is the score for this step.
-8. Freeze: write `contracts/frozen.json` with the SHA-256 of every file under
+8. Freeze: write `build/contract-freeze.json` with the SHA-256 of every file under
    `crates/contracts/src/`, and the CI check that fails on a change whose commit
    carries no CCR id.
 9. Handle CCRs after the freeze: additive lands with a minor bump and no pause;
@@ -169,7 +169,7 @@ does — that is what lets you run before Wave 3. Plus `build/scope.md` (B00),
 - [ ] `UpdateManifest.kind` distinguishes security from feature as a typed field
       (REQ-UPD-13); `ExitCode` has no duplicate value and includes B01's
       reserved 3 (REQ-INST-11).
-- [ ] `contracts/frozen.json` covers every file under `crates/contracts/src/`,
+- [ ] `build/contract-freeze.json` covers every file under `crates/contracts/src/`,
       and a test edit to a contract file fails CI without a CCR id (REQ-CTR-02).
 - [ ] The breaking-change detector runs on every commit and fails on a removed
       member and on an enum made exhaustive, proved by two deliberate edits
@@ -182,7 +182,7 @@ does — that is what lets you run before Wave 3. Plus `build/scope.md` (B00),
 
 ## Hand-off
 
-`crates/contracts` — frozen, with `contracts/frozen.json` and the freeze commit
+`crates/contracts` — frozen, with `build/contract-freeze.json` and the freeze commit
 id. Every Wave 3 agent compiles against it and nobody negotiates with anybody.
 `build/contract-freeze.md` — the member list with its owning agent, the six
 collision tables with their checked counts, the `#[non_exhaustive]` audit, and

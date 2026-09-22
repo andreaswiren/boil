@@ -289,8 +289,10 @@ build/
 └── screenshots/       A21: the visual record
 ```
 
-`build/` is working state and is gitignored. What survives is the commit, the
-changelog, and the gate verdicts A22 copies into the release notes.
+`build/` is working state and it is **committed** — the CRA obligations matrix
+cites the gate verdicts under it as conformity evidence, and evidence an auditor
+cannot open is not evidence. A22 additionally carries the outcomes into the
+release notes.
 
 ---
 
