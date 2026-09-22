@@ -41,6 +41,25 @@ for dir in boilerplates/*/; do
   fi
 done
 
+# Hard rule 1: no boilerplate depends on a sibling. Naming one is the dependency
+# -- the reader follows the name. This is a repo-level check because only from
+# here are the sibling names known. It catches what path resolution cannot: a
+# ../ written as if from the boilerplate root resolves to a path that is inside
+# the folder and simply does not exist, so a self-containment check based on
+# resolving paths passes it while the reference is still a sibling dependency.
+for dir in boilerplates/*/; do
+  name=$(basename "$dir")
+  for other in boilerplates/*/; do
+    o=$(basename "$other")
+    [ "$o" = "$name" ] && continue
+    hits=$(grep -rn "$o" "$dir" --include='*.md' --include='*.json' --include='*.yaml' 2>/dev/null || true)
+    if [ -n "$hits" ]; then
+      bad "$name names the sibling boilerplate $o:"
+      printf '%s\n' "$hits" | head -4 | sed 's/^/    /'
+    fi
+  done
+done
+
 # Every boilerplate in the tree must be listed in the README table, or nobody
 # finds it.
 for dir in boilerplates/*/; do

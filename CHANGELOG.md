@@ -9,6 +9,50 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.7.2] — 2026-09-22
+
+### Added
+
+- **The README now offers both boilerplates as a choice**, each with its own
+  copy-paste command, rather than one command and "swap the name for the other
+  one". The sparse-checkout fallback is parameterised, with the PowerShell
+  equivalent named.
+- **A section on running under Muse Code or another non-Claude runtime**, in the
+  README where someone hitting the problem will look. It quotes the `AGENTS.md`
+  precedence warning verbatim, says it is expected and costs nothing because
+  every `CLAUDE.md` / `AGENTS.md` pair is byte-identical, and says plainly **not
+  to act on the warning's own suggestion** to remove one of the two files —
+  Claude Code reads one and Muse Code reads the other. It also says skills may
+  not load and that nothing depends on them.
+- `base-windows-rust-app/portability/README.md` gains a Muse Code row carrying
+  the two observed facts, states that no adapter is written for it yet, and
+  describes the four parts an adapter has so one can be written without a
+  sibling to copy. It also gains the billing-tier check: a discounted tier is
+  usually discounted because prompts and outputs may be used to improve the
+  vendor's products, and this build sends the update trust chain, the elevation
+  and IPC design and the signing procedure through the model.
+
+### Fixed
+
+- **`base-windows-rust-app` named a sibling boilerplate**, pointing at
+  `../base-admin-panel/portability/muse-code.md` as a worked example. Hard rule
+  1 forbids depending on a sibling, and the reference was doubly broken: written
+  as if relative to the boilerplate root, it resolves to a path inside the
+  folder that does not exist.
+- The self-containment check could not have caught it. It pattern-matched
+  `../..`, so a single `../` to a sibling — the case hard rule 1 names
+  explicitly — passed. It now **resolves** every `../` path against the
+  directory of the file holding it and fails only on one that lands outside the
+  folder, which is both stricter and free of the false positives a pattern would
+  produce on `contracts/../spec/x.md`, a Rust `include_str!`, or an ellipsis in
+  a URL.
+- That still would not have caught this one, because the path resolved inside
+  the folder. So a repo-level check now fails any boilerplate whose text names a
+  sibling boilerplate, which is the rule stated directly: naming one is the
+  dependency, because the reader follows the name.
+- A claim in the README that both boilerplates ship an adapter prompt. Only
+  `base-admin-panel` does.
+
 ## [0.7.1] — 2026-09-22
 
 Nothing in the repository said what starts a build, and the only slash command
@@ -729,7 +773,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.7.2...HEAD
+[0.7.2]: https://github.com/andreaswiren/boil/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/andreaswiren/boil/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/andreaswiren/boil/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/andreaswiren/boil/compare/v0.5.0...v0.6.0

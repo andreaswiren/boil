@@ -19,12 +19,35 @@ printf '\n== %s ==\n' "$(basename "$root")"
 
 
 # CONVENTIONS.md §1 — self-containment. A boilerplate must work cloned alone.
-if grep -rqn '\.\./\.\.' "$root" --include='*.md' --include='*.json' --include='*.yaml' 2>/dev/null; then
-  bad "path escapes the boilerplate folder:"
-  grep -rn '\.\./\.\.' "$root" --include='*.md' --include='*.json' --include='*.yaml' | sed 's/^/    /'
-else
-  note "self-contained: no escaping relative paths"
-fi
+#
+# Every relative path containing ../ is resolved against the directory of the
+# file that holds it, and fails only if the result lands outside this folder.
+# Pattern-matching on "../.." missed the case hard rule 1 names explicitly: a
+# single ../ to a sibling boilerplate. Resolving also avoids failing the
+# legitimate ones -- contracts/../spec/x.md stays inside, and so does a Rust
+# include_str! or an ellipsis in a URL.
+python3 - "$root" <<'PYSELF'
+import os,re,sys
+root=os.path.realpath(sys.argv[1])
+pat=re.compile(r'(?:\.\./)+[A-Za-z0-9._/-]*')
+bad=[]
+for r,_,fs in os.walk(root):
+    if os.sep+'.git' in r: continue
+    for n in fs:
+        if not n.endswith(('.md','.json','.yaml','.yml')): continue
+        p=os.path.join(r,n)
+        for i,line in enumerate(open(p,encoding='utf-8',errors='replace'),1):
+            for m in pat.finditer(line):
+                target=os.path.realpath(os.path.join(r,m.group(0)))
+                if not (target==root or target.startswith(root+os.sep)):
+                    bad.append(f'{os.path.relpath(p,root)}:{i}: {m.group(0)}')
+if bad:
+    for b in bad[:8]: print('  FAIL: path escapes the boilerplate folder: '+b)
+else:
+    print('  self-contained: no path resolves outside this folder')
+sys.exit(1 if bad else 0)
+PYSELF
+[ $? -eq 0 ] || fail=1
 if find "$root" -type l 2>/dev/null | while read -r l; do readlink "$l"; done | grep -qF '../'; then
   bad "symlink points outside the boilerplate"
 fi

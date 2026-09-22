@@ -31,9 +31,21 @@ and `README.md` / `CHANGELOG.md` / `VERSION` to agents. The build writes the
 application beside `spec/`, `contracts/` and `gates/`, at those paths with no
 prefix. So the folder you start in is the root of the thing you end up with.
 
-### The command
+### The command — pick one
 
-Copy the one boilerplate to where the new project should live, and start there:
+Copy the one boilerplate you want to where the new project should live, and
+start there. Change `my-panel` / `my-app` to whatever the project is called.
+
+**A multi-tenant Next.js admin panel:**
+
+```bash
+npx degit andreaswiren/boil/boilerplates/base-admin-panel my-panel
+cd my-panel
+git init && git add -A && git commit -m "Vendor base-admin-panel"
+claude          # or: muse, or any agent pointed at this directory
+```
+
+**A Windows desktop app in Rust:**
 
 ```bash
 npx degit andreaswiren/boil/boilerplates/base-windows-rust-app my-app
@@ -43,20 +55,24 @@ claude          # or: muse, or any agent pointed at this directory
 ```
 
 `degit` takes the folder without the collection's git history, which is what you
-want: the boilerplate is a vendored input, and the commit above records the
-version you vendored. Swap `base-windows-rust-app` for `base-admin-panel` for
-the other one.
+want: the boilerplate is a vendored input, and the commit records the version
+you vendored.
 
-No Node? Sparse checkout does the same thing:
+No Node? Sparse checkout does the same thing — set `NAME` to either
+`base-admin-panel` or `base-windows-rust-app`:
 
 ```bash
+NAME=base-windows-rust-app
 git clone --filter=blob:none --no-checkout https://github.com/andreaswiren/boil.git
 cd boil
 git sparse-checkout init --cone
-git sparse-checkout set boilerplates/base-windows-rust-app
+git sparse-checkout set "boilerplates/$NAME"
 git checkout main
-mv boilerplates/base-windows-rust-app ../my-app && cd ../my-app
+mv "boilerplates/$NAME" ../my-app && cd ../my-app
 ```
+
+On Windows PowerShell, replace `NAME=...` with `$NAME = "base-windows-rust-app"`
+and `mv` with `Move-Item`.
 
 ### What triggers the build
 
@@ -87,6 +103,47 @@ Muse Code 1.3.0 does not load skills — read
 collection*, which is a contributor task; it lives in this repository's root
 `.claude/skills/`, so a vendored project does not have it at all. If you typed
 it expecting a build to start, you wanted the paragraph above.
+
+### Running on Muse Code, or another non-Claude runtime
+
+Both boilerplates are runtime-neutral by design: every spec, contract, gate and
+agent file is plain Markdown that names no tool, and each ships a
+`portability/` folder with a capability map. `base-admin-panel` also carries a
+written Muse Code adapter; `base-windows-rust-app` does not yet, and its
+`portability/README.md` says so rather than implying otherwise. Two things will
+surprise you on either.
+
+**The `AGENTS.md` warning is expected. Ignore it, and do not act on its
+suggestion.** Muse Code 1.3.0 prints:
+
+```
+warning: rules file at ...\CLAUDE.md is ignored this session because AGENTS.md
+takes precedence in that directory; merge still-applicable guidance into
+AGENTS.md or remove one of the two files
+```
+
+Every `CLAUDE.md` and `AGENTS.md` in this repository is a **byte-identical
+pair**, and the conformance check fails if they drift. So there is nothing in
+the ignored file that is not in the file being read, and the warning costs you
+nothing. **Do not remove either file** as the warning suggests — Claude Code
+reads one, Muse Code reads the other, and deleting either breaks that runtime.
+The duplication is deliberate: a pointer file is a behaviour that depends on the
+agent following it, while two identical files are a fact the runtime cannot
+misread.
+
+**Skills may not load, and nothing depends on them.** In an observed Muse Code
+1.3.0 run the skill did not load; where it looks for skills is recorded as
+`unconfirmed` in `portability/capability-map.md` rather than guessed. It costs
+nothing, because the entry point is a file read rather than a slash command, and
+every skill is a plain `SKILL.md` you can read as a file. A skill is a
+procedure, and a procedure can always be read.
+
+Before a real build on a non-Claude runtime, read that boilerplate's
+`portability/README.md`. It also covers two things that are easy to skip and are
+requirements the build is held to: turning off the runtime's **own** telemetry,
+and recording which tier the session bills to — a discounted tier is often
+discounted because prompts and outputs may be used to improve the vendor's
+products, and this build sends security design through the model.
 
 ### Two things not to do
 
