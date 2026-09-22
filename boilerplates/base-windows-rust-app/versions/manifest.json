@@ -1,0 +1,279 @@
+{
+  "$schema": "./README.md",
+  "generatedAt": "2026-09-22T08:25:06Z",
+  "generatedBy": "B16-version-validator",
+  "policy": {
+    "requirements": [
+      "REQ-VER-01",
+      "REQ-VER-02",
+      "REQ-VER-03",
+      "REQ-VER-04",
+      "REQ-VER-05",
+      "REQ-VER-06"
+    ],
+    "rules": [
+      "Latest stable only. No prerelease, no release candidate, no git dependency in a release build.",
+      "Every version was read from crates.io or the Rust release channel at generatedAt. None came from memory.",
+      "A major jump is a reviewed decision with a migration note. The `windows` crate moves fast and a major bump can rename types across every FFI call site (REQ-VER-04).",
+      "In a Rust binary every dependency is compiled into the shipped product, so adding one is a shipping decision, not a development convenience (REQ-SBM-05).",
+      "Re-validate at gate H2. A manifest older than staleAfterDays fails the gate.",
+      "crates.io requires a User-Agent header. A request without one is rejected, which is easy to misread as 'crate not found'."
+    ],
+    "staleAfterDays": 7
+  },
+  "toolchain": {
+    "rust": {
+      "latestStable": "1.98.1",
+      "pin": "1.98.1",
+      "source": "https://static.rust-lang.org/dist/channel-rust-stable.toml",
+      "checkedAt": "2026-09-22T08:25:06Z",
+      "note": "Pinned in rust-toolchain.toml so every build and CI run uses one compiler (REQ-FND-02). The MSRV is stated separately and tested (REQ-VER-06)."
+    },
+    "targets": [
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc"
+    ]
+  },
+  "crates": {
+    "windows-bindings": {
+      "windows": {
+        "latestStable": "0.62.2",
+        "pin": "^0.62.2",
+        "source": "https://crates.io/api/v1/crates/windows",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "The only route to Win32/WinRT (REQ-FND-03). Used exclusively inside crates/ffi (contracts/ownership.md). Pair the version with windows-sys deliberately - a mismatched pair compiles and then disagrees about type layout (REQ-VER-05)."
+      },
+      "windows-sys": {
+        "latestStable": "0.61.2",
+        "pin": "^0.61.2",
+        "source": "https://crates.io/api/v1/crates/windows-sys",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Raw bindings. Prefer `windows` unless a call is missing from it."
+      },
+      "windows-registry": {
+        "latestStable": "0.100.0",
+        "pin": "^0.100.0",
+        "source": "https://crates.io/api/v1/crates/windows-registry",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Registry access for the autostart entry and ARP registration. B08 and B07 only."
+      },
+      "windows-service": {
+        "latestStable": "0.8.1",
+        "pin": "^0.8.1",
+        "source": "https://crates.io/api/v1/crates/windows-service",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Service lifecycle (REQ-SVC-01..05). B08 only; nobody shells out to sc.exe (contracts/ownership.md)."
+      }
+    },
+    "ui": {
+      "eframe": {
+        "latestStable": "0.36.2",
+        "pin": "^0.36.2",
+        "source": "https://crates.io/api/v1/crates/eframe",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Default UI framework. Chosen because the design tokens are plain Rust values, which makes REQ-MOC-02's compiled mockups trivially achievable and REQ-DSN-02's 'tokens are code' literal. It is not a native-look framework - that is the tradeoff, and it is an intake decision (REQ-UI-01)."
+      },
+      "egui": {
+        "latestStable": "0.36.2",
+        "pin": "^0.36.2",
+        "source": "https://crates.io/api/v1/crates/egui",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Must match eframe's minor exactly. A mismatch is a confusing trait-resolution error, not a clear one."
+      },
+      "iced": {
+        "latestStable": "0.14.0",
+        "pin": "^0.14.0",
+        "source": "https://crates.io/api/v1/crates/iced",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Intake alternative. Elm-style, themeable; more ceremony, more native feel."
+      },
+      "slint": {
+        "latestStable": "1.18.1",
+        "pin": "^1.18.1",
+        "source": "https://crates.io/api/v1/crates/slint",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Intake alternative. Declarative with its own styling language - a better fit if the design system should live outside Rust, a worse fit for REQ-MOC-02."
+      }
+    },
+    "tray-and-shell": {
+      "tray-icon": {
+        "latestStable": "0.25.1",
+        "pin": "^0.25.1",
+        "source": "https://crates.io/api/v1/crates/tray-icon",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Tray icon and its Explorer-restart re-registration (REQ-TRY-01, REQ-TRY-02). B06 only."
+      },
+      "muda": {
+        "latestStable": "0.20.0",
+        "pin": "^0.20.0",
+        "source": "https://crates.io/api/v1/crates/muda",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Native menus for the tray context menu (REQ-TRY-04)."
+      },
+      "rfd": {
+        "latestStable": "0.17.2",
+        "pin": "^0.17.2",
+        "source": "https://crates.io/api/v1/crates/rfd",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Native file dialogs, used by the support bundle (REQ-OBS-04)."
+      }
+    },
+    "install-and-update": {
+      "self-replace": {
+        "latestStable": "1.5.0",
+        "pin": "^1.5.0",
+        "source": "https://crates.io/api/v1/crates/self-replace",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Atomic self-replacement for the update swap (REQ-UPD-06). Verify the signature BEFORE calling it, never after."
+      },
+      "self_update": {
+        "latestStable": "1.3.0",
+        "pin": "^1.3.0",
+        "source": "https://crates.io/api/v1/crates/self_update",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Optional convenience over the update flow. Its defaults do not satisfy REQ-UPD-02 - signature verification is ours to add, not its to provide. Record the decision if it is used at all."
+      },
+      "minisign-verify": {
+        "latestStable": "0.2.5",
+        "pin": "^0.2.5",
+        "source": "https://crates.io/api/v1/crates/minisign-verify",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Verification only, with the public key embedded (REQ-UPD-03). A verify-only crate is the right dependency here: the binary never needs to sign."
+      },
+      "semver": {
+        "latestStable": "1.0.28",
+        "pin": "^1.0.28",
+        "source": "https://crates.io/api/v1/crates/semver",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Version comparison, including the downgrade refusal (REQ-UPD-05)."
+      },
+      "cargo-wix": {
+        "latestStable": "0.3.9",
+        "pin": "0.3.9",
+        "source": "https://crates.io/api/v1/crates/cargo-wix",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "MSI for enterprise deployment (REQ-INST-03). A build-time tool, not a dependency."
+      },
+      "winres": {
+        "latestStable": "0.1.12",
+        "pin": "^0.1.12",
+        "source": "https://crates.io/api/v1/crates/winres",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Embeds the application manifest, icon and version resource. The manifest is asInvoker (REQ-FND-11)."
+      }
+    },
+    "supply-chain": {
+      "cargo-auditable": {
+        "latestStable": "0.7.6",
+        "pin": "0.7.6",
+        "source": "https://crates.io/api/v1/crates/cargo-auditable",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Embeds the dependency list in the shipped binary (REQ-SBM-02). This is the requirement's whole point: an artefact found on a machine can be audited without the release page."
+      },
+      "cargo-cyclonedx": {
+        "latestStable": "0.5.9",
+        "pin": "0.5.9",
+        "source": "https://crates.io/api/v1/crates/cargo-cyclonedx",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "CycloneDX SBOM per build (REQ-SBM-01, REQ-CRA-03)."
+      },
+      "cargo-deny": {
+        "latestStable": "see crates.io",
+        "pin": "latest-stable",
+        "source": "https://crates.io/api/v1/crates/cargo-deny",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Licence, advisory and duplicate-version gate (REQ-SBM-07). B16 must resolve the exact version at H2 - it was not read in this pass, so it is recorded as unresolved rather than guessed."
+      }
+    },
+    "runtime": {
+      "tokio": {
+        "latestStable": "1.53.1",
+        "pin": "^1.53.1",
+        "source": "https://crates.io/api/v1/crates/tokio",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Off-UI-thread work (REQ-UI-06). Enable only the features used; the full feature set compiles a great deal into the binary."
+      },
+      "serde": {
+        "latestStable": "1.0.229",
+        "pin": "^1.0.229",
+        "source": "https://crates.io/api/v1/crates/serde",
+        "checkedAt": "2026-09-22T08:25:06Z"
+      },
+      "anyhow": {
+        "latestStable": "1.0.104",
+        "pin": "^1.0.104",
+        "source": "https://crates.io/api/v1/crates/anyhow",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Application error plumbing. Not in the contract crate's public API."
+      },
+      "thiserror": {
+        "latestStable": "2.0.20",
+        "pin": "^2.0.20",
+        "source": "https://crates.io/api/v1/crates/thiserror",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Typed errors for the contract surface."
+      },
+      "tracing": {
+        "latestStable": "0.1.44",
+        "pin": "^0.1.44",
+        "source": "https://crates.io/api/v1/crates/tracing",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Structured logging (REQ-OBS-01)."
+      },
+      "keyring": {
+        "latestStable": "4.2.0",
+        "pin": "^4.2.0",
+        "source": "https://crates.io/api/v1/crates/keyring",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Credential-store access for secrets at rest (REQ-SEC-03)."
+      },
+      "ureq": {
+        "latestStable": "3.4.2",
+        "pin": "^3.4.2",
+        "source": "https://crates.io/api/v1/crates/ureq",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Update fetch. Small and blocking - suits a background task and keeps the dependency tree short. reqwest 0.13.5 is the intake alternative when async HTTP is already present."
+      },
+      "sha2": {
+        "latestStable": "0.11.0",
+        "pin": "^0.11.0",
+        "source": "https://crates.io/api/v1/crates/sha2",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Artefact hash check against the signed manifest (REQ-UPD-04)."
+      },
+      "zip": {
+        "latestStable": "8.6.0",
+        "pin": "^8.6.0",
+        "source": "https://crates.io/api/v1/crates/zip",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Support-bundle packaging (REQ-OBS-04)."
+      },
+      "directories": {
+        "latestStable": "6.0.0",
+        "pin": "^6.0.0",
+        "source": "https://crates.io/api/v1/crates/directories",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "Per-user paths. B01 publishes `paths`; no other crate resolves a directory itself (REQ-SEC-05)."
+      },
+      "clap": {
+        "latestStable": "4.6.7",
+        "pin": "^4.6.7",
+        "source": "https://crates.io/api/v1/crates/clap",
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "note": "The CLI surface: --install, --uninstall, --service, --silent (REQ-INST-01, REQ-INST-11)."
+      }
+    }
+  },
+  "telemetry": {
+    "requirement": "REQ-FND-10, REQ-SBM-06",
+    "note": "Asserted by test, not assumed. B11 owns the assertion, and it covers build-time network access by any crate as well as runtime.",
+    "env": {
+      "DO_NOT_TRACK": "1",
+      "CARGO_NET_OFFLINE": "false"
+    },
+    "checks": [
+      "no crate performs network I/O in a build script",
+      "no runtime HTTP destination outside the configured update endpoint"
+    ]
+  }
+}

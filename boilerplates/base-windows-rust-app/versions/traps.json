@@ -1,0 +1,62 @@
+{
+  "description": "Compatibility traps, inherited build to build so they are recorded rather than rediscovered (REQ-VER-05). B16 applies every rule here after reading crates.io and before finalising versions/manifest.json. A trap is superseded with a reason, never deleted on a hunch.",
+  "appliesTo": "versions/manifest.json",
+  "traps": [
+    {
+      "id": "WIN-TRAP-001",
+      "item": "windows + windows-sys",
+      "kind": "version-pairing",
+      "rule": "Pair the two versions deliberately; do not bump one alone.",
+      "why": "A mismatched pair compiles and then disagrees about type layout. The failure is a memory bug at runtime, not a compile error, which makes it expensive to find.",
+      "status": "active"
+    },
+    {
+      "id": "WIN-TRAP-002",
+      "item": "windows",
+      "kind": "fast-moving-major",
+      "rule": "A major bump is a reviewed decision with a migration note (REQ-VER-04).",
+      "why": "The crate moves fast and a major can rename types across every call site. The blast radius is bounded to crates/ffi on purpose (REQ-FND-03) - that is the payoff for the single-FFI-crate rule.",
+      "status": "active"
+    },
+    {
+      "id": "WIN-TRAP-003",
+      "item": "eframe + egui",
+      "kind": "lockstep-minor",
+      "rule": "The minor versions must match exactly.",
+      "why": "A mismatch surfaces as a trait-resolution error deep in generic code rather than a version conflict, and reads like a code bug.",
+      "status": "active"
+    },
+    {
+      "id": "WIN-TRAP-004",
+      "item": "self_update",
+      "kind": "insufficient-defaults",
+      "rule": "Its defaults do not satisfy REQ-UPD-02. Signature verification is ours to add.",
+      "why": "Adopting a crate because its name matches the requirement is how an unverified updater ships. If it is used at all, record what it does and does not do.",
+      "status": "active"
+    },
+    {
+      "id": "WIN-TRAP-005",
+      "item": "any crate",
+      "kind": "msrv-creep",
+      "rule": "A dependency bump must not raise the MSRV above the pinned toolchain (REQ-VER-06).",
+      "why": "MSRV creep is silent until a contributor or a CI image with an older toolchain fails. CI tests the MSRV so it fails at the bump instead.",
+      "status": "active"
+    },
+    {
+      "id": "WIN-TRAP-006",
+      "item": "crates.io API",
+      "kind": "misleading-error",
+      "rule": "Always send a User-Agent header.",
+      "why": "crates.io rejects a request without one, and the rejection reads like a missing crate. That misreading leads directly to a version written from memory, which is what REQ-VER-02 forbids.",
+      "status": "active"
+    },
+    {
+      "id": "WIN-TRAP-007",
+      "item": "cargo-deny",
+      "kind": "unresolved-on-purpose",
+      "rule": "Its version is recorded as unresolved in the manifest. B16 resolves it at H2.",
+      "why": "It was not read in the pass that produced the manifest. An unresolved entry is honest; a guessed one is not.",
+      "status": "active"
+    }
+  ]
+}

@@ -1,0 +1,356 @@
+{
+  "_comment": "Ownership map for the traceability matrix. Consumed by scripts/gen-traceability.py. domain = default (owner, contract_member, gate) per requirement domain. override = per-requirement-ID exceptions, for requirements whose owner genuinely differs from their domain's. spec = default spec document per domain; spec_by_id overrides it. Gates here are H0-H8; the sibling boilerplate uses G0-G8 so a verdict cannot be read against the wrong ladder.",
+  "domain": {
+    "FND": [
+      "B01",
+      "env-config / ffi-boundary / paths",
+      "H4"
+    ],
+    "DSN": [
+      "B03",
+      "design-tokens",
+      "H1"
+    ],
+    "MOC": [
+      "B04",
+      "(pre-contract)",
+      "H1"
+    ],
+    "UI": [
+      "B05",
+      "view-registry / settings-registry",
+      "H6"
+    ],
+    "TRY": [
+      "B06",
+      "tray-state",
+      "H6"
+    ],
+    "INST": [
+      "B07",
+      "install-mode / exit-codes",
+      "H5"
+    ],
+    "SVC": [
+      "B08",
+      "service-state / ipc-contract",
+      "H5"
+    ],
+    "UPD": [
+      "B09",
+      "update-manifest / channel",
+      "H7"
+    ],
+    "REL": [
+      "B10",
+      "release-artifacts",
+      "H8"
+    ],
+    "SBM": [
+      "B11",
+      "SBOM / advisory report",
+      "H7"
+    ],
+    "SEC": [
+      "B01",
+      "crypto / paths",
+      "H7"
+    ],
+    "OBS": [
+      "B12",
+      "log-record / diagnostics",
+      "H6"
+    ],
+    "CRA": [
+      "B13",
+      "(documentation)",
+      "H8"
+    ],
+    "CER": [
+      "B13",
+      "(documentation)",
+      "H8"
+    ],
+    "VER": [
+      "B16",
+      "manifest.json",
+      "H2"
+    ],
+    "TST": [
+      "B14",
+      "fixtures / interface tests",
+      "H5"
+    ],
+    "GAT": [
+      "orchestrator",
+      "(process)",
+      "H6"
+    ],
+    "COST": [
+      "B18",
+      "agent-report",
+      "H8"
+    ],
+    "PORT": [
+      "orchestrator",
+      "capability-map",
+      "H8"
+    ],
+    "CTR": [
+      "B02",
+      "contracts crate",
+      "H3"
+    ]
+  },
+  "override": {
+    "REQ-FND-08": [
+      "B16",
+      "manifest.json",
+      "H2"
+    ],
+    "REQ-FND-10": [
+      "B11",
+      "(telemetry kill-list)",
+      "H7"
+    ],
+    "REQ-FND-11": [
+      "B01",
+      "ffi-boundary",
+      "H7"
+    ],
+    "REQ-DSN-06": [
+      "B03",
+      "design-tokens",
+      "H1"
+    ],
+    "REQ-DSN-11": [
+      "B05",
+      "view-registry",
+      "H6"
+    ],
+    "REQ-MOC-05": [
+      "B15",
+      "(screenshots)",
+      "H1"
+    ],
+    "REQ-MOC-08": [
+      "orchestrator",
+      "approvals.md",
+      "H1"
+    ],
+    "REQ-UI-01": [
+      "B00",
+      "(intake)",
+      "H0"
+    ],
+    "REQ-UI-08": [
+      "B05",
+      "view-registry",
+      "H6"
+    ],
+    "REQ-INST-08": [
+      "B07",
+      "install-mode",
+      "H7"
+    ],
+    "REQ-SVC-06": [
+      "B08",
+      "ipc-contract",
+      "H7"
+    ],
+    "REQ-SEC-01": [
+      "B09",
+      "update-manifest",
+      "H7"
+    ],
+    "REQ-SEC-02": [
+      "B09",
+      "update-manifest",
+      "H7"
+    ],
+    "REQ-SEC-08": [
+      "B12",
+      "log-record",
+      "H7"
+    ],
+    "REQ-SEC-09": [
+      "B08",
+      "ipc-contract",
+      "H7"
+    ],
+    "REQ-SEC-10": [
+      "B13",
+      "(documentation)",
+      "H8"
+    ],
+    "REQ-UPD-13": [
+      "B09",
+      "update-manifest",
+      "H7"
+    ],
+    "REQ-REL-09": [
+      "B17",
+      "(release record)",
+      "H8"
+    ],
+    "REQ-SBM-02": [
+      "B11",
+      "SBOM",
+      "H7"
+    ],
+    "REQ-OBS-06": [
+      "B12",
+      "log-record",
+      "H6"
+    ],
+    "REQ-CRA-03": [
+      "B11",
+      "SBOM",
+      "H7"
+    ],
+    "REQ-CRA-07": [
+      "B09",
+      "update-manifest",
+      "H7"
+    ],
+    "REQ-CRA-08": [
+      "B00",
+      "(intake)",
+      "H0"
+    ],
+    "REQ-TST-04": [
+      "B15",
+      "(visual suite)",
+      "H5"
+    ],
+    "REQ-TST-05": [
+      "B03",
+      "design-tokens",
+      "H1"
+    ],
+    "REQ-TST-08": [
+      "B15",
+      "(visual suite)",
+      "H5"
+    ],
+    "REQ-TST-09": [
+      "B15",
+      "(visual suite)",
+      "H6"
+    ],
+    "REQ-GAT-01": [
+      "D1,D2",
+      "gate verdict",
+      "H6"
+    ],
+    "REQ-GAT-02": [
+      "T1,T2",
+      "gate verdict",
+      "H7"
+    ],
+    "REQ-GAT-03": [
+      "T1,T2",
+      "review plan",
+      "H7"
+    ],
+    "REQ-GAT-04": [
+      "D1,D2,T1,T2",
+      "gate verdict",
+      "H6"
+    ],
+    "REQ-GAT-06": [
+      "D1,D2",
+      "karpathy-lens",
+      "H6"
+    ],
+    "REQ-GAT-08": [
+      "orchestrator",
+      "approvals.md",
+      "H1"
+    ],
+    "REQ-COST-02": [
+      "orchestrator",
+      "agent-report",
+      "H1"
+    ],
+    "REQ-COST-05": [
+      "B18",
+      "agent-report",
+      "H6"
+    ],
+    "REQ-PORT-04": [
+      "B11",
+      "(telemetry kill-list)",
+      "H7"
+    ],
+    "REQ-CTR-04": [
+      "orchestrator",
+      "ownership.md",
+      "H3"
+    ],
+    "REQ-CTR-05": [
+      "B14",
+      "fixtures",
+      "H4"
+    ],
+    "REQ-CTR-07": [
+      "B01",
+      "ffi-boundary",
+      "H4"
+    ],
+    "REQ-CTR-08": [
+      "B08",
+      "service-state",
+      "H5"
+    ],
+    "REQ-CTR-10": [
+      "B14",
+      "interface tests",
+      "H4"
+    ],
+    "REQ-REL-05": [
+      "B17",
+      "(release record)",
+      "H8"
+    ],
+    "REQ-REL-07": [
+      "B17",
+      "(release record)",
+      "H8"
+    ]
+  },
+  "spec": {
+    "FND": "spec/foundation.md",
+    "DSN": "spec/design-system.md",
+    "MOC": "spec/mockups.md",
+    "UI": "spec/app-surface.md",
+    "TRY": "spec/app-surface.md",
+    "INST": "spec/installer.md",
+    "SVC": "spec/service-autostart.md",
+    "UPD": "spec/updater.md",
+    "REL": "spec/release.md",
+    "SBM": "spec/supply-chain.md",
+    "SEC": "spec/foundation.md",
+    "OBS": "spec/observability.md",
+    "CRA": "compliance/cra/obligations-matrix.md",
+    "CER": "compliance/cer/resilience.md",
+    "VER": "versions/README.md",
+    "TST": "gates/gate-ladder.md",
+    "GAT": "gates/gate-ladder.md",
+    "COST": "gates/README.md",
+    "PORT": "portability/README.md",
+    "CTR": "contracts/README.md"
+  },
+  "spec_by_id": {
+    "REQ-SEC-01": "spec/updater.md",
+    "REQ-SEC-02": "spec/updater.md",
+    "REQ-SEC-08": "spec/observability.md",
+    "REQ-SEC-09": "spec/service-autostart.md",
+    "REQ-SEC-10": "compliance/cra/cvd-policy.md",
+    "REQ-FND-10": "spec/supply-chain.md",
+    "REQ-CRA-03": "spec/supply-chain.md",
+    "REQ-CRA-07": "spec/updater.md",
+    "REQ-DSN-11": "spec/app-surface.md",
+    "REQ-PORT-04": "portability/capability-map.md"
+  }
+}

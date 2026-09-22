@@ -1,0 +1,49 @@
+{
+  "$schema": "./README.md",
+  "generatedAt": "2026-09-22T08:34:06Z",
+  "generatedBy": "B18-cost-accountant",
+  "unit": "USD per 1,000,000 tokens",
+  "policy": {
+    "requirements": [
+      "REQ-COST-03",
+      "REQ-COST-04"
+    ],
+    "rules": [
+      "A price is never taken from a model's memory. It is read from the provider's published pricing and recorded with its source and check timestamp.",
+      "Every entry carries a `confidence`. `verified` means this build read the provider's own pricing page. `secondary` means it came from a cached table or third party and has NOT been confirmed.",
+      "A `secondary` price may produce an estimate, and the estimate must say it rests on an unverified price (REQ-COST-03).",
+      "Token counts are measured and never estimated. Money is derived. The cost table never presents one as the other."
+    ],
+    "staleAfterDays": 14
+  },
+  "egressNote": "Vendor pricing pages were unreachable through this environment's egress proxy when this file was written, so nothing is marked `verified`. Do not upgrade a confidence level without a successful fetch.",
+  "providers": {
+    "anthropic": {
+      "source": "https://docs.claude.com/en/docs/about-claude/pricing",
+      "checkedAt": "2026-09-22T08:34:06Z",
+      "confidence": "secondary",
+      "provenance": "Bundled claude-api skill cache dated 2026-06-24. Not confirmed against the live page.",
+      "models": {
+        "claude-opus-5": {
+          "input": 5.0,
+          "output": 25.0,
+          "note": "Default build model."
+        },
+        "claude-sonnet-5": {
+          "input": 2.0,
+          "output": 10.0
+        },
+        "claude-haiku-4-5": {
+          "input": 1.0,
+          "output": 5.0,
+          "note": "B18 runs here (REQ-COST-03). 200K context rather than 1M."
+        }
+      },
+      "modifiers": {
+        "batch": {
+          "multiplier": 0.5
+        }
+      }
+    }
+  }
+}

@@ -60,12 +60,32 @@ for dir in boilerplates/*/; do
   fi
 
   # CONVENTIONS.md §5 — ownership before parallelism.
-  if [ -f "$dir/contracts/ownership.md" ]; then
-    for a in $(grep -oE '\b[AC][0-9]{2}\b|\bS[12]\b|\bC[12]\b' "$dir/contracts/ownership.md" | sort -u); do
-      ls "$dir/.claude/agents/" 2>/dev/null | grep -q "^${a}-" \
-        || bad "ownership map names $a but .claude/agents/${a}-*.md is missing"
+  # The roster is the source of truth for agent ids, so this works for any
+  # naming scheme. Deriving the ids from a hardcoded pattern silently passed a
+  # boilerplate whose agents are B01/D1/T1 rather than A01/C1/S1.
+  if [ -f "$dir/spec/agents.md" ] && [ -d "$dir/.claude/agents" ]; then
+    ids=$(grep -oE '^\| *`?[A-Z]{1,2}[0-9]{1,2}`? *\|' "$dir/spec/agents.md" \
+            | tr -d '|` ' | sort -u)
+    if [ -z "$ids" ]; then
+      bad "spec/agents.md has no recognisable agent-id rows — the roster is the source of truth for ids"
+    else
+      missing=0
+      for a in $ids; do
+        ls "$dir/.claude/agents/" 2>/dev/null | grep -q "^${a}-" \
+          || { bad "roster names $a but .claude/agents/${a}-*.md is missing"; missing=1; }
+      done
+      [ "$missing" -eq 0 ] && note "roster: $(echo "$ids" | wc -w | tr -d ' ') agents, every one has a definition"
+    fi
+  fi
+  if [ -f "$dir/contracts/ownership.md" ] && [ -f "$dir/spec/agents.md" ] && [ -n "${ids:-}" ]; then
+    # An agent that owns a path but is not in the roster is the inverse error.
+    # Only tokens sharing a roster prefix are considered: gate ids (G3, H3) fit
+    # a generic letter+digit pattern and are not agents.
+    prefixes=$(echo "$ids" | sed 's/[0-9].*//' | sort -u | tr -d '\n' | sed 's/./&|/g; s/|$//')
+    for a in $(grep -oE "\b(${prefixes})[0-9]{1,2}\b" "$dir/contracts/ownership.md" | sort -u); do
+      echo "$ids" | grep -qx "$a" \
+        || bad "ownership map names $a, which is not in spec/agents.md"
     done
-    note "ownership map present, named agents resolve"
   fi
 
   # Internal document links must resolve. Paths under build/ are per-build
