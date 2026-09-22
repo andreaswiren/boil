@@ -9,35 +9,33 @@ A21 owns `tests/visual/**` and `build/screenshots/**`. Requirements: REQ-TST-02,
 REQ-TST-03, REQ-TST-04, REQ-TST-06, REQ-UI-10. A21 writes no product code, so it
 never screenshots its own work (REQ-GAT-07).
 
-## 1. Environment facts — do not fight them
+## 1. Resolve the browser first — and do not assume which case you are in
 
-Chromium is **pre-installed**:
-
-```bash
-echo "$PLAYWRIGHT_BROWSERS_PATH"      # /opt/pw-browsers  (set for you)
-ls -l /opt/pw-browsers/chromium       # symlink -> chromium-<rev>/chrome-linux/chrome
-```
-
-`PLAYWRIGHT_BROWSERS_PATH` is already exported. `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD`
-is **not** — check it and export it yourself before any install, or an npm
-postinstall hook will try to re-fetch a browser that is already on disk:
+This runs on a developer's laptop, in CI, and in agent containers that ship a
+browser already. **The correct first move is opposite in the first and the
+last**, so detect it rather than following a rule that was written for one of
+them:
 
 ```bash
-export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+echo "${PLAYWRIGHT_BROWSERS_PATH:-<unset>}"   # containers usually set this
+npx playwright --version
+npx playwright install --dry-run chromium 2>&1 | tail -3   # says where it would look
 ```
 
-**Never run `playwright install`.** The download is blocked or wasted, and it
-does not fix the one failure it looks like it would fix.
+| What you find | What to do |
+|---|---|
+| `PLAYWRIGHT_BROWSERS_PATH` set and the binary present — an agent container | Use it. **Do not run `playwright install`**: the download is blocked or wasted, and it does not fix the one failure it looks like it would fix. Export `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1` before any `npm install`, or a postinstall hook re-fetches a browser already on disk. |
+| Nothing installed — a laptop or a fresh CI runner, **the normal case** | `npx playwright install --with-deps chromium`, once. A blanket "never install" belongs to the container case only; applied here it produces `Executable doesn't exist at …` and a failed gate, and re-reading the rule does not fix it. |
+| Installed, but the pinned `@playwright/test` expects a different revision | Do not download that revision. Launch the present binary: `chromium.launch({ executablePath: process.env.CHROMIUM_PATH })`, and record which binary you used. |
 
-If the project pins a `@playwright/test` expecting a different browser revision,
-Playwright reports "Executable doesn't exist at /opt/pw-browsers/chromium-<rev>/…".
-Do not download that revision — launch the installed binary instead:
-`chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })`.
+Record the resolved path and whether you installed anything, in the manifest. A
+screenshot set nobody can attribute to a browser build is evidence with a gap.
 
-**When this fails:** the browser dies immediately with no page. In a container
-without a user namespace, add `--no-sandbox` to `args`; if it still dies, check
-`ldd /opt/pw-browsers/chromium | grep 'not found'` — a missing shared library is
-a host problem to report, not something a reinstall fixes.
+**When the browser dies immediately with no page:** in a container without a user
+namespace add `--no-sandbox` to `args`; if it still dies, check
+`ldd "$CHROMIUM_PATH" | grep 'not found'` — a missing shared library is a host
+problem to report, not something a reinstall fixes. On Windows that check is
+`where.exe` plus the launch error itself; there is no `ldd`.
 
 ## 2. Connect: launch vs connectOverCDP
 
@@ -57,7 +55,7 @@ import { chromium } from '@playwright/test';
 
 const PORT = 9222;
 const server = await chromium.launchServer({
-  executablePath: '/opt/pw-browsers/chromium',
+  executablePath: process.env.CHROMIUM_PATH,   // resolved in §1; omit to use Playwright's default
   args: [`--remote-debugging-port=${PORT}`, '--no-sandbox', '--font-render-hinting=none'],
 });
 const browser = await chromium.connectOverCDP(`http://127.0.0.1:${PORT}`);

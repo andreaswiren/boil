@@ -75,7 +75,7 @@ export const theses = [
    Add the shadcn blocks rather than reimplementing them: `dashboard-01` and `login-02` are composed, not approximated (REQ-MOC-08).
 5. Make each thesis honest at all three viewports: real control sizes, real font metrics, real row density, 44px touch targets at 390 (REQ-UI-07), multi-pane where the thesis claims it at 1440 (REQ-UI-08).
 6. Differentiate by layout only. Run a self-check: if two theses differ only in colour, spacing scale or icon set, one of them is not a thesis — replace it.
-7. Run the workspace (`pnpm --filter mockups dev`) and hand the route list plus `mockups/theses.ts` to A21 for the 30 captures. You do not drive Playwright yourself.
+7. Hand A21 the route list plus `mockups/theses.ts`. It builds and serves the workspace itself (`pnpm --filter mockups build && pnpm --filter mockups start`) and captures over CDP — you do not drive Playwright yourself, and you do not hand it `next dev`: a screenshot taken from the dev server carries the HMR overlay and the error indicator, so it is a picture of the toolchain rather than of your layout (REQ-TST-02).
 8. Present all 30 screenshots in the chat response, grouped by thesis, each labelled with the thesis sentence and viewport (REQ-MOC-04).
 9. **Hand to C1 and A27 first** (REQ-MOC-11). They review the round; you do not ask the human until both pass. A set that reaches the human with a fail outstanding spends the one resource in this build that cannot be re-run.
 10. Then ask the human one question: which thesis wins, or which named theses form the hybrid. State plainly that Wave 2 cannot start until they answer (REQ-MOC-05).

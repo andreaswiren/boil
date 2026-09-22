@@ -80,7 +80,12 @@ concurrent with it:
 6. **No mockup declares a design value** (REQ-MOC-10): no hex, no raw radius,
    font stack or spacing number outside A06's tokens. Grep the mockup sources —
    a literal is a fail, not a note.
-7. Screenshots presented in the chat response, not only on disk (REQ-MOC-04).
+7. Screenshots presented in the chat response, not only on disk (REQ-MOC-04),
+   and captured by **A21 over CDP from a production build** of the mockup
+   workspace — `pnpm --filter mockups build && start`, never `next dev` and
+   never a file path (REQ-TST-02, REQ-MOC-07). A render carrying the dev
+   overlay is a picture of the toolchain; a build that fails here is a G1 fail
+   reported as such, not something to screenshot around.
 8. Chrome-vs-content budget per surface stated and visible (REQ-UI-10).
 9. **C1 and A27 have both passed this round** (REQ-MOC-11), neither having
    written the mockups (REQ-GAT-07). C1 judges design; A27 judges the 390px

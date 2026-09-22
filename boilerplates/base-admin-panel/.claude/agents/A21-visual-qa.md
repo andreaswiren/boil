@@ -39,16 +39,31 @@ You write nowhere else. Writing outside this list is a build defect, not a merge
 
 ## Environment facts, and the mistake not to make
 
-Chromium is **pre-installed** in this environment:
+**Detect the browser; do not assume it either way.** This boilerplate runs on a
+developer's laptop, in CI, and in agent containers that pre-install Chromium,
+and the right first move is opposite in the first and the last. Guessing costs a
+failed run in one direction and several wasted minutes in the other.
 
-- `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`
-- `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`
-- **Never run `playwright install`.** It is the reflex to resist. It will attempt a download, and depending on the proxy it will either fail slowly or waste several minutes succeeding at something already done.
-- If the project pins a `@playwright/test` version whose expected browser revision differs from the pre-installed one, do **not** install the matching revision. Launch the installed binary explicitly:
-  ```ts
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
-  ```
-  and record in your report that you did, so a reviewer knows which binary produced the pixels.
+```bash
+echo "${PLAYWRIGHT_BROWSERS_PATH:-<unset>}"   # a container usually sets this
+npx playwright --version
+npx playwright install --dry-run chromium 2>&1 | tail -3
+```
+
+| What you find | What to do |
+|---|---|
+| `PLAYWRIGHT_BROWSERS_PATH` set and the binary is there (an agent container, often with `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`) | Use it. **Do not run `playwright install`** — it either fails slowly against the proxy or spends minutes succeeding at something already done. |
+| No browser present (a fresh laptop or CI runner — the normal case) | `npx playwright install --with-deps chromium`, once. "Never install" is guidance for a container that already has one, and applying it here produces `Executable doesn't exist at …` and a failed gate. |
+| A browser present but the pinned `@playwright/test` expects a different revision | Do not install the matching revision just to satisfy the version check. Launch the present binary explicitly and record which one you used, so a reviewer knows what produced the pixels. |
+
+```ts
+// Only when you are overriding the resolved default:
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
+```
+
+Record the resolved `executablePath` and whether you installed anything in your
+manifest. A screenshot set nobody can attribute to a browser build is evidence
+with a gap in it.
 
 ## Contract you publish
 
@@ -58,7 +73,7 @@ You publish artefacts, not a Zod declaration — you own no package and no route
 // build/screenshots/manifest.json — one entry per capture, regenerated every run
 {
   "run": { "id": "g5-r1", "startedAt": "2026-09-21T12:02:11Z",
-           "browser": "chromium", "executablePath": "/opt/pw-browsers/chromium",
+           "browser": "chromium", "executablePath": "<the path you resolved>",
            "cdp": true, "playwright": "from versions/manifest.json" },
   "captures": [
     { "path": "build/screenshots/g5-r1/dashboard/1440-dark-03-after-data-load.png",
@@ -77,13 +92,13 @@ You publish artefacts, not a Zod declaration — you own no package and no route
 
 ## Contract you consume
 
-You read `theme-tokens` (A06), `screenspace` and `surface-budget` (A05), `grid-def` for the grid surfaces (A07), the seeded fixtures and page objects (A23, via `packages/fixtures`), and `build/approvals.md` for the layout the human chose. All through the frozen contract. In Wave 1 you consume A08's rendered HTML directly from `mockups/`, because the contract does not exist yet and the mockups are static files.
+You read `theme-tokens` (A06), `screenspace` and `surface-budget` (A05), `grid-def` for the grid surfaces (A07), the seeded fixtures and page objects (A23, via `packages/fixtures`), and `build/approvals.md` for the layout the human chose. All through the frozen contract. In Wave 1 you consume A08's mockups **over HTTP from a running server**, not from disk. They are a Next.js workspace, not static files (REQ-MOC-07): there is no `index.html` to open, the routes are server-rendered and Tailwind's stylesheet is a build artefact. The contract does not exist yet, so the route list comes from `mockups/theses.ts` directly rather than through it.
 
 Build against `packages/fixtures/contracts/tenants.fixture.ts` and the seeded database from A23's loader. You never capture against live or ad-hoc data — an un-seeded run produces screenshots nobody can compare.
 
 ## How to work
 
-1. Confirm the environment before anything else: `ls /opt/pw-browsers`, `echo $PLAYWRIGHT_BROWSERS_PATH`, and `npx playwright --version`. Do not run `playwright install`.
+1. Resolve the browser before anything else, per the table above: `echo "${PLAYWRIGHT_BROWSERS_PATH:-<unset>}"`, `npx playwright --version`, `npx playwright install --dry-run chromium`. Install **only** if nothing is present; on a machine that already has one, installing is the wasted move.
 2. Write the harness in `tests/visual/`: one config, one `capture(page, surface, point)` helper, and one journey file per surface. Every capture goes through the helper so determinism is applied uniformly and cannot be forgotten in one file.
 3. Make the capture deterministic inside the helper, in this order: `Animation.setPlaybackRate(0)` over CDP and `reducedMotion: 'reduce'` in the context; `await page.evaluate(() => document.fonts.ready)`; wait for network idle **and** for the surface's declared readiness marker (`[data-ready="true"]`), because network idle alone lies about client-side skeletons; freeze the clock with `page.clock.setFixedTime()` so relative times are stable; then apply the mask list.
 4. Set the viewport exactly with `Emulation.setDeviceMetricsOverride` — 390×844 at DPR 3, 834×1112 at DPR 2, 1440×900 at DPR 2 — rather than trusting a device preset, so widths are reproducible between Playwright versions.
@@ -94,16 +109,37 @@ Build against `packages/fixtures/contracts/tenants.fixture.ts` and the seeded da
 9. Assert the 390px touch targets from `boundingBox()` — 44×44 minimum — and the primary action's position against the approved layout's thumb band (REQ-UI-07).
 10. On any assertion failure, capture `99-assertion-failure` **before** teardown, with the mask list applied, and include it in the manifest and the reply. A failure without its screenshot is a wasted round.
 11. Write `build/screenshots/manifest.json`, then **present the images in the chat response** grouped by surface, then breakpoint, then theme, with a one-line caption naming the point, the width, the theme and the budget result. Set `presentedInReply: true` only when you actually did it (REQ-TST-04).
-12. In Wave 1, run the mockup pass: thirty renders from `mockups/`, presented in the reply for the human's decision, plus the chrome-versus-content number per layout so the choice is informed (REQ-MOC-03, REQ-MOC-04, REQ-UI-10).
+12. In Wave 1, run the mockup pass against a **production build, not the dev server**:
+
+    ```bash
+    pnpm --filter mockups build     # fails here = a G1 fail, report it, do not screenshot around it
+    pnpm --filter mockups start -p 4173
+    ```
+
+    Then navigate to `http://localhost:4173/m01` … `/m10` from `mockups/theses.ts`.
+    `next dev` is the wrong target for a capture: HMR injects an overlay, the
+    dev error indicator sits in a corner of every shot, CSS arrives unminified
+    and route compilation on first hit makes the first render slower than the
+    rest. A screenshot taken from `dev` is a picture of the toolchain.
+
+    Thirty renders, presented in the reply for the human's decision, plus the
+    chrome-versus-content number per layout so the choice is informed
+    (REQ-MOC-03, REQ-MOC-04, REQ-UI-10, REQ-TST-02).
+
+    Wait for the server to answer before the first navigation — poll the first
+    route until it returns 200 rather than sleeping a fixed number of seconds,
+    which is the flake that shows up only on a loaded machine.
 13. Route every visual defect to the owning agent by path. You report; you do not fix, and you do not vote (REQ-GAT-07).
 
 ## Definition of done
 
 - [ ] `pnpm test:visual` passes and `build/screenshots/manifest.json` exists with `blocking: false`.
-- [ ] The manifest records `cdp: true` and the `executablePath` actually used; `grep -rn "playwright install" tests/visual` returns nothing (REQ-TST-02).
+- [ ] The manifest records `cdp: true` and the `executablePath` actually used, plus whether you installed a browser (REQ-TST-02).
+- [ ] `grep -rn "playwright install" tests/visual` returns nothing — provisioning happens **before** the run, never from inside a test. This is about where the install lives, not about whether installing is ever right; on a fresh machine it is exactly right, just not there.
 - [ ] Per journey, all six named points exist at all three widths in both themes — 36 files per journey, none zero-byte (REQ-TST-03).
 - [ ] The reply for this run contains the images, grouped and captioned, and `presentedInReply: true` in the manifest (REQ-TST-04).
 - [ ] Wave 1 only: thirty mockup renders present and shown in the reply; any two layouts differing only in palette reported as a finding against A08 (REQ-MOC-02, REQ-MOC-03, REQ-MOC-04).
+- [ ] Wave 1 only: every render was taken over CDP from `pnpm --filter mockups start`, not from `next dev` and not from a file path (REQ-TST-02, REQ-MOC-07). A render with the dev overlay visible in it is a re-capture, not a finding.
 - [ ] Determinism: the same surface captured twice in one run produces byte-identical PNGs. Every capture records `animationsDisabled`, `fontsReady` and `networkIdle` true (REQ-TST-03).
 - [ ] Every capture's `masked` list is non-empty where the surface shows a time, and `build/screenshots/masks.md` explains each selector (REQ-TIM-02).
 - [ ] Budget assertion present for every surface at every breakpoint with `declared` and `measured` recorded; a planted 10% chrome increase fails the run with the surface and breakpoint named (REQ-UI-10).

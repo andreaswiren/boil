@@ -9,6 +9,34 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.8.1] — 2026-09-22
+
+Two defects in the screenshot path, one of them introduced by 0.8.0 itself.
+
+### Fixed
+
+- **0.8.0 turned the mockups into a Next.js workspace and left `A21` told they
+  were static files.** Its brief still read "you consume A08's rendered HTML
+  directly from `mockups/` … the mockups are static files", which was true of
+  `index.html` and is not true of a server-rendered workspace: there is no file
+  to open and Tailwind's stylesheet is a build artefact. `A21` now builds and
+  serves the workspace and captures over HTTP, and `G1` cites `REQ-TST-02` so
+  the gate verifies the capture method rather than only the output.
+- **The capture targets a production build, not `next dev`.** The dev server
+  injects the HMR overlay and the error indicator into every shot, serves
+  unminified CSS, and compiles routes on first hit so the first render is slower
+  than the rest. A screenshot taken from `dev` is a picture of the toolchain.
+- **`A21` and `visual-qa-cdp` hardcoded one machine's browser setup.** Both
+  asserted Chromium is pre-installed at `/opt/pw-browsers` and that
+  `playwright install` must *never* be run — true in the agent container they
+  were written in, and exactly backwards on a developer laptop or a fresh CI
+  runner, where the run fails with `Executable doesn't exist at …` and the brief
+  tells the agent not to fix it. Both now resolve the browser first and say
+  which action each case calls for, since the correct first move is opposite at
+  the two ends. The resolved path and whether anything was installed go in the
+  manifest: a screenshot set nobody can attribute to a browser build is evidence
+  with a gap in it.
+
 ## [0.8.0] — 2026-09-22
 
 Reported from a real `base-admin-panel` build: the mockups used none of the
@@ -862,7 +890,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/andreaswiren/boil/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/andreaswiren/boil/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/andreaswiren/boil/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/andreaswiren/boil/compare/v0.7.0...v0.7.1
