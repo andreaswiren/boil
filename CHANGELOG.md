@@ -9,6 +9,66 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-09-22
+
+Both boilerplates were unusable on Muse Code, and one of them had a broken
+entry point on every runtime including Claude Code. Reported from a real
+deployment; the portability adapter had asserted both as working.
+
+### Fixed
+
+**`AGENTS.md` carried no instructions (both boilerplates and the repo root)**
+- Muse Code 1.3.0 gives `AGENTS.md` precedence and **ignores** `CLAUDE.md`:
+  `warning: rules file at …\CLAUDE.md is ignored this session because AGENTS.md
+  takes precedence in that directory`. All three `AGENTS.md` files were
+  three-line pointers *to* `CLAUDE.md`, so on that runtime an agent received a
+  note telling it to read the file the tool had just refused to read. Every hard
+  rule, the map, the gate ladder and the no-self-approval rule silently failed
+  to load.
+- `CLAUDE.md` and `AGENTS.md` are now byte-identical in all three directories,
+  and the conformance check fails if they drift. The duplication is deliberate:
+  a pointer is a behaviour that depends on the agent following it, while two
+  identical files are a fact the runtime cannot misread. Each pair carries a
+  note saying the Muse warning is expected and that deleting either file breaks
+  the other runtime.
+- `portability/muse-code.md` had claimed "`CLAUDE.md` is read too — Muse Code
+  falls back to `CLAUDE.md` … the entry-point chain in this repo survives
+  unchanged" as something that **already works**. It is a precedence rule, not a
+  fallback chain, and the adapter's own status line said `untested`. Rows stated
+  as facts in an untested adapter are the defect, not just the wrong row.
+
+**`/build-orchestrate` resolved to nothing in `base-windows-rust-app`**
+- `CLAUDE.md` opened by telling the agent to run `/build-orchestrate`, and
+  `.claude/skills/` was an empty directory. The documented first action of the
+  documented entry point failed in every runtime, Claude Code included.
+- The skill now exists, written for this boilerplate rather than copied: the
+  `H0`–`H8` ladder, the 23-agent wave table with Wave 3 at nine, the four
+  non-negotiable rules, `T1`/`T2` in separate sessions when concurrency is
+  unavailable, and the `#[non_exhaustive]` CCR trap.
+
+### Changed
+
+**The entry point is a file read, not a slash command**
+- Both boilerplates now lead with "read `prompts/00-master-orchestrator.md` and
+  follow it", because that works on every runtime: it is a file rather than a
+  feature. The skill is presented as a Claude Code shortcut, with reading
+  `.claude/skills/build-orchestrate/SKILL.md` as an ordinary file named as the
+  fallback. Muse Code does not load skills, which is the second half of what
+  this deployment hit.
+- `base-admin-panel/CLAUDE.md` stated 24 agents, 215 requirements and 13
+  concurrent against an actual 32, 337 and 16. That is the first file an agent
+  reads.
+
+### Added
+
+Two conformance checks, both confirmed to fail on an injected fault rather than
+assumed to work:
+- `CLAUDE.md` and `AGENTS.md` must be byte-identical.
+- A slash command on a line of its own must resolve to a skill the folder ships.
+  The first version of this check filtered its candidates by the directory it
+  was meant to verify, so it could never fail — caught by testing it, which is
+  the only reason it is a check rather than decoration.
+
 ## [0.5.0] — 2026-09-22
 
 The repository becomes a collection of two boilerplates rather than one, and
@@ -591,7 +651,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/andreaswiren/boil/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/andreaswiren/boil/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/andreaswiren/boil/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/andreaswiren/boil/compare/v0.2.0...v0.3.0

@@ -19,7 +19,7 @@ files and run a shell command.
 | Agent frontmatter `model:` | Names Anthropic model ids — including `claude-haiku-4-5` for `B18`, which is an economic choice rather than a capability one |
 | "Launch every agent in a wave in one message" | Expresses concurrency in Claude Code's terms |
 | `.claude/agents/` and `.claude/skills/` discovery | A path convention |
-| Skill invocation | `/name` is Claude Code syntax |
+| Skill invocation | `/<name>` is Claude Code syntax |
 
 `capability-map.md` is the translation layer. It names what the structure needs
 a runtime to be able to do, and where a runtime cannot do it, **which

@@ -35,6 +35,46 @@ for f in README.md CLAUDE.md AGENTS.md spec/requirements.md prompts/00-master-or
 done
 [ -d "$root/.claude/agents" ] || note "no .claude/agents (single-agent boilerplate?)"
 
+# The two entry points must be byte-identical. Runtimes disagree about which one
+# wins, and some ignore the loser outright -- Muse Code 1.3.0 gives AGENTS.md
+# precedence and prints "rules file at CLAUDE.md is ignored this session". A
+# pointer file is therefore the one thing neither file may be: on the runtime
+# that ignores its target, the agent gets a note telling it to read a file the
+# tool has just refused to read, and every hard rule, the map and the gate
+# ladder silently fail to load.
+if [ -f "$root/CLAUDE.md" ] && [ -f "$root/AGENTS.md" ]; then
+  if diff -q "$root/CLAUDE.md" "$root/AGENTS.md" >/dev/null 2>&1; then
+    note "entry points: CLAUDE.md and AGENTS.md are identical"
+  else
+    bad "CLAUDE.md and AGENTS.md differ -- a runtime that reads only one would miss what is in the other"
+    diff "$root/CLAUDE.md" "$root/AGENTS.md" | head -12 | sed 's/^/    /'
+  fi
+fi
+
+# A slash command named in a document must resolve to a skill the folder ships.
+# CLAUDE.md told the agent to run /build-orchestrate in a boilerplate whose
+# .claude/skills/ was empty, so the documented entry point resolved to nothing
+# in every runtime, Claude Code included.
+#
+# Only a whole line that is nothing but the command counts -- that is how a
+# fenced invocation block reads, and it is the shape that tells an agent to run
+# something. A backticked mention in prose is documentation about syntax and may
+# legitimately be a placeholder, so matching those produces false failures.
+cited=$(grep -rhoE '^/[a-z][a-z0-9-]{3,}$' "$root" --include='*.md' 2>/dev/null \
+          | tr -d '/' | sort -u)
+if [ -n "$cited" ]; then
+  missing=0
+  for cmd in $cited; do
+    [ -f "$root/.claude/skills/$cmd/SKILL.md" ] \
+      || { bad "/$cmd is cited as a command but .claude/skills/$cmd/SKILL.md is missing"; missing=1; }
+  done
+  [ "$missing" -eq 0 ] && note "slash commands: $(echo "$cited" | wc -w | tr -d ' ') cited, every one resolves to a skill"
+fi
+for d in "$root"/.claude/skills/*/; do
+  [ -d "$d" ] || continue
+  [ -f "$d/SKILL.md" ] || bad "skill $(basename "$d") has no SKILL.md"
+done
+
 # CONVENTIONS.md §3 — every cited requirement ID is defined.
 if [ -f "$root/spec/requirements.md" ]; then
   defined=$(grep -oE '^\| REQ-[A-Z0-9]+-[0-9]+' "$root/spec/requirements.md" | sed 's/^| //' | sort -u)

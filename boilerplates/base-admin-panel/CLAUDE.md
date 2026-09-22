@@ -1,20 +1,33 @@
 # base-admin-panel — operating instructions
 
 You have been pointed at a boilerplate. It builds a multi-tenant Next.js admin
-panel from a short description, using a 24-agent fleet across 5 waves behind 9
-gates.
+panel from a short description, using a 32-agent fleet — 28 builders and 4
+reviewers — across 5 waves behind 9 gates.
+
+> **`CLAUDE.md` and `AGENTS.md` in this directory are byte-identical.** Some
+> runtimes read one, some read the other, and Muse Code reads `AGENTS.md` and
+> prints a warning that it is ignoring `CLAUDE.md`. That warning is expected and
+> costs nothing here, because there is nothing in the ignored file that is not
+> in the one being read. Do not "fix" it by deleting either file — that breaks
+> the other runtime. `scripts/check-boilerplate.sh` fails if the two drift.
 
 ## Start here
 
-**If the user has described what they want** — even in a sentence — load the
-orchestration skill and begin:
+**If the user has described what they want** — even in a sentence — read
+`prompts/00-master-orchestrator.md` and follow it. That file is the process of
+record and it is the entry point on every runtime, because it is a file rather
+than a feature.
+
+On Claude Code you can load the same procedure as a skill, which is a shortcut
+and not a prerequisite:
 
 ```
 /build-orchestrate
 ```
 
-That turns this session into the orchestrator. Its full instructions are
-`prompts/00-master-orchestrator.md`.
+If a slash command does nothing in your runtime, or the skill does not load, you
+have lost nothing: read `.claude/skills/build-orchestrate/SKILL.md` as an
+ordinary file. A skill is a procedure, and a procedure can always be read.
 
 **If the user has not described anything yet** — ask for a paragraph. Not a
 specification: a paragraph. What the panel is for, roughly how many tenants, who
@@ -30,10 +43,10 @@ document. Do not start a build to answer a question.
 | File | What it is |
 |------|------------|
 | `prompts/00-master-orchestrator.md` | How the build runs. Read this first. |
-| `spec/requirements.md` | 215 requirements with stable IDs. The source of truth. |
+| `spec/requirements.md` | 337 requirements with stable IDs. The source of truth. |
 | `spec/agents.md` | The fleet: agent IDs, waves, who publishes and consumes what. |
 | `contracts/ownership.md` | Who owns which path. The routing table for tasks and findings. |
-| `contracts/README.md` | Contract law. Why 13 agents can build at once. |
+| `contracts/README.md` | Contract law. Why 16 agents can build at once. |
 | `gates/gate-ladder.md` | G0–G8. |
 | `.claude/agents/` | The agent prompts themselves. |
 | `.claude/skills/` | `build-orchestrate`, `contract-guard`, `version-guard`, `visual-qa-cdp`, `supply-chain-audit`, `release-build`. |

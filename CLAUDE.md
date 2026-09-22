@@ -3,12 +3,19 @@
 This repo is a collection of boilerplates and skills. Read
 [`CONVENTIONS.md`](CONVENTIONS.md) before changing anything in it.
 
+> **`CLAUDE.md` and `AGENTS.md` in this directory are byte-identical.** Some
+> runtimes read one, some read the other, and Muse Code reads `AGENTS.md` and
+> prints a warning that it is ignoring `CLAUDE.md`. That warning is expected and
+> costs nothing here, because there is nothing in the ignored file that is not
+> in the one being read. Do not "fix" it by deleting either file — that breaks
+> the other runtime. `scripts/check-conventions.sh` fails if the two drift.
+
 ## Where you are
 
-- Working **inside a boilerplate** (`boilerplates/<name>/`) — that folder's
-  `CLAUDE.md` governs. It is self-contained; do not reach outside it.
+- Working **inside a boilerplate** (`boilerplates/<name>/`) — that folder's own
+  operating instructions govern. It is self-contained; do not reach outside it.
 - Working **on the repo itself** — adding a boilerplate, editing shared skills,
-  updating meta files — this file governs.
+  updating meta files — these instructions govern.
 
 ## Hard rules
 

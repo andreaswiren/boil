@@ -18,14 +18,50 @@ capability map rather than a fork.
 
 | Already works | Why |
 |---------------|-----|
-| `AGENTS.md` is the entry point | Muse Code reads project instructions from `AGENTS.md`, seeded by `muse init`. This boilerplate already has one, and it points at `CLAUDE.md` and `prompts/00-master-orchestrator.md`. |
-| `CLAUDE.md` is read too | Muse Code falls back to `CLAUDE.md` (and `.agents/AGENTS.md`, `.claude/CLAUDE.md`). The entry-point chain in this repo survives unchanged. |
-| The six skills are discoverable where they are | Muse Code scans repo-local `.claude/skills` and `.codex/skills`. Nothing is moved and nothing is renamed. `muse skills import --from claude` exists if you want them copied into Muse's own store instead. |
+| `AGENTS.md` is the entry point | Muse Code reads project instructions from `AGENTS.md`, seeded by `muse init`. This boilerplate has one, and it is a byte-identical copy of `CLAUDE.md` — see the correction below for why that matters. |
 | Every spec, contract and gate document | Plain Markdown naming no tool (REQ-PORT-03). `spec/requirements.md`, `spec/agents.md`, `contracts/ownership.md`, `gates/gate-ladder.md` and `gates/loop-rules.md` read identically on any runtime. |
 | Every agent file's body | The mission, owned REQ IDs, owned paths, definition of done and hand-off shape are runtime-neutral prose. Only the frontmatter needs translating. |
 
 What is left to correct: frontmatter vocabulary, one dispatch sentence, one
 invocation syntax, and two runtime settings. Sections 3 onward.
+
+## 1a. Two rows this section got wrong, and what a real deployment showed
+
+Corrected 2026-09-22 from an observed Muse Code 1.3.0 run, which is the first
+time this adapter met the tool. Both rows had been stated as facts in an adapter
+whose own status line said **untested**. That is the defect worth naming: a
+capability map may hold an `unconfirmed` cell indefinitely, but it may not hold
+a cell that reads *already works* on the strength of an inference.
+
+**"`CLAUDE.md` is read too — Muse Code falls back to it."** It does not. Muse
+Code 1.3.0 prints:
+
+```
+warning: rules file at C:\…\CLAUDE.md is ignored this session because AGENTS.md
+takes precedence in that directory; merge still-applicable guidance into
+AGENTS.md or remove one of the two files
+```
+
+That is **precedence**, not a fallback chain. `AGENTS.md` had been a three-line
+pointer *to* `CLAUDE.md`, so the agent received a note telling it to read the
+file the tool had just refused to read: no hard rules, no map, no gate ladder,
+no `REQ-GAT-07`. The fix is in the repo, not in this adapter — `CLAUDE.md` and
+`AGENTS.md` are now byte-identical and the conformance check fails if they
+drift. **Expect the warning and ignore it.** Nothing is lost when the ignored
+file and the read file are the same file, and deleting either one — which the
+warning suggests — breaks the other runtime.
+
+**"The six skills are discoverable where they are."** In the observed run the
+skill did not load. Whether Muse Code scans `.claude/skills` at all is now
+`unconfirmed`, and the earlier claim about `muse skills import --from claude` is
+`unconfirmed` with it. It costs nothing: both boilerplates now lead with *read
+`prompts/00-master-orchestrator.md` and follow it*, and every skill is a plain
+`SKILL.md` you can read as a file. A skill is a procedure, and a procedure can
+always be read. What is lost is cache economy, which shows up in `REQ-COST-08`.
+
+**Check to resolve them:** run `muse --help` and whatever settings or skills
+subcommand it lists, and record what it prints in
+`build/gates/G7/`. That is how an `unconfirmed` becomes a fact.
 
 ## 2. The adapter prompt
 
@@ -136,7 +172,7 @@ Instruction shapes in this repo that a non-Claude runtime would misread.
 | `model: opus` | every build agent | Not a Muse model id | Muse Spark 1.3 is the build model. Do not map it to a Meta model name you have not read in your own tooling. |
 | `model: claude-haiku-4-5` | `A26` (see `versions/pricing.json`) | Not a Muse model id, and A26's design assumes a cheaper tier exists (REQ-COST-04) | Per-subagent model selection is `unconfirmed` on Muse Code. If it is unavailable, A26 runs on the session model — say so in the cost table rather than leaving the reader to assume A26 was cheap. |
 | "Launch every agent in a wave in a single message with multiple tool calls" | `prompts/00-master-orchestrator.md` | Reads as a rule about message formatting; a runtime with a different dispatch shape may conclude the wave cannot be run at all | "Every agent in the wave starts before any of them finishes." If concurrency is capped, batch it and record the batch size. |
-| `/build-orchestrate` | `CLAUDE.md` | A slash command that may not exist | The skill is at `.claude/skills/build-orchestrate/SKILL.md` and Muse Code scans `.claude/skills`, so it is discoverable. The invocation syntax is `unconfirmed` — check `muse --help`. Reading the `SKILL.md` as a file is always a valid fallback. |
+| `/build-orchestrate` | `CLAUDE.md` | A slash command that may not exist | **Observed: it did not load.** `CLAUDE.md` no longer leads with it — the entry point is "read `prompts/00-master-orchestrator.md` and follow it", which is a file rather than a feature. Read `.claude/skills/build-orchestrate/SKILL.md` as a file when you want the orchestration procedure. |
 | `.claude/agents/` as the agent store | the 31 agent files | Muse Code's own agent format is `*.agent.md` inside a plugin. Whether it scans `.claude/agents/*.md` is **`unconfirmed`** | Do not move the files. The orchestrator reads the agent file and passes its body to the subagent. For native discovery, **copy** each file to `<id>-<slug>.agent.md` inside a plugin (keeping `name` and `description`); the plugin layout and discovery path are `unconfirmed` — check `muse --help` and the plugin-authoring skill that ships inside the binary. Never delete the `.claude/agents/` originals: they are the Claude Code reference implementation (REQ-PORT-01). |
 | "presented in the chat response" | REQ-MOC-04, REQ-TST-04, `A21` | A CLI agent may treat writing the PNG to disk as done | The requirement is that the human sees the images in the reply. If the terminal cannot render them, list every path **and state explicitly that the images were not rendered**. That is a recorded REQ-TST-04 failure, not a pass. |
 | `spec/requirements.md` as something to summarise | all agents | A model with a 1M-token context may pull the whole register in and paraphrase it into a plan | Cite REQ IDs; never paraphrase a requirement into a second wording (REQ-PORT-05). The register is the only source of truth. |

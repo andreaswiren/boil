@@ -5,16 +5,30 @@ in Rust — tray-resident, self-installing, self-updating, optionally a service 
 using a 23-agent fleet (19 builders, 4 reviewers) across 5 waves behind 9
 gates.
 
+> **`CLAUDE.md` and `AGENTS.md` in this directory are byte-identical.** Some
+> runtimes read one, some read the other, and Muse Code reads `AGENTS.md` and
+> prints a warning that it is ignoring `CLAUDE.md`. That warning is expected and
+> costs nothing here, because there is nothing in the ignored file that is not
+> in the one being read. Do not "fix" it by deleting either file — that breaks
+> the other runtime. `scripts/check-boilerplate.sh` fails if the two drift.
+
 ## Start here
 
-**If the user has described what they want** — even in a sentence — load the
-orchestration skill and begin:
+**If the user has described what they want** — even in a sentence — read
+`prompts/00-master-orchestrator.md` and follow it. That file is the process of
+record and it is the entry point on every runtime, because it is a file rather
+than a feature.
+
+On Claude Code you can load the same procedure as a skill, which is a shortcut
+and not a prerequisite:
 
 ```
 /build-orchestrate
 ```
 
-Its full instructions are `prompts/00-master-orchestrator.md`.
+If a slash command does nothing in your runtime, or the skill does not load, you
+have lost nothing: read `.claude/skills/build-orchestrate/SKILL.md` as an
+ordinary file. A skill is a procedure, and a procedure can always be read.
 
 **If the user has not described anything yet** — ask for a paragraph. What the
 app does, who runs it, whether it needs to run when nobody is logged in, and
@@ -34,6 +48,8 @@ document. Do not start a build to answer a question.
 | `contracts/ownership.md` | Who owns which path. The routing table for tasks and findings. |
 | `gates/gate-ladder.md` | `H0`–`H8`. |
 | `versions/manifest.json` | Externally validated crate and toolchain versions. |
+| `.claude/agents/` | The 23 agent prompts themselves. |
+| `.claude/skills/` | `build-orchestrate` — the orchestration procedure, loadable or readable. |
 | `design/` | The design system, once `B03` has written it. |
 | `mockups/` | The compiled styling proofs. |
 
