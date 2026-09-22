@@ -160,6 +160,54 @@ PYPIN
   [ $? -eq 0 ] || fail=1
 fi
 
+# The .gitignore has to exist, and it has to not ignore the wrong things. Both
+# halves have failed in the field: with no file at all the tree fills with
+# node_modules and build output and a .env can be committed, and a generic
+# template ignores build/ -- which is where this project's conformity evidence
+# lives. Checked in a throwaway repo so the collection's own rules do not
+# interfere with the answer.
+if [ -f "$root/.gitignore" ]; then
+  python3 - "$root" <<'PYGI'
+import os,subprocess,sys,tempfile,shutil
+root=sys.argv[1]
+must_commit=[l.strip() for l in open(os.path.join(root,'.gitignore'),encoding='utf-8')
+             if l.startswith('#   ') and '/' in l]
+# paths the boilerplate declares must never be ignored, plus the universal ones
+probe=['build/gates/verdict.json','build/approvals.md']
+for extra in ('resources/pin.json','mockups/theses.ts','mockups/m01/main.rs',
+              'crates/update/keys/update-current.pub',
+              'crates/update/tests/fixtures/wrong-key.sig',
+              'packages/theme/fonts/montserrat.woff2'):
+    if os.path.isdir(os.path.join(root,extra.split('/')[0])) or extra.startswith(('build/','mockups/','crates/','packages/','resources/')):
+        probe.append(extra)
+# universal, then stack-specific: demanding target/ from a boilerplate with no
+# Rust in it is the check inventing a requirement the register never stated.
+must_ignore=['node_modules/x','.env','signing.pfx','private.key']
+if os.path.isdir(os.path.join(root,'crates')) or 'crates/' in open(os.path.join(root,'.gitignore'),encoding='utf-8').read():
+    must_ignore.append('target/x')
+t=tempfile.mkdtemp()
+try:
+    shutil.copy(os.path.join(root,'.gitignore'), os.path.join(t,'.gitignore'))
+    subprocess.run(['git','init','-q','.'],cwd=t,check=True)
+    def ignored(p):
+        os.makedirs(os.path.join(t,os.path.dirname(p)),exist_ok=True)
+        open(os.path.join(t,p),'w').close()
+        return subprocess.run(['git','check-ignore','-q',p],cwd=t).returncode==0
+    bad=[f'{p}: ignored, but it is evidence or a build input the project needs committed' for p in probe if ignored(p)]
+    bad+= [f'{p}: NOT ignored -- it is dependency, build or secret material' for p in must_ignore if not ignored(p)]
+finally:
+    shutil.rmtree(t,ignore_errors=True)
+if bad:
+    for b in bad[:8]: print('  FAIL: .gitignore: '+b)
+else:
+    print(f'  .gitignore correct ({len(probe)} kept, {len(must_ignore)} excluded)')
+sys.exit(1 if bad else 0)
+PYGI
+  [ $? -eq 0 ] || fail=1
+else
+  bad ".gitignore is missing -- the generated project commits node_modules, build output and any .env from its first commit (REQ-FND-12/13)"
+fi
+
 # CONVENTIONS.md §3 — every cited requirement ID is defined.
 if [ -f "$root/spec/requirements.md" ]; then
   defined=$(grep -oE '^\| REQ-[A-Z0-9]+-[0-9]+' "$root/spec/requirements.md" | sed 's/^| //' | sort -u)

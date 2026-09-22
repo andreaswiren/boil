@@ -1,0 +1,82 @@
+# This file ships with the boilerplate because the boilerplate becomes the
+# project root, so it is in place before the first agent writes anything.
+# A01 owns it (REQ-FND-13).
+#
+# Read the "never ignore" section at the bottom before adding a line. Two of the
+# obvious entries in a JavaScript .gitignore would silently destroy this
+# project's conformity evidence.
+
+# ── Dependencies ────────────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+
+# ── Build output ────────────────────────────────────────────────────────────
+.next/
+out/
+dist/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# ── Test and capture output ─────────────────────────────────────────────────
+coverage/
+playwright-report/
+blob-report/
+test-results/
+.playwright/
+build/screenshots/*.tmp.png
+
+# ── Secrets. These are the lines that matter ────────────────────────────────
+# REQ-SEC-03 keeps secrets encrypted at rest; a committed .env makes that moot.
+# The SMTP password, the OIDC client secret and the KEK all live here, and a
+# git history is not something you can un-leak by deleting the file later.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+!**/public/**/*.key
+*.pfx
+*.p12
+secrets/
+
+# ── Local and OS noise ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# ── Docker / runtime volumes ────────────────────────────────────────────────
+docker/data/
+docker/certs/
+*.sqlite
+*.sqlite3
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NEVER ignore these. Each has been added to a .gitignore by mistake before,
+# because each looks like build output and is not:
+#
+#   build/          The gate verdicts, the intake, the human's G1 approval and
+#                   the cost ledger. compliance/cra/obligations-matrix.md cites
+#                   build/gates/*.json as Annex I II(3) evidence at the strongest
+#                   tier, on the grounds that an auditor can check a path. An
+#                   auditor cannot check a path that is not in the repository.
+#                   Only build/screenshots/*.tmp.png is ignored, above.
+#   resources/      The pinned upstream baseline (REQ-UI-16), verified by
+#                   resources/pin.json. Ignoring it turns the pin into a comment.
+#   mockups/        The mockup sources are the reference the approved design is
+#                   checked against (REQ-MOC-05). Their node_modules and .next
+#                   are already covered by the patterns above.
+#   packages/theme/fonts/   Self-hosted Montserrat (REQ-SUP-07). It is a binary
+#                   asset, not a build artefact; fetching it at build time is
+#                   the thing that requirement forbids.
+#
+# scripts/check-boilerplate.sh fails if any of them is ignored.

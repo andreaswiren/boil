@@ -11,7 +11,7 @@ Read before you start:
 
 | File | Why |
 |------|-----|
-| `spec/requirements.md` | 354 requirement IDs. The only way to refer to a requirement. |
+| `spec/requirements.md` | 356 requirement IDs. The only way to refer to a requirement. |
 | `spec/agents.md` | The fleet, the waves, who publishes and consumes what. |
 | `contracts/ownership.md` | Who owns which path. Your routing table for every task and every finding. |
 | `contracts/README.md` | Contract law. The reason the parallel wave is safe. |

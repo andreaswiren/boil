@@ -13,6 +13,7 @@ rejects the task result and reassigns rather than accepting the diff.
 |------|-------|-------|
 | `Cargo.toml` (workspace), `Cargo.lock`, `rust-toolchain.toml`, `.cargo/config.toml` | B01 | Version fields are B17's |
 | `deny.toml` | B11 | |
+| `.gitignore` | B01 | Present from the first commit. It never excludes `build/`, `mockups/`, the `*.pub` update keys or the updater test fixtures (REQ-FND-13, REQ-FND-14). |
 | `crates/contracts/**` | B02 | Frozen at H3. CCR-only afterwards |
 | `crates/app/` scaffold, `crates/ffi/**`, `build.rs`, the application manifest | B01 | The `unsafe`/FFI boundary policy lives here (REQ-FND-06) |
 | `versions/manifest.json`, `versions/traps.json` | B16 | |

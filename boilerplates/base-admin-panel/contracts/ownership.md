@@ -28,6 +28,7 @@ treats it as a failed task and reassigns, rather than accepting the diff.
 | `build/navigation.md` | A00 | The resolved menu, derived at G0. G1 cannot start without it: the sidebar is sized to it (REQ-MOC-13, REQ-MOC-14). |
 | `resources/**` | nobody | Vendored third-party reference, pinned by `resources/pin.json`. **No agent edits it.** Our conventions do not apply to it and the conformance check skips it (REQ-UI-16). |
 | `.github/workflows/**` | A01, except `supply-chain.yml` (A19) | |
+| `.gitignore` | A01 | Present from the first commit. It never excludes `build/`, `resources/`, `mockups/` or the self-hosted fonts (REQ-FND-12, REQ-FND-13). |
 
 ## Domain packages
 

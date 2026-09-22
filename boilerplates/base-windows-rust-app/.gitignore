@@ -1,0 +1,82 @@
+# This file ships with the boilerplate because the boilerplate becomes the
+# project root, so it is in place before the first agent writes anything.
+# B01 owns it (REQ-FND-13).
+#
+# Read the "never ignore" section at the bottom before adding a line. Two of the
+# obvious entries would break the build, and one would destroy this project's
+# conformity evidence.
+
+# ── Build output ────────────────────────────────────────────────────────────
+target/
+**/target/
+*.pdb
+*.ilk
+*.exp
+
+# ── Installer and release output ────────────────────────────────────────────
+*.msi
+*.msix
+*.wixpdb
+*.wixobj
+dist/
+staging/
+
+# ── Test and capture output ─────────────────────────────────────────────────
+build/screenshots/*.tmp.png
+tests/visual/**/*.actual.png
+*.profraw
+
+# ── Signing material. These are the lines that matter ───────────────────────
+# REQ-REL-04: the signing key never enters a build log, a repository, or an
+# unencrypted CI variable. REQ-UPD-02's whole trust chain rests on the update
+# signing key being secret; a git history is not something you can un-leak.
+#
+# NOTE the asymmetry: the *private* halves are ignored, the *public* halves are
+# committed on purpose — crates/update/keys/*.pub is include_str!'d into the
+# binary (REQ-UPD-03), so ignoring it breaks the build outright.
+*.pfx
+*.p12
+*.snk
+*.key
+*.sec
+minisign.key
+!**/*.pub
+secrets/
+
+# ── Anything JavaScript that shows up alongside (docs tooling, CI helpers) ──
+node_modules/
+.env
+.env.*
+!.env.example
+
+# ── Local and OS noise ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NEVER ignore these. Each looks like build output and is not:
+#
+#   build/          The gate verdicts, the intake, the human's H1 design
+#                   approval and the cost ledger. compliance/cra/obligations-matrix.md
+#                   cites build/gates/*.md as Annex I II(3) evidence at the
+#                   strongest tier, on the grounds that an auditor can check a
+#                   path. An auditor cannot check a path that is not in the
+#                   repository. Only build/screenshots/*.tmp.png is ignored.
+#   mockups/        The compiled styling proofs. The winning mockup stays
+#                   in-tree as the reference the design is checked against
+#                   (REQ-MOC-08), and the ones that lost stay as the record of
+#                   what was rejected. Their target/ dirs are covered above.
+#   crates/update/keys/*.pub   The embedded update public keys (REQ-UPD-03).
+#                   include_str! resolves these at compile time — ignore them
+#                   and the crate does not build.
+#   crates/update/tests/fixtures/   The wrong-key, mutated-signature and
+#                   tampered-artefact fixtures. They are committed deliberately
+#                   because minisign-verify cannot sign, so they are generated
+#                   out of band once. Regenerating them is not possible in CI.
+#
+# scripts/check-boilerplate.sh fails if any of them is ignored.

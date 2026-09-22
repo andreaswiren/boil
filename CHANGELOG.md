@@ -9,6 +9,52 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-09-22
+
+Reported from a real build: the working tree fills with dependencies, build
+output and capture artefacts, none of which belongs in a commit.
+
+### Fixed
+
+**Neither boilerplate shipped a `.gitignore`, and nothing required one.** No
+requirement mentioned it, no agent owned it, and neither folder contained one.
+The generated project therefore commits `node_modules/`, `.next/`, `target/`,
+Playwright reports and anything else the first build leaves behind — and, more
+seriously, has nothing stopping a `.env` or a signing key going in.
+
+Both now ship one, owned by `A01` / `B01` and required from the first commit by
+new `REQ-FND-12`/`13` (admin panel) and `REQ-FND-13`/`14` (windows app). Two
+existing `MUST`s had been resting on it without saying so: `REQ-REL-04` says the
+signing key never enters a repository, and `REQ-SEC-03` keeps secrets encrypted
+at rest — which a committed `.env` makes moot. A git history is not something
+you can un-leak by deleting the file later.
+
+**`contracts/ownership.md` asserted a state nothing produced.** It said
+"`node_modules/`, `.next/` and `build/screenshots/*.tmp.png` are gitignored"
+while no `.gitignore` existed anywhere to do it. Same class as the gitignored
+CRA evidence fixed in 0.5.0: a document describing a state no file creates.
+
+### Added
+
+**A check on what the `.gitignore` must *not* exclude**, which is the half that
+does silent damage. A generic JavaScript template ignores `build/` by default —
+the directory holding the gate verdicts, the human's design approval and the
+cost ledger, which `compliance/cra/obligations-matrix.md` cites as Annex I II(3)
+evidence at the strongest tier. Ignoring it destroys the conformity chain
+without failing anything.
+
+The windows app carries a sharper version of the same trap: a blanket `keys/`
+rule ignores both halves of an asymmetric pair. The **private** signing key must
+never be committed; the **public** update key is `include_str!`'d at compile
+time (`REQ-UPD-03`), so ignoring it does not leak anything — it stops the crate
+building. The shipped file spells the asymmetry out, and the check verifies it.
+
+The check runs in a throwaway repository so the collection's own ignore rules
+cannot change the answer, and is stack-aware: demanding `target/` from a
+boilerplate with no Rust in it would be the check inventing a requirement the
+register never stated. Confirmed to fail both ways — on a missing file, and on a
+`build/` line added to a working one.
+
 ## [0.8.1] — 2026-09-22
 
 Two defects in the screenshot path, one of them introduced by 0.8.0 itself.
@@ -890,7 +936,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/andreaswiren/boil/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/andreaswiren/boil/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/andreaswiren/boil/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/andreaswiren/boil/compare/v0.7.1...v0.7.2

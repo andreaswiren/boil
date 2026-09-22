@@ -43,7 +43,7 @@ document. Do not start a build to answer a question.
 | File | What it is |
 |------|------------|
 | `prompts/00-master-orchestrator.md` | How the build runs. Read this first. |
-| `spec/requirements.md` | 177 requirements with stable IDs. The source of truth. |
+| `spec/requirements.md` | 179 requirements with stable IDs. The source of truth. |
 | `spec/agents.md` | The fleet: `B00`–`B18`, `D1`, `D2`, `T1`, `T2`, and the waves. |
 | `contracts/ownership.md` | Who owns which path. The routing table for tasks and findings. |
 | `gates/gate-ladder.md` | `H0`–`H8`. |

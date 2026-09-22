@@ -26,6 +26,8 @@ build fails instead.
 | REQ-FND-10 | MUST | No telemetry, no phone-home, no crash reporting to a third party, from the app or from any dependency (REQ-SBM-06). |
 | REQ-FND-11 | MUST | The app runs as a normal user. `asInvoker` in the application manifest. Only the installer path elevates (REQ-INST-04). An app that always runs elevated is a defect, not a convenience. |
 | REQ-FND-12 | MUST | Single self-contained executable with no runtime installer prerequisite — no VC++ redistributable step, no .NET requirement. |
+| REQ-FND-13 | MUST | A `.gitignore` is present **from the first commit**, not added once the tree is already dirty with build output. It excludes build output, installer artefacts, capture output, and — the line that matters — every private signing key and certificate. `REQ-REL-04` says the signing key never enters a repository and `REQ-UPD-02`'s whole trust chain rests on the update key staying secret; without this file nothing enforces either, and a git history is not something you can un-leak. |
+| REQ-FND-14 | MUST | The `.gitignore` never excludes `build/`, `mockups/`, `crates/update/keys/*.pub` or `crates/update/tests/fixtures/`. `build/` is the conformity evidence cited at the strongest tier; the mockups are the compiled styling proofs the design is checked against (`REQ-MOC-08`); the **public** keys are `include_str!`'d at compile time (`REQ-UPD-03`), so ignoring them breaks the build outright; and the negative-test fixtures are committed deliberately because `minisign-verify` cannot sign and CI cannot regenerate them. The private/public asymmetry is the trap — a blanket `keys/` rule ignores both halves. |
 
 ## DSN — Design system
 

@@ -11,7 +11,7 @@ Read before you start:
 
 | File | Why |
 |------|-----|
-| `spec/requirements.md` | 177 requirement IDs. The only way to refer to a requirement. |
+| `spec/requirements.md` | 179 requirement IDs. The only way to refer to a requirement. |
 | `spec/agents.md` | The fleet, the waves, who publishes and consumes what. |
 | `contracts/ownership.md` | Who owns which path. Your routing table for tasks and findings. |
 | `contracts/README.md` | Contract law. |
