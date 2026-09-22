@@ -41,28 +41,36 @@
         "pin": "^0.62.2",
         "source": "https://crates.io/api/v1/crates/windows",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "The only route to Win32/WinRT (REQ-FND-03). Used exclusively inside crates/ffi (contracts/ownership.md). Pair the version with windows-sys deliberately - a mismatched pair compiles and then disagrees about type layout (REQ-VER-05)."
+        "note": "The only route to Win32/WinRT (REQ-FND-03). Used exclusively inside crates/ffi (contracts/ownership.md). Pair the version with windows-sys deliberately - a mismatched pair compiles and then disagrees about type layout (REQ-VER-05).",
+        "msrv": "1.82",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.62.2)"
       },
       "windows-sys": {
         "latestStable": "0.61.2",
         "pin": "^0.61.2",
         "source": "https://crates.io/api/v1/crates/windows-sys",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Raw bindings. Prefer `windows` unless a call is missing from it."
+        "note": "Raw bindings. Prefer `windows` unless a call is missing from it.",
+        "msrv": "1.71",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.61.2)"
       },
       "windows-registry": {
         "latestStable": "0.100.0",
         "pin": "^0.100.0",
         "source": "https://crates.io/api/v1/crates/windows-registry",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Registry access for the autostart entry and ARP registration. B08 and B07 only."
+        "note": "Registry access for the autostart entry and ARP registration. B08 and B07 only.",
+        "msrv": "1.95",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.100.0)"
       },
       "windows-service": {
         "latestStable": "0.8.1",
         "pin": "^0.8.1",
         "source": "https://crates.io/api/v1/crates/windows-service",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Service lifecycle (REQ-SVC-01..05). B08 only; nobody shells out to sc.exe (contracts/ownership.md)."
+        "note": "Service lifecycle (REQ-SVC-01..05). B08 only; nobody shells out to sc.exe (contracts/ownership.md).",
+        "msrv": "1.71.0",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.8.1)"
       }
     },
     "ui": {
@@ -71,28 +79,36 @@
         "pin": "^0.36.2",
         "source": "https://crates.io/api/v1/crates/eframe",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Default UI framework. Chosen because the design tokens are plain Rust values, which makes REQ-MOC-02's compiled mockups trivially achievable and REQ-DSN-02's 'tokens are code' literal. It is not a native-look framework - that is the tradeoff, and it is an intake decision (REQ-UI-01)."
+        "note": "Default UI framework. Chosen because the design tokens are plain Rust values, which makes REQ-MOC-02's compiled mockups trivially achievable and REQ-DSN-02's 'tokens are code' literal. It is not a native-look framework - that is the tradeoff, and it is an intake decision (REQ-UI-01).",
+        "msrv": "1.95",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.36.2)"
       },
       "egui": {
         "latestStable": "0.36.2",
         "pin": "^0.36.2",
         "source": "https://crates.io/api/v1/crates/egui",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Must match eframe's minor exactly. A mismatch is a confusing trait-resolution error, not a clear one."
+        "note": "Must match eframe's minor exactly. A mismatch is a confusing trait-resolution error, not a clear one.",
+        "msrv": "1.95",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.36.2)"
       },
       "iced": {
         "latestStable": "0.14.0",
         "pin": "^0.14.0",
         "source": "https://crates.io/api/v1/crates/iced",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Intake alternative. Elm-style, themeable; more ceremony, more native feel."
+        "note": "Intake alternative. Elm-style, themeable; more ceremony, more native feel.",
+        "msrv": "1.88",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.14.0)"
       },
       "slint": {
         "latestStable": "1.18.1",
         "pin": "^1.18.1",
         "source": "https://crates.io/api/v1/crates/slint",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Intake alternative. Declarative with its own styling language - a better fit if the design system should live outside Rust, a worse fit for REQ-MOC-02."
+        "note": "Intake alternative. Declarative with its own styling language - a better fit if the design system should live outside Rust, a worse fit for REQ-MOC-02.",
+        "msrv": "1.92",
+        "msrvSource": "https://index.crates.io/ (rust_version for 1.18.1)"
       }
     },
     "tray-and-shell": {
@@ -101,21 +117,27 @@
         "pin": "^0.25.1",
         "source": "https://crates.io/api/v1/crates/tray-icon",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Tray icon and its Explorer-restart re-registration (REQ-TRY-01, REQ-TRY-02). B06 only."
+        "note": "Tray icon and its Explorer-restart re-registration (REQ-TRY-01, REQ-TRY-02). B06 only.",
+        "msrv": "1.90",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.25.1)"
       },
       "muda": {
         "latestStable": "0.20.0",
         "pin": "^0.20.0",
         "source": "https://crates.io/api/v1/crates/muda",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Native menus for the tray context menu (REQ-TRY-04)."
+        "note": "Native menus for the tray context menu (REQ-TRY-04).",
+        "msrv": "1.90",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.20.0)"
       },
       "rfd": {
         "latestStable": "0.17.2",
         "pin": "^0.17.2",
         "source": "https://crates.io/api/v1/crates/rfd",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Native file dialogs, used by the support bundle (REQ-OBS-04)."
+        "note": "Native file dialogs, used by the support bundle (REQ-OBS-04).",
+        "msrv": "none declared",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.17.2)"
       }
     },
     "install-and-update": {
@@ -124,42 +146,54 @@
         "pin": "^1.5.0",
         "source": "https://crates.io/api/v1/crates/self-replace",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Atomic self-replacement for the update swap (REQ-UPD-06). Verify the signature BEFORE calling it, never after."
+        "note": "Atomic self-replacement for the update swap (REQ-UPD-06). Verify the signature BEFORE calling it, never after.",
+        "msrv": "1.63",
+        "msrvSource": "https://index.crates.io/ (rust_version for 1.5.0)"
       },
       "self_update": {
         "latestStable": "1.3.0",
         "pin": "^1.3.0",
         "source": "https://crates.io/api/v1/crates/self_update",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Optional convenience over the update flow. Its defaults do not satisfy REQ-UPD-02 - signature verification is ours to add, not its to provide. Record the decision if it is used at all."
+        "note": "Optional convenience over the update flow. Its defaults do not satisfy REQ-UPD-02 - signature verification is ours to add, not its to provide. Record the decision if it is used at all.",
+        "msrv": "1.88",
+        "msrvSource": "https://index.crates.io/ (rust_version for 1.3.0)"
       },
       "minisign-verify": {
         "latestStable": "0.2.5",
         "pin": "^0.2.5",
         "source": "https://crates.io/api/v1/crates/minisign-verify",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Verification only, with the public key embedded (REQ-UPD-03). A verify-only crate is the right dependency here: the binary never needs to sign."
+        "note": "Verification only, with the public key embedded (REQ-UPD-03). A verify-only crate is the right dependency here: the binary never needs to sign.",
+        "msrv": "none declared",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.2.5)"
       },
       "semver": {
         "latestStable": "1.0.28",
         "pin": "^1.0.28",
         "source": "https://crates.io/api/v1/crates/semver",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Version comparison, including the downgrade refusal (REQ-UPD-05)."
+        "note": "Version comparison, including the downgrade refusal (REQ-UPD-05).",
+        "msrv": "1.68",
+        "msrvSource": "https://index.crates.io/ (rust_version for 1.0.28)"
       },
       "cargo-wix": {
         "latestStable": "0.3.9",
         "pin": "0.3.9",
         "source": "https://crates.io/api/v1/crates/cargo-wix",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "MSI for enterprise deployment (REQ-INST-03). A build-time tool, not a dependency."
+        "note": "MSI for enterprise deployment (REQ-INST-03). A build-time tool, not a dependency.",
+        "msrv": "1.70.0",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.3.9)"
       },
       "winres": {
         "latestStable": "0.1.12",
         "pin": "^0.1.12",
         "source": "https://crates.io/api/v1/crates/winres",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Embeds the application manifest, icon and version resource. The manifest is asInvoker (REQ-FND-11)."
+        "note": "Embeds the application manifest, icon and version resource. The manifest is asInvoker (REQ-FND-11).",
+        "msrv": "none declared",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.1.12)"
       }
     },
     "supply-chain": {
@@ -168,14 +202,18 @@
         "pin": "0.7.6",
         "source": "https://crates.io/api/v1/crates/cargo-auditable",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Embeds the dependency list in the shipped binary (REQ-SBM-02). This is the requirement's whole point: an artefact found on a machine can be audited without the release page."
+        "note": "Embeds the dependency list in the shipped binary (REQ-SBM-02). This is the requirement's whole point: an artefact found on a machine can be audited without the release page.",
+        "msrv": "none declared",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.7.6)"
       },
       "cargo-cyclonedx": {
         "latestStable": "0.5.9",
         "pin": "0.5.9",
         "source": "https://crates.io/api/v1/crates/cargo-cyclonedx",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "CycloneDX SBOM per build (REQ-SBM-01, REQ-CRA-03)."
+        "note": "CycloneDX SBOM per build (REQ-SBM-01, REQ-CRA-03).",
+        "msrv": "1.85.0",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.5.9)"
       },
       "cargo-deny": {
         "latestStable": "see crates.io",
@@ -191,77 +229,111 @@
         "pin": "^1.53.1",
         "source": "https://crates.io/api/v1/crates/tokio",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Off-UI-thread work (REQ-UI-06). Enable only the features used; the full feature set compiles a great deal into the binary."
+        "note": "Off-UI-thread work (REQ-UI-06). Enable only the features used; the full feature set compiles a great deal into the binary.",
+        "msrv": "1.71",
+        "msrvSource": "https://index.crates.io/ (rust_version for 1.53.1)"
       },
       "serde": {
         "latestStable": "1.0.229",
         "pin": "^1.0.229",
         "source": "https://crates.io/api/v1/crates/serde",
-        "checkedAt": "2026-09-22T08:25:06Z"
+        "checkedAt": "2026-09-22T08:25:06Z",
+        "msrv": "1.56",
+        "msrvSource": "https://index.crates.io/ (rust_version for 1.0.229)"
       },
       "anyhow": {
         "latestStable": "1.0.104",
         "pin": "^1.0.104",
         "source": "https://crates.io/api/v1/crates/anyhow",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Application error plumbing. Not in the contract crate's public API."
+        "note": "Application error plumbing. Not in the contract crate's public API.",
+        "msrv": "1.68",
+        "msrvSource": "https://index.crates.io/ (rust_version for 1.0.104)"
       },
       "thiserror": {
         "latestStable": "2.0.20",
         "pin": "^2.0.20",
         "source": "https://crates.io/api/v1/crates/thiserror",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Typed errors for the contract surface."
+        "note": "Typed errors for the contract surface.",
+        "msrv": "1.71",
+        "msrvSource": "https://index.crates.io/ (rust_version for 2.0.20)"
       },
       "tracing": {
         "latestStable": "0.1.44",
         "pin": "^0.1.44",
         "source": "https://crates.io/api/v1/crates/tracing",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Structured logging (REQ-OBS-01)."
+        "note": "Structured logging (REQ-OBS-01).",
+        "msrv": "1.65.0",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.1.44)"
       },
       "keyring": {
         "latestStable": "4.2.0",
         "pin": "^4.2.0",
         "source": "https://crates.io/api/v1/crates/keyring",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Credential-store access for secrets at rest (REQ-SEC-03)."
+        "note": "Credential-store access for secrets at rest (REQ-SEC-03).",
+        "msrv": "1.88.0",
+        "msrvSource": "https://index.crates.io/ (rust_version for 4.2.0)"
       },
       "ureq": {
         "latestStable": "3.4.2",
         "pin": "^3.4.2",
         "source": "https://crates.io/api/v1/crates/ureq",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Update fetch. Small and blocking - suits a background task and keeps the dependency tree short. reqwest 0.13.5 is the intake alternative when async HTTP is already present."
+        "note": "Update fetch. Small and blocking - suits a background task and keeps the dependency tree short. reqwest 0.13.5 is the intake alternative when async HTTP is already present.",
+        "msrv": "1.85",
+        "msrvSource": "https://index.crates.io/ (rust_version for 3.4.2)"
       },
       "sha2": {
         "latestStable": "0.11.0",
         "pin": "^0.11.0",
         "source": "https://crates.io/api/v1/crates/sha2",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Artefact hash check against the signed manifest (REQ-UPD-04)."
+        "note": "Artefact hash check against the signed manifest (REQ-UPD-04).",
+        "msrv": "1.85",
+        "msrvSource": "https://index.crates.io/ (rust_version for 0.11.0)"
       },
       "zip": {
         "latestStable": "8.6.0",
         "pin": "^8.6.0",
         "source": "https://crates.io/api/v1/crates/zip",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Support-bundle packaging (REQ-OBS-04)."
+        "note": "Support-bundle packaging (REQ-OBS-04).",
+        "msrv": "1.88",
+        "msrvSource": "https://index.crates.io/ (rust_version for 8.6.0)"
       },
       "directories": {
         "latestStable": "6.0.0",
         "pin": "^6.0.0",
         "source": "https://crates.io/api/v1/crates/directories",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "Per-user paths. B01 publishes `paths`; no other crate resolves a directory itself (REQ-SEC-05)."
+        "note": "Per-user paths. B01 publishes `paths`; no other crate resolves a directory itself (REQ-SEC-05).",
+        "msrv": "none declared",
+        "msrvSource": "https://index.crates.io/ (rust_version for 6.0.0)"
       },
       "clap": {
         "latestStable": "4.6.7",
         "pin": "^4.6.7",
         "source": "https://crates.io/api/v1/crates/clap",
         "checkedAt": "2026-09-22T08:25:06Z",
-        "note": "The CLI surface: --install, --uninstall, --service, --silent (REQ-INST-01, REQ-INST-11)."
+        "note": "The CLI surface: --install, --uninstall, --service, --silent (REQ-INST-01, REQ-INST-11).",
+        "msrv": "1.85",
+        "msrvSource": "https://index.crates.io/ (rust_version for 4.6.7)"
       }
+    },
+    "_msrvCheck": {
+      "note": "REQ-VER-06. Every crates entry carries the rust_version its pinned release declares, read from the crates.io sparse index. The highest is the floor the workspace must satisfy; the pinned toolchain must be at or above it, and scripts/check-conventions.sh asserts that rather than leaving it to a build failure.",
+      "highestMsrv": "1.95",
+      "heldBy": [
+        "eframe 0.36.2",
+        "egui 0.36.2",
+        "windows-registry 0.100.0"
+      ],
+      "pinnedToolchain": "1.98.1",
+      "source": "https://index.crates.io/",
+      "checkedAt": "2026-09-22T09:10:00Z"
     }
   },
   "telemetry": {

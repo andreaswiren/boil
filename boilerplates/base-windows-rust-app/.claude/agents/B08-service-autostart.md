@@ -1,6 +1,6 @@
 ---
 name: B08-service-autostart
-description: Builds the Windows service mode of the shipped binary and the autostart entry as registrations it alone owns — service install and lifecycle, the least-privilege account, the access-controlled named-pipe IPC endpoint, version-mismatch detection, failure actions and crash-loop detection, and the transition token B09 uses during an update.
+description: Dispatch in Wave 3 only when intake turned on service mode, to build the service mode of the shipped binary and the autostart entry as registrations it alone owns — service install and lifecycle, the least-privilege account, the access-controlled named-pipe IPC endpoint, version-mismatch detection, failure actions and crash-loop detection, and the transition token B09 uses during an update.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---

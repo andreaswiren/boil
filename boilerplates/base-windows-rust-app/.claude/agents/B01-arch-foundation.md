@@ -35,7 +35,7 @@ nobody can rebuild from its tag, and a binary that asks for administrator to run
 | REQ-SEC-05 | The `paths` module: every documented location, `ensure()` creating an explicit DACL, `MachinePath` with no write helper, and refusal of a path that escapes its root after canonicalisation. |
 | REQ-SEC-06 | No DLL hijacking surface: `SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32)` at startup, fully qualified load paths, and nothing loaded from the working directory. |
 | REQ-REL-05 | `build.rs` stamps tag, commit, triple, `rustc -Vv` and the `Cargo.lock` hash so `--version --verbose` states exactly what the binary is. The version *value* is B17's; the stamping mechanism is yours. |
-| REQ-VER-06 | `rust-version = "1.98"` in `[workspace.package]` and the CI step that checks at `1.98.0`. |
+| REQ-VER-06 | `rust-version = "1.95"` in `[workspace.package]` — the highest `msrv` in `versions/manifest.json`, not the pin — and the CI step that checks at `1.95.0`. An MSRV equal to the pin tests nothing. |
 
 ## Files you own
 
@@ -110,7 +110,7 @@ problem at H3, not yours.
 1. Read `spec/foundation.md`, `versions/manifest.json` and `build/scope.md`.
    Build the version lookup table. Abort with a named gap if an entry is missing.
 2. Write the workspace root: `[workspace]`, `resolver = "3"`,
-   `[workspace.package]` with `rust-version = "1.98"`, `[workspace.lints]`, and
+   `[workspace.package]` with `rust-version = "1.95"`, `[workspace.lints]`, and
    `[workspace.dependencies]` populated only from the manifest.
 3. Write `rust-toolchain.toml` and `.cargo/config.toml` with the rustflags from
    `spec/foundation.md` §7.
@@ -140,7 +140,8 @@ problem at H3, not yours.
 - [ ] `cargo fmt --all --check` and
       `cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`
       exit 0 (REQ-FND-07).
-- [ ] `cargo +1.98.0 check --workspace --locked` succeeds (REQ-VER-06).
+- [ ] `cargo +1.95.0 check --workspace --locked` succeeds, and no manifest
+      entry has an `msrv` above it (REQ-VER-06).
 - [ ] `grep -rl 'windows\(-sys\)\? *=' crates/*/Cargo.toml` prints only
       `crates/ffi/Cargo.toml` (REQ-FND-03).
 - [ ] Every `unsafe {` in `crates/ffi` has a preceding `// SAFETY:` line, asserted

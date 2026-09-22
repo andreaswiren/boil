@@ -39,7 +39,8 @@ a version of its own (REQ-FND-08): one place to bump, one place to check drift.
 `rust-toolchain.toml` pins `channel = "1.98.1"` from `versions/manifest.json`.
 A floating `stable` makes REQ-FND-09's reproducibility claim untestable, because
 the compiler that built the tag is gone. The MSRV is a separate declaration —
-`rust-version = "1.98"` — proved by `cargo +1.98.0 check --workspace --locked`.
+`rust-version = "1.95"`, the floor the dependency graph actually imposes —
+proved by `cargo +1.95.0 check --workspace --locked`.
 Conflating the two is how a dependency bump raises the floor with nobody deciding
 to, and B16 rejects a crate whose `rust_version` exceeds it (REQ-VER-05). Edition
 2024, `resolver = "3"`.
@@ -224,7 +225,7 @@ canonicalisation is refused** — the `..` in a config value REQ-SEC-07 is about
 | Decision | Choice | Why | Intake-overridable? |
 |---|---|---|---|
 | Toolchain pin | `1.98.1` from the manifest | A floating channel breaks REQ-FND-09 | No |
-| MSRV | `1.98`, tested at `1.98.0` | Separate, or a bump raises it silently | No |
+| MSRV | `1.95`, tested at `1.95.0` | The graph's real floor; equal to the pin it tests nothing | No |
 | Minimum Windows | 10 22H2, build 19045 | Older Windows 10 is out of servicing | Yes, upward only |
 | OS version read via | `RtlGetVersion` | `GetVersionExW` is shimmed and lies | No |
 | `unsafe` confined to | `crates/ffi` alone | Nine assumption sets give unsafe bugs | No |

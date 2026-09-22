@@ -11,6 +11,11 @@ consumes `config`, `paths` and `version`.
 B08 is dispatched only when intake turns on service mode (REQ-SVC-01 is `OPT`).
 The autostart half ships either way.
 
+`windows-service` 0.8.1 and `windows-registry` 0.100.0 are called directly here,
+which `versions/manifest.json` records as B08's. Every other Win32 call goes
+through a B01 `crates/ffi` wrapper; needing a new one is a CCR, never a
+`use windows::Win32::…` in these crates (REQ-FND-03).
+
 ## Requirements covered
 
 | ID | How this spec covers it |

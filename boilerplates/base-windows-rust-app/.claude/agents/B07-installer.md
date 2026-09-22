@@ -1,6 +1,6 @@
 ---
 name: B07-installer
-description: Builds the self-install, upgrade, repair and uninstall flow, the elevation hand-off, the Add/Remove Programs registration, shortcuts, transactional rollback, the silent-mode exit-code contract and the WiX MSI. Owns files on disk and the app's registration, and delegates the service and autostart registrations to B08.
+description: Dispatch in Wave 3, after the contract freeze at H3, to build the self-install, upgrade, repair and uninstall flow, the elevation hand-off, the Add/Remove Programs registration, shortcuts, transactional rollback, the silent-mode exit-code contract and the WiX MSI. It owns files on disk and the app's registration, and delegates the service and autostart registrations to B08.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---

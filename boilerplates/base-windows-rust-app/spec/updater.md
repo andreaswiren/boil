@@ -21,8 +21,7 @@ as a security one (REQ-CRA-07).
 | ID | How this spec covers it |
 |----|------------------------|
 | REQ-UPD-01, REQ-UPD-02, REQ-UPD-03 | Automatic checks on a staggered schedule plus a manual one in the tray and on the CLI; a minisign signature over the manifest verified against a key embedded with `include_str!` before anything is executed or swapped. |
-| REQ-UPD-04, REQ-UPD-05 | HTTPS with certificate validation and the artefact's SHA-256 checked against the signed manifest; downgrade refused, with a forced path needing a local operator and a machine policy value. |
-| REQ-UPD-06 | Journal plus same-volume rename, reconciled on next start. Old or new, never a mixture. |
+| REQ-UPD-04, REQ-UPD-05, REQ-UPD-06 | HTTPS with certificate validation and the artefact's SHA-256 checked against the signed manifest; downgrade refused, with a forced path needing a local operator and a machine policy value; a journal plus same-volume rename reconciled at next start, so the result is old or new and never a mixture. |
 | REQ-UPD-07, REQ-UPD-08 | `stable` and `next`, selectable in settings and shown in diagnostics; deterministic per-install phase offset, jittered backoff, and a manifest-driven rollout window. |
 | REQ-UPD-09, REQ-UPD-10 | Verified and staged while running, with the restart asked for and never taken; service transitions through B08's token, with the new version confirmed over IPC. |
 | REQ-UPD-11 | Typed errors, visible last-check state, backoff for transport faults and a hard stop for verification faults. |
@@ -152,10 +151,9 @@ directory rename under the same journal.
 
 ## Channels (REQ-UPD-07)
 
-`stable` and `next`, at
-`https://updates.example.com/<product>/<channel>/manifest.json`. The channel
-lives in `config`, is selectable in settings (REQ-UI-09) and is shown in
-diagnostics with the last check time (REQ-OBS-03).
+`stable` and `next`, at `https://updates.example.com/<product>/<channel>/manifest.json`.
+The channel lives in `config`, is selectable in settings (REQ-UI-09) and is shown
+in diagnostics with the last check time (REQ-OBS-03).
 
 Both channels are signed with the same key: a channel is release selection, not
 a trust boundary, and a key per channel would double the rotation problem for
@@ -191,11 +189,10 @@ an idle check cost a 304; `Retry-After` on 429 or 503 is honoured up to 24 h.
 
 ## Updating a running instance (REQ-UPD-09)
 
-Default `on_restart`: check, download, verify, swap, then notify — *"Update
-1.4.2 installed. It will be used the next time the app starts."* — with
-**Restart now** and **Later**. The swap is safe while running because Windows
-keeps the old image mapped: the running process finishes on the old code and
-nothing changes underneath it.
+Default `on_restart`: check, download, verify, swap, then notify — *"Update 1.4.2
+installed. It will be used the next time the app starts."* — with **Restart now**
+and **Later**. The swap is safe while running because Windows keeps the old image
+mapped: the running process finishes on the old code, unchanged underneath it.
 
 The app is never restarted with work in flight. B09 asks through the contract —
 `BusyGuard::state() -> Busy`, where `Busy { what }` means no automatic restart,
@@ -266,8 +263,7 @@ one per failure trains people to dismiss them.
 | `PinnedVersion` | `REG_SZ` | a semver requirement such as `1.4.x`, so patches inside the pin still land |
 | `ManifestUrl` | `REG_SZ` | HTTPS only; a non-HTTPS value is rejected, not honoured |
 | `SecurityUpdatesOnly` | `REG_DWORD` | take releases with `security: true`, skip the rest |
-| `CheckIntervalHours` | `REG_DWORD` | clamped to 1–168; `AllowDowngrade` gates the forced path above |
-| `RestartDeadlineHours` | `REG_DWORD` | `0` means never restart automatically |
+| `CheckIntervalHours`, `RestartDeadlineHours` | `REG_DWORD` | interval clamped to 1–168; deadline `0` never restarts automatically; `AllowDowngrade` gates the forced path above |
 
 Precedence is policy, then config, then default. Policy wins in effect but never
 invisibly: the settings control is disabled and labelled *"Managed by your
@@ -288,12 +284,10 @@ release-engineering commitment recorded at intake.
 
 | Decision | Choice | Why | Intake-overridable? |
 |----------|--------|-----|--------------------|
-| Signature scheme, key location | minisign via verify-only `minisign-verify` 0.2.5; current + next keys via `include_str!` from `crates/update/keys/` | The binary never signs, so it never needs a private key; a key fetched at update time is not a trust anchor (REQ-UPD-03); rotation needs an overlap release or clients are stranded | no |
-| Check order | manifest signature → hash → artefact signature → Authenticode | Any other order verifies something already trusted or already running | no |
+| Signature scheme, key location, check order | minisign via verify-only `minisign-verify` 0.2.5; current + next keys via `include_str!` from `crates/update/keys/`; manifest signature → hash → artefact signature → Authenticode | The binary never signs, so it never needs a private key; a key fetched at update time is not a trust anchor (REQ-UPD-03); rotation needs an overlap release or clients are stranded; any other check order verifies something already trusted, or already running | no |
 | Transport, swap | `ureq` 3.4.2 + rustls, HTTPS only, 3 same-domain redirects; `self-replace` 1.5.0 running, `ReplaceFileW` not running, always `MOVEFILE_WRITE_THROUGH` | A non-HTTPS URL is rejected, not upgraded (REQ-SEC-01); atomicity across power loss with ACLs preserved (REQ-UPD-06) | no |
 | Downgrade, channels | refused unless flag + policy + elevation; `stable` and `next` under one key | A downgrade reintroduces patched vulnerabilities (REQ-UPD-05); a channel is release selection, not a trust boundary | a third channel |
-| Check interval, backoff | 6 h offset by `HMAC(install_id)`; 5 m → 6 h fully jittered | Deterministic de-synchronisation without a server; unjittered backoff re-synchronises a struggling fleet (REQ-UPD-08) | interval 1–168 h |
-| Install identity | random UUID at install | A stagger key must not identify the machine (REQ-FND-10) | no |
+| Check interval, backoff, stagger key | 6 h offset by `HMAC(install_id)`; 5 m → 6 h fully jittered; `install_id` a random UUID made at install | Deterministic de-synchronisation without a server, and unjittered backoff re-synchronises a struggling fleet (REQ-UPD-08); a stagger key must not identify the machine (REQ-FND-10) | interval 1–168 h |
 | Restart, verification failure | asked for, never taken while `Busy`; a failed check quarantines, stops and notifies | Killing in-progress work ends the product (REQ-UPD-09); retrying an attack is not resilience (REQ-UPD-11) | deadline hours |
 | Service transitions, policy scope | B08's token always; `HKLM` only | B09 cannot know the restart policy (REQ-UPD-10); a user-writable policy is not a policy (REQ-UPD-12) | no |
 

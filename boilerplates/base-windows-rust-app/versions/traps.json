@@ -57,6 +57,16 @@
       "rule": "Its version is recorded as unresolved in the manifest. B16 resolves it at H2.",
       "why": "It was not read in the pass that produced the manifest. An unresolved entry is honest; a guessed one is not.",
       "status": "active"
+    },
+    {
+      "id": "WIN-TRAP-008",
+      "item": "sha2 + digest",
+      "kind": "version-pairing",
+      "rule": "sha2 0.11 requires digest ^0.11. A dependency still pinning digest 0.10 puts two hasher generations in one binary; resolve it rather than allowing the duplicate.",
+      "why": "Verified from the crates.io index on 2026-09-22: sha2 0.11.0 declares digest ^0.11. The symptom is a duplicate-version finding in cargo-deny plus two incompatible Digest traits, so a hash computed by one generation cannot be verified by the other -- and REQ-UPD-02's artefact hash is exactly that comparison.",
+      "source": "https://index.crates.io/sh/a2/sha2",
+      "checkedAt": "2026-09-22T09:00:00Z",
+      "status": "active"
     }
   ]
 }

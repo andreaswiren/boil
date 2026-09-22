@@ -24,7 +24,7 @@ release quietly raises the MSRV above the pinned toolchain, and a `windows` /
 | REQ-VER-03 | Per entry: the resolved version, the `source` URL, the `checkedAt` UTC timestamp, and a `note` where a trap applies. An entry missing any of those is invalid. |
 | REQ-VER-04 | A major jump against the previous manifest is a reviewed decision with a migration note and a human acknowledgement. `windows` moves fast, and a major bump can rename types across every call site in `crates/ffi` — so the note names the affected wrappers, not just the crate. |
 | REQ-VER-05 | Traps are recorded, not rediscovered. The `windows` / `windows-sys` pairing and any crate whose latest version raises the MSRV above the pinned toolchain both live in `versions/traps.json` and are applied before you finalise. |
-| REQ-VER-06 | The MSRV is stated and never silently raised. You read each candidate's `rust_version` from crates.io and reject a version that exceeds the declared MSRV, rather than discovering it in B01's build. |
+| REQ-VER-06 | The MSRV is stated **per entry** and never silently raised. The highest `msrv` across the manifest is the workspace floor; `crates._msrvCheck` records it beside the pinned toolchain, and `scripts/check-conventions.sh` fails when the floor rises above the pin. You read each candidate's `rust_version` from crates.io and reject a version that exceeds the declared MSRV, rather than discovering it in B01's build. |
 | REQ-FND-08 | Your manifest is the single source of every version in the repository. A version string anywhere that is not in it is a drift failure B01's CI catches. |
 | REQ-SBM-05 | A crate not already in the manifest is a new dependency: it needs a requesting agent, a one-line justification and the REQ ID it serves. In a Rust binary every dependency is compiled into the product, so this is a shipping decision, not a development convenience. |
 | REQ-SBM-07 | `cargo-deny`'s version is recorded as `latest-stable` / unresolved in the shipped manifest **on purpose** — it was not read in that pass, so it was not guessed. **You resolve it at H2** and write the exact version with its source and timestamp. |
@@ -77,26 +77,38 @@ does not, so reading the wrong field is how a `-rc` enters a release build.
     "checkedAt": "…", "note": "Pinned in rust-toolchain.toml (REQ-FND-02)" },
     "targets": ["x86_64-pc-windows-msvc", "aarch64-pc-windows-msvc"] },
   "crates": { "windows-bindings": { "windows": {
-      "latestStable": "0.62.2", "pin": "^0.62.2", "msrv": "1.74",
+      "latestStable": "0.62.2", "pin": "^0.62.2", "msrv": "1.82",
       "source": "https://crates.io/api/v1/crates/windows", "checkedAt": "…",
       "requestedBy": "B01", "why": "REQ-FND-03 — the only route to Win32",
-      "trap": "VER-TRAP-001" } } },
+      "trap": "WIN-TRAP-001" } } },
   "majorJumps": [{ "name": "windows", "from": 61, "to": 62,
-    "migrationNote": "versions/notes/windows-0.62.md",
+    "migrationNote": "versions/notes/<crate>-<major>.md",
     "affects": ["ffi::window", "ffi::shell"], "acknowledgedBy": "human" }],
-  "rejected": [{ "crate": "zip", "version": "9.0.0-rc.1", "why": "REQ-VER-01" }]
+  "rejected": [{ "crate": "zip", "version": "9.0.0-pre3", "why": "REQ-VER-01" }]
 }
 ```
 
 `versions/traps.json` carries the recorded traps, inherited by the next build:
 
+The ids are `WIN-TRAP-*` and they are the ones in that file — cite them exactly,
+because the id you write into `manifest.json` is how the next build finds the
+reason. Inventing a parallel numbering makes the manifest reference traps nobody
+can look up.
+
 | Trap | Rule | Symptom if ignored |
 |---|---|---|
-| `VER-TRAP-001` | `windows` and `windows-sys` versions are paired deliberately, not bumped independently | Compiles, then disagrees about type layout at the ABI boundary (REQ-VER-05) |
-| `VER-TRAP-002` | `egui`'s minor must equal `eframe`'s exactly | A trait-resolution error that names neither crate |
-| `VER-TRAP-003` | A crate whose `rust_version` exceeds the pinned toolchain is rejected, not accommodated | The MSRV rises with nobody deciding (REQ-VER-06) |
-| `VER-TRAP-004` | `sha2 0.11` implies `digest 0.11`; a crate pinning `digest 0.10` pulls in two hasher generations | A duplicate-version finding in `cargo deny`, and two APIs in one binary |
-| `VER-TRAP-005` | `windows-registry` and `windows-service` version independently of `windows` | Inferring their numbers from `windows` produces a crate that does not exist |
+| `WIN-TRAP-001` | `windows` and `windows-sys` versions are paired deliberately, not bumped independently | Compiles, then disagrees about type layout at the ABI boundary (REQ-VER-05) |
+| `WIN-TRAP-002` | A `windows` major bump is a reviewed decision with a migration note | A rename across every `crates/ffi` call site, unannounced (REQ-VER-04) |
+| `WIN-TRAP-003` | `egui`'s minor must equal `eframe`'s exactly | A trait-resolution error that names neither crate |
+| `WIN-TRAP-004` | `self_update`'s defaults do not satisfy REQ-UPD-02 | An updater that matches the requirement by name and not by behaviour |
+| `WIN-TRAP-005` | A crate whose `rust_version` exceeds the pinned toolchain is rejected, not accommodated | The MSRV rises with nobody deciding (REQ-VER-06) |
+| `WIN-TRAP-006` | Always send a `User-Agent` to the crates.io API | The rejection reads like a missing crate, and a missing crate is how a version gets written from memory |
+| `WIN-TRAP-007` | `cargo-deny` is recorded unresolved; you resolve it at `H2` | A supply-chain gate configured against a tool version nobody validated |
+| `WIN-TRAP-008` | `sha2 0.11` requires `digest ^0.11`; a dependency pinning `digest 0.10` puts two hasher generations in one binary | A duplicate-version finding in `cargo-deny`, and a hash one generation computes that the other cannot verify — which is REQ-UPD-02's check |
+
+`windows-registry` and `windows-service` version independently of `windows`.
+Inferring their numbers from `windows` produces a crate that does not exist,
+which `WIN-TRAP-006` then makes look like a network problem.
 
 ## Contract you consume
 
@@ -140,7 +152,7 @@ arrive as a list and you resolve them against the network.
       `policy.staleAfterDays`.
 - [ ] Every entry's `msrv` is less than or equal to the pinned toolchain
       (REQ-VER-06), and any rejection for that reason is in `rejected[]`.
-- [ ] `windows` and `windows-sys` both carry `VER-TRAP-001`, and `egui`'s minor
+- [ ] `windows` and `windows-sys` both carry `WIN-TRAP-001`, and `egui`'s minor
       equals `eframe`'s (REQ-VER-05).
 - [ ] Every `majorJumps` entry has a migration note on disk naming the affected
       call sites and `acknowledgedBy: "human"` (REQ-VER-04).

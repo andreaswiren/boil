@@ -151,6 +151,41 @@ else:
 sys.exit(1 if bad else 0)
 PYVER
     [ $? -eq 0 ] || fail=1
+
+    # REQ-VER-06's failure is silent: a dependency raises its rust_version, the
+    # workspace no longer builds on the pinned toolchain, and nobody decided it.
+    # Where a manifest records an MSRV per entry, the highest one must be at or
+    # below the pinned toolchain.
+    python3 - "$dir/versions/manifest.json" <<'PYMSRV'
+import json,re,sys
+m=json.load(open(sys.argv[1]))
+def ver(s):
+    return tuple(int(x) for x in re.findall(r"\d+", str(s))[:3]) if s else None
+worst=(None,None)
+def walk(n,name="?"):
+    global worst
+    if isinstance(n,dict):
+        if "latestStable" in n and n.get("msrv") and ver(n["msrv"]):
+            v=ver(n["msrv"])
+            if worst[0] is None or v>worst[0]:
+                worst=(v,f'{n.get("name",name)} {n["latestStable"]} needs {n["msrv"]}')
+        for k,v in n.items(): walk(v,k)
+    elif isinstance(n,list):
+        for v in n: walk(v,name)
+walk(m.get("crates",{}))
+pin=ver(((m.get("toolchain") or {}).get("rust") or {}).get("pin"))
+if worst[0] is None:
+    print("  no per-entry MSRV recorded, nothing to check")
+elif pin is None:
+    print("  FAIL: entries record an MSRV but toolchain.rust.pin is absent")
+    sys.exit(1)
+elif worst[0] > pin:
+    print(f"  FAIL: MSRV {'.'.join(map(str,worst[0]))} exceeds pinned toolchain {'.'.join(map(str,pin))}: {worst[1]}")
+    sys.exit(1)
+else:
+    print(f"  MSRV floor {'.'.join(map(str,worst[0]))} fits the pinned toolchain {'.'.join(map(str,pin))}")
+PYMSRV
+    [ $? -eq 0 ] || fail=1
   fi
 done
 

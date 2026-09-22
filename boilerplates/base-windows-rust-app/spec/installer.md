@@ -9,6 +9,11 @@ are B08's and B09's transitions, reached through the contract. B07 publishes
 `install-mode` and `exit-codes`; it consumes `paths`, `version` and the public
 half of `signing-keys`.
 
+`windows-registry` 0.100.0 is called directly here for the ARP entry, which
+`versions/manifest.json` records as B07's. Every other Win32 call goes through a
+B01 `crates/ffi` wrapper; needing a new one is a CCR, never a
+`use windows::Win32::…` in this crate (REQ-FND-03).
+
 ## Requirements covered
 
 | ID | How this spec covers it |
