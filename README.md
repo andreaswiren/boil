@@ -23,14 +23,39 @@ More boilerplates will be added alongside it. Each one is independent.
 
 ## Using a boilerplate
 
-### Option A — point an agent at the folder
+**A boilerplate becomes your project. It is not a folder you add to one.**
 
-The fastest path. Each boilerplate folder is self-describing: it carries its own
-`CLAUDE.md`, its own `.claude/agents/` fleet and its own `.claude/skills/`.
+Each boilerplate's `contracts/ownership.md` opens with a *Workspace root*
+section that assigns the workspace manifest, the lockfile, `.github/workflows/`
+and `README.md` / `CHANGELOG.md` / `VERSION` to agents. The build writes the
+application beside `spec/`, `contracts/` and `gates/`, at those paths with no
+prefix. So the folder you start in is the root of the thing you end up with.
+
+### The command
+
+Copy the one boilerplate to where the new project should live, and start there:
 
 ```bash
-cd boilerplates/base-admin-panel
-claude
+npx degit andreaswiren/boil/boilerplates/base-windows-rust-app my-app
+cd my-app
+git init && git add -A && git commit -m "Vendor base-windows-rust-app"
+claude          # or: muse, or any agent pointed at this directory
+```
+
+`degit` takes the folder without the collection's git history, which is what you
+want: the boilerplate is a vendored input, and the commit above records the
+version you vendored. Swap `base-windows-rust-app` for `base-admin-panel` for
+the other one.
+
+No Node? Sparse checkout does the same thing:
+
+```bash
+git clone --filter=blob:none --no-checkout https://github.com/andreaswiren/boil.git
+cd boil
+git sparse-checkout init --cone
+git sparse-checkout set boilerplates/base-windows-rust-app
+git checkout main
+mv boilerplates/base-windows-rust-app ../my-app && cd ../my-app
 ```
 
 Then describe what you want in a paragraph. The orchestrator handles the rest:
@@ -40,33 +65,32 @@ Build me a panel for managing customer firewall estates across ~40 tenants.
 Techs need to see devices, config backups and change history. Entra ID login.
 ```
 
-You can also hand an agent the folder without cloning anything — the path or the
-GitHub URL of `boilerplates/base-admin-panel/` is enough context to start.
+### Two things not to do
 
-### Option B — clone just the one boilerplate
+**Do not build inside this collection.** Running an agent in
+`boil/boilerplates/<name>/` has it overwrite that boilerplate's own `README.md`
+with your project's, and drop a workspace manifest and CI workflows into the
+collection. Copy it out first — that is what the command above does.
 
-You do not need the rest of the repo. Sparse checkout pulls one folder:
+**Do not nest a boilerplate inside an existing project.** At
+`yourproject/boilerplate/`, every path in the ownership map is ambiguous between
+two roots and an agent will pick one silently. To add what a boilerplate
+produces to an existing system, build it as its own repository and integrate at
+the API or deployment boundary. Keeping the boilerplates in a central folder and
+pulling them in through a skill has the same problem from the other direction,
+plus two more: not every runtime loads skills — Muse Code 1.3.0 does not — and
+the requirement register, the frozen contract and the CRA conformity evidence
+have to live with the product. An auditor handed a path outside the repository
+is in the same position as one handed a gitignored file.
 
-```bash
-git clone --filter=blob:none --no-checkout https://github.com/andreaswiren/boil.git
-cd boil
-git sparse-checkout init --cone
-git sparse-checkout set boilerplates/base-admin-panel
-git checkout main
-```
+### Reading a boilerplate without cloning
 
-Or, to get the folder with no git history at all:
-
-```bash
-npx degit andreaswiren/boil/boilerplates/base-admin-panel my-panel
-cd my-panel && claude
-```
-
-Either way you end up with a directory that stands on its own. Nothing in a
+For a question rather than a build, the GitHub URL of
+`boilerplates/<name>/` is enough context to hand an agent. Nothing in a
 boilerplate reaches outside its own folder — that is enforced, not hoped for
 (see [`CONVENTIONS.md`](CONVENTIONS.md)).
 
-### Option C — clone the lot
+### Cloning the whole collection
 
 ```bash
 git clone https://github.com/andreaswiren/boil.git

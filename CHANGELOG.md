@@ -9,6 +9,47 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-09-22
+
+Answers a question the repository had never stated an answer to: where a
+boilerplate is supposed to live. The answer was already implied by
+`contracts/ownership.md` and contradicted by the README.
+
+### Changed
+
+**A boilerplate becomes the project. It is not a folder you add to one.**
+- Each ownership map opens with a *Workspace root* section assigning the
+  workspace manifest, the lockfile, the toolchain pin, `.github/workflows/**`
+  and `README.md` / `CHANGELOG.md` / `SECURITY.md` / `TODO.md` / `VERSION` to
+  agents, and the build writes the application at those paths with no prefix.
+  The folder you start in is the root of what you end up with. Both entry
+  points now say so, and say what to do instead.
+- **Nesting a boilerplate inside an existing project does not work**, and the
+  failure is silent: at `yourproject/boilerplate/`, the ownership map's
+  `Cargo.toml` and `.github/workflows/**` are ambiguous between two roots and an
+  agent picks one without saying. An agent that finds itself in a subdirectory
+  of a larger project is now told to stop and say so rather than guess a prefix.
+- **A central boilerplate folder pulled in through a skill** has the same
+  problem from the other direction and two more: not every runtime loads skills
+  — Muse Code 1.3.0 does not, which is what 0.6.0 fixed — and the requirement
+  register, the frozen contract and the CRA conformity evidence have to live
+  with the product. An auditor handed a path outside the repository is in the
+  same position as one handed a gitignored file, which is the defect fixed in
+  0.5.0.
+- `spec/`, `contracts/`, `gates/` and `compliance/` are stated to be permanent
+  rather than scaffolding to delete once the app exists.
+
+### Fixed
+
+- **The README told you to build inside the collection.** Its first option was
+  `cd boilerplates/base-admin-panel && claude`, which has the release agent
+  overwrite that boilerplate's own `README.md` with the generated project's and
+  drops a workspace manifest and CI workflows into this repository. Both
+  boilerplates ship a `README.md` that their release agent owns, so the
+  collision was certain rather than possible. The usage section now leads with
+  a one-line `degit` that copies the boilerplate to where the project should
+  live, and names both things not to do.
+
 ## [0.6.0] — 2026-09-22
 
 Both boilerplates were unusable on Muse Code, and one of them had a broken
@@ -651,7 +692,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/andreaswiren/boil/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/andreaswiren/boil/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/andreaswiren/boil/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/andreaswiren/boil/compare/v0.3.0...v0.4.0

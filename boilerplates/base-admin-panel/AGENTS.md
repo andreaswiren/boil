@@ -77,6 +77,35 @@ document. Do not start a build to answer a question.
    `CHANGELOG.md`, `README.md`, `SECURITY.md` and `TODO.md` — and only `A22` may
    touch those files (REQ-REL-01..08).
 
+## Where this folder sits
+
+**This folder becomes the project root. It is not a folder you add to a
+project.** `contracts/ownership.md` opens with a *Workspace root* section that
+assigns the workspace manifest, the lockfile, the toolchain pin,
+`.github/workflows/**` and `README.md` / `CHANGELOG.md` / `SECURITY.md` /
+`TODO.md` / `VERSION` to agents. The build writes the application beside these
+documents, at the paths the ownership map names with no prefix.
+
+Three consequences, and the first one is destructive if you miss it:
+
+1. **Copy this folder out of the collection before you build in it.** A build in
+   place overwrites the boilerplate's own `README.md` with the generated
+   project's, and drops the workspace manifest and CI workflows into the
+   collection repository. Clone or copy it to where the new project should live,
+   then start there. The repository README has the one-line command.
+2. **Do not nest it inside an existing project.** Every path here is relative to
+   this folder, so at `yourproject/this-folder/` the ownership map's
+   `Cargo.toml` and `.github/workflows/**` are ambiguous between two roots, and
+   an agent will pick one silently. If you find yourself running inside a
+   subdirectory of a larger project, **stop and say so** rather than guessing a
+   prefix. To add what this produces to an existing system, build it as its own
+   repository and integrate at the API or deployment boundary.
+3. **`spec/`, `contracts/`, `gates/` and `compliance/` stay.** They are not
+   scaffolding to delete once the app exists. They are the register every gate
+   verdict cites, the frozen contract the code is built against, and the CRA
+   conformity evidence, which has to ship with the product rather than live in
+   whatever repository the prompt structure came from.
+
 ## This folder is self-contained
 
 Nothing here reaches outside `boilerplates/base-admin-panel/`. If you find
