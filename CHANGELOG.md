@@ -9,6 +9,95 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-09-22
+
+Reported from a real `base-admin-panel` build: the mockups used none of the
+mandated stack. No shadcn, no Tailwind, no TanStack Table, no preset, no
+baseline conventions, no datagrid chrome — "a free design", in the reporter's
+words. Every one of those was a MUST in the register. The register was not the
+problem; nothing bound the mockup phase to it.
+
+### Fixed
+
+**The mockup phase could not have used the stack it was required to use.**
+`A08`'s output was `mockups/m*/index.html`, and its definition of done greped
+those files. A standalone HTML page can contain no shadcn component, no Tailwind
+build and no TanStack Table, so the format foreclosed the entire mandated stack
+by construction. `mockups/` is now a runnable Next.js workspace with Tailwind
+and shadcn at the preset, one route per thesis, and `pnpm --filter mockups
+build` is the check that replaced the grep (`REQ-MOC-07`).
+
+**Nothing in the MOC requirements named the stack.** `REQ-MOC-01`…`06` specified
+ten layouts, three viewports, screenshots and human approval — no library, no
+preset, no baseline. `G1`'s checklist cited `REQ-UI-04` and `REQ-MOC-06` but not
+`REQ-UI-01`, `REQ-UI-02`, `REQ-UI-03` or `REQ-GRD-01`. Gates verify by ID, so a
+hand-rolled page passed. New `REQ-MOC-08` binds the real `dashboard-01` and
+`login-02` blocks and TanStack Table; `REQ-MOC-09` binds the baseline
+conventions; `G1` now cites all of them and fails a round that misses them
+**without taking it to the human at all** — a mockup set built against the wrong
+stack is not a design disagreement, and the human cannot fix it by choosing.
+
+**The datagrid appeared with none of its chrome.** New `REQ-MOC-12`: a thesis
+showing a grid shows fuzzy search top-left, column chooser top-right, a sort
+indicator, one type-aware filter and pagination at the bottom (`REQ-GRD-02` …
+`REQ-GRD-05`, `REQ-GRD-09`). This is the surface where a simplified mockup does
+the most damage, because the toolbar is precisely the chrome the layout has to
+accommodate.
+
+**Mockups were built before there was anything to build them against.** `A06`'s
+own brief said "dispatch in Wave 1 alongside A08", so the token bundle A08 was
+required to link might not exist when A08 started — which is how ten mockups end
+up at a palette the agent invented. Wave 1 is now ordered: `A06` completes
+first (`REQ-MOC-10`), and no mockup declares a colour, radius, font or spacing
+value of its own.
+
+**There was no menu either.** The `nav-registry` contract belongs to `A05`, a
+Wave 3 agent, so at mockup time no navigation model existed and each thesis
+invented one. Sidebar width, the collapse breakpoint and the chrome budget are
+all consequences of the menu, so ten invented menus are ten measurements of
+different things. New `REQ-MOC-13`/`REQ-MOC-14`: `A00` publishes
+`build/navigation.md` at `G0` — real labels, real depth, real item count for a
+tenant with every module enabled — and all ten theses render it.
+
+**No expert reviewed a mockup before the human did.** `C1` was dispatched at
+`G6` only; its own brief judged the built interface against the layout the human
+had already approved at `G1`. So the human chose from an unreviewed set, and
+`REQ-GAT-07` was satisfied everywhere except the one gate whose output every
+later gate is measured against. New `REQ-MOC-11`: `C1` and `A27` both pass every
+round before the human is asked.
+
+### Added
+
+**`ORC` — fleet supervision, and `A28`.** A wave that is dispatched and then
+waited on is a wave whose failures are all discovered at the end. The
+orchestrator now checks in at most every five minutes (`REQ-ORC-01`) and `A28`
+runs alongside every wave on a cheap model doing the same independently
+(`REQ-ORC-02`). A non-responding agent is **classified before it is retried** —
+`hard-stop`, `stall`, `partial`, `malformed` — because retry is correct for one
+of the four, and a loop that skips the classification turns one spend limit into
+ten (`REQ-ORC-03`). **A partial landing is reconciled, never accepted**
+(`REQ-ORC-04`): an agent that dies after writing four of nine files leaves a
+tree that reads like completion, and the gate failure two waves later gets
+blamed on whoever consumed the gap. Three failed revivals escalate
+(`REQ-ORC-07`); every check-in is recorded, because a wave with no entries is
+indistinguishable from one nobody watched (`REQ-ORC-06`).
+
+**The baseline is pinned and vendored** (`REQ-UI-16`). `REQ-UI-03` measured
+conventions against a GitHub repo and a live demo — both moving targets, so a
+build was measured against whatever they served that day. `resources/next-shadcn-admin-dashboard/`
+now holds the complete tracked tree at commit `5ac5a9a8`, 340 files, with the
+upstream MIT notice and a SHA-256 per file in `resources/pin.json`. Our
+conventions do not apply to vendored content and the checks skip it; the pin is
+verified instead, and fails on an edit — an edited reference is an undeclared
+fork that silently moves what every gate compares against.
+
+### Checks
+
+Two more, both confirmed to fail on an injected fault:
+- Vendored resources match their pin, and the upstream licence notice is present.
+- Stated counts match the register and roster — it caught all seven of this
+  release's own count changes as they happened.
+
 ## [0.7.2] — 2026-09-22
 
 ### Added
@@ -773,7 +862,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/andreaswiren/boil/compare/v0.7.2...v0.8.0
 [0.7.2]: https://github.com/andreaswiren/boil/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/andreaswiren/boil/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/andreaswiren/boil/compare/v0.6.0...v0.7.0

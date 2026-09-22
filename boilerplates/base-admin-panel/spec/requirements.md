@@ -137,6 +137,7 @@ bounded, and cannot quietly become privilege escalation.
 | REQ-UI-01 | MUST | shadcn/ui, `dashboard-01` block as the dashboard baseline. |
 | REQ-UI-02 | MUST | shadcn `login-02` block as the login baseline. |
 | REQ-UI-03 | MUST | Layout and navigation conventions follow `arhamkhnz/next-shadcn-admin-dashboard` as the reference implementation (see `spec/baseline.md`). |
+| REQ-UI-16 | MUST | The baseline is **pinned and vendored**, never fetched: `spec/baseline-ref/` holds the convention-bearing files verbatim at one recorded commit, with a SHA-256 per file and the upstream MIT notice. A reference that can change is not a reference — the live demo is redeployed and `main` advances, so a build measured against a URL is measured against something the register never described. Moving the pin is a recorded decision with a reason in `CHANGELOG.md`, and `src/` is never edited: editing it turns the reference into a fork and silently changes what every gate compares to. |
 | REQ-UI-04 | MUST | Theme preset `b2CjxkL2O` with base `radix`: style `mira`, baseColor `mist`, theme `emerald`, chart `emerald`, font `montserrat`, radius `small`, menuAccent `bold`. |
 | REQ-UI-05 | MUST | Full in-app theming at parity with the shadcn theme generator: every knob the generator exposes (style, base colour, theme colour, chart colour, icon library, font, heading font, radius, menu accent, menu colour) is editable, previewable and persistable in-app. |
 | REQ-UI-06 | MUST | Dark, light and system theme modes, with no flash of wrong theme on first paint. |
@@ -195,6 +196,20 @@ exist to fix that.
 | REQ-MOB-11 | MUST | The mobile surfaces are verified on a real engine at the declared viewports with touch emulation enabled, in both themes (REQ-TST-02, REQ-TST-03). A desktop browser narrowed to 390px does not exercise touch targets, the on-screen keyboard, or safe-area insets. |
 | REQ-MOB-12 | MUST | Where a surface is genuinely unsuitable for a phone — a dense editor (REQ-MON-10), a wide comparison view — the mobile experience says so and offers the useful subset, rather than shipping an unusable rendering and calling it responsive. |
 
+## ORC — Fleet supervision
+
+| ID | Status | Requirement |
+|----|--------|-------------|
+| REQ-ORC-01 | MUST | The orchestrator checks in on every dispatched agent on a fixed interval of **at most 5 minutes**, and never simply waits for a wave to return. A wave dispatched and then left alone is a wave whose failures are all discovered at the end, at the cost of the whole wave. |
+| REQ-ORC-02 | MUST | A dedicated supervisor agent (`A28`) runs for the duration of every wave alongside the orchestrator. It writes no product code, owns no product path and votes at no gate (REQ-GAT-07). Its only job is to keep the wave alive: watch each agent, classify what went wrong, revive it, and escalate when reviving stops working. |
+| REQ-ORC-03 | MUST | A non-responding agent is **classified before it is retried**, because retry is the correct remedy for only one of the classes: `hard-stop` (rate limit, spend limit, auth failure — the runtime refused, so wait and re-dispatch), `stall` (dispatched, no output for two consecutive check-ins — re-dispatch), `partial` (files written, no hand-off — reconcile, see REQ-ORC-04), `malformed` (hand-off returned but missing required artefacts — re-dispatch with the gap named). A retry loop that does not classify turns a spend limit into ten spend limits. |
+| REQ-ORC-04 | MUST | **A partial landing is reconciled, never accepted.** An agent that dies after writing some of its files leaves a tree that looks like progress and reads like completion. The supervisor diffs what landed against the agent's declared file list, and either resumes from the gap or re-dispatches the whole agent. It never marks a partial result done, and never lets the next wave consume it. |
+| REQ-ORC-05 | MUST | Re-dispatch is idempotent. Every agent brief states its complete file list, so a re-run overwrites its own outputs and touches nothing else (REQ-CTR-04). An agent whose second run would append, duplicate or half-merge is a build defect to fix in the brief, not a hazard to work around. |
+| REQ-ORC-06 | MUST | Every check-in is appended to `build/supervision.md` with its timestamp, each in-flight agent's state, and the action taken. A wave that "went fine" with no record is indistinguishable from a wave nobody watched, and the second one is what actually happened most of the time. |
+| REQ-ORC-07 | MUST | After three failed revivals of the same agent the supervisor escalates to the human with the classification, what was tried and what it recommends, rather than looping (the bound in REQ-GAT-05 applies to revival as it does to critique). |
+| REQ-ORC-08 | MUST | The check-in carries the running token cost per agent, so the cost table is current at every gate rather than reconstructed at the end (REQ-COST-01, REQ-COST-03). An agent that died is also an agent that spent. |
+
+
 ## MOC — Mockup & approval phase
 
 | ID | Status | Requirement |
@@ -205,6 +220,14 @@ exist to fix that.
 | REQ-MOC-04 | MUST | Screenshots are presented in the chat response, not only written to disk. |
 | REQ-MOC-05 | MUST | No production UI code is written until a human names the winning layout (or a hybrid of named ones). The approval is recorded in `build/approvals.md`. |
 | REQ-MOC-06 | MUST | Mockups are real rendered HTML at the chosen theme, not drawings — they must be honest about typography, density and control sizes. |
+| REQ-MOC-07 | MUST | **Mockups are built in the shipping stack**: a runnable Next.js workspace with Tailwind and shadcn/ui at the configured preset, one route per thesis. Not standalone `index.html`. A page that only links the token stylesheet proves the colours are reachable and nothing about whether the component library can express the layout, which is the only question this phase asks. |
+| REQ-MOC-08 | MUST | Where a thesis shows the dashboard or the login surface it composes the shadcn `dashboard-01` and `login-02` blocks (REQ-UI-01, REQ-UI-02), and any tabular surface is TanStack Table (REQ-GRD-01) — never a hand-written `<table>`. A layout approved against a hand-rolled table is approved against a control that will not ship. |
+| REQ-MOC-09 | MUST | Layout and navigation conventions follow `arhamkhnz/next-shadcn-admin-dashboard` (REQ-UI-03). The ten theses vary the **layout**; they do not each invent their own navigation conventions. |
+| REQ-MOC-10 | MUST | The design system is published and frozen **before the first mockup is built**. A06 completes and publishes `theme-tokens` before A08 starts — they do not run concurrently. No mockup declares a colour, radius, font, spacing step or shadow of its own; every value resolves to a token (REQ-UI-04, REQ-UI-05). |
+| REQ-MOC-11 | MUST | Two independent design reviewers — C1 for design and A27 for the mobile renderings — pass every mockup round **before the human is asked to choose**. Neither wrote the mockups (REQ-GAT-07). A set that reaches the human unreviewed spends the one irreplaceable resource in the build, the human's attention, on defects a reviewer would have caught. |
+| REQ-MOC-12 | MUST | A thesis that shows a grid shows the **real grid with its real chrome**: fuzzy search top-left and column chooser top-right above the table (REQ-GRD-02, REQ-GRD-03), a sort indicator, at least one type-aware column filter, and pagination at the bottom (REQ-GRD-04, REQ-GRD-05, REQ-GRD-09). A grid drawn as rows with no toolbar hides precisely the chrome the layout has to accommodate, so it is the one surface where a simplified mockup invalidates the choice the human is making (REQ-UI-10). |
+| REQ-MOC-13 | MUST | **The navigation model is resolved and published before the first mockup.** A00 derives it from the entity list, the settings sections (REQ-SET-01) and the tenant model, and writes `build/navigation.md`: every top-level group and item, the nesting depth, the real labels, the icons and the permission that gates each one. All ten theses render **that** menu — same items, same depth, same labels. A05 later formalises it as the `nav-registry` contract (REQ-UI-03); this is its input, not a second source of truth. |
+| REQ-MOC-14 | MUST | The published menu is sized honestly: the longest real label, the deepest real nesting, and the item count a tenant with every module enabled actually sees. Sidebar width, the collapse breakpoint and the chrome budget (REQ-UI-10) are all consequences of the menu, so a thesis that invents a three-item menu is not comparable with one that invents fifteen — and the human comparing them is choosing between measurements of different things. |
 
 ## GRD — Advanced datagrid
 

@@ -24,6 +24,9 @@ treats it as a failed task and reassigns, rather than accepting the diff.
 | `versions/manifest.json`, `versions/traps.json`, `versions/notes/**` | A20 | |
 | `CHANGELOG.md`, `README.md`, `SECURITY.md`, `TODO.md`, `VERSION`, all `version` fields | A22 | No other agent edits these, ever |
 | `versions/pricing.json`, `versions/pricing.md`, `build/costs.md` | A26 | The only agent that derives money. It owns no product code and no table. |
+| `build/supervision.md`, `build/supervision/**` | A28 | The supervisor. It owns no product path and votes at no gate, and it never finishes a dead agent's work — completing someone else's task hides the failure and takes an ownership violation at the same time (REQ-ORC-02). |
+| `build/navigation.md` | A00 | The resolved menu, derived at G0. G1 cannot start without it: the sidebar is sized to it (REQ-MOC-13, REQ-MOC-14). |
+| `resources/**` | nobody | Vendored third-party reference, pinned by `resources/pin.json`. **No agent edits it.** Our conventions do not apply to it and the conformance check skips it (REQ-UI-16). |
 | `.github/workflows/**` | A01, except `supply-chain.yml` (A19) | |
 
 ## Domain packages

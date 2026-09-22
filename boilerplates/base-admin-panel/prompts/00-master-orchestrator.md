@@ -11,7 +11,7 @@ Read before you start:
 
 | File | Why |
 |------|-----|
-| `spec/requirements.md` | 337 requirement IDs. The only way to refer to a requirement. |
+| `spec/requirements.md` | 354 requirement IDs. The only way to refer to a requirement. |
 | `spec/agents.md` | The fleet, the waves, who publishes and consumes what. |
 | `contracts/ownership.md` | Who owns which path. Your routing table for every task and every finding. |
 | `contracts/README.md` | Contract law. The reason the parallel wave is safe. |
@@ -60,8 +60,9 @@ afternoon and a week.
 
 | Wave | Gate that must pass first | Agents | Concurrency |
 |------|---------------------------|--------|-------------|
-| 0 | — | `A00` | 1 |
-| 1 | G0 | `A06` → then `A08`, `A21` | 1 then 2 |
+| 0 | — | `A00` (incl. `build/navigation.md`) | 1 |
+| all | — | `A28` supervisor, running for the duration of every wave | +1 |
+| 1 | G0 | `A06` → then `A08`, `A21` → then `C1`, `A27` (review) | 1, 2, then 2 |
 | 2 | G1 | `A20` → `A01` → `A02` | strictly sequential |
 | 3 | G3 | `A03` `A04` `A05` `A07` `A09` `A10` `A11` `A12` `A13` `A14` `A15` `A19` `A23` `A24` `A25` | **15 concurrent** |
 | 4 | G4 + G5 | `A16` `A17` `A18` | 3 concurrent |
@@ -104,6 +105,52 @@ Two gates you must not soften:
   functions (REQ-GAT-01). Three out of four is a fail.
 
 ---
+
+## Supervising a wave (REQ-ORC-01 … REQ-ORC-08)
+
+**Dispatching a wave and then waiting for it is the most expensive mistake
+available to you.** Sixteen agents running at once will not all finish, and the
+ones that fail do not announce it: they hit a spend limit, or stop producing
+output, or die after writing four of nine files and leave a tree that reads like
+completion. Waiting means every one of those is discovered when the wave is
+collected, at the cost of the wave.
+
+So two things run alongside every wave:
+
+1. **You check in at most every five minutes** (REQ-ORC-01). Not "when it feels
+   quiet". A fixed interval, from dispatch to gate.
+2. **`A28` runs for the wave's duration** (REQ-ORC-02) and does the same thing
+   independently, on a cheap model. It writes no product code and votes at no
+   gate. You are the one who can re-dispatch and arbitrate; it is the one whose
+   only job is to notice.
+
+**Classify before you retry** (REQ-ORC-03). Retry is the right remedy for one of
+four classes, and a retry loop that skips the classification turns one spend
+limit into ten:
+
+| Class | Signal | Remedy |
+|-------|--------|--------|
+| `hard-stop` | the runtime refused — rate limit, spend limit, auth | wait one interval, re-dispatch once. If it is account-wide, **stop the wave** and tell the human. |
+| `stall` | no new output across **two** consecutive check-ins | re-dispatch. One quiet check-in is a long tool call; two is a stall. |
+| `partial` | files written, no hand-off report | **reconcile** — never accept. |
+| `malformed` | hand-off returned, required artefacts missing | re-dispatch naming the gap. Do not patch it yourself. |
+
+**A partial landing is the one that does real damage** (REQ-ORC-04). Diff what
+landed against the agent's declared file list, then resume from the gap or
+re-dispatch the whole agent. Never mark it done and never let the next wave
+consume it. A gate failure two waves later traces back to exactly here, and
+without `build/supervision.md` it gets blamed on the agent that consumed the gap
+instead of the one that left it.
+
+Three failed revivals of the same agent escalates to the human (REQ-ORC-07).
+Three identical failures is information; a fourth attempt only spends money to
+reconfirm it.
+
+Every check-in appends to `build/supervision.md` with each agent's state, the
+action taken, and the running token cost (REQ-ORC-06, REQ-ORC-08). **A wave with
+no entries did not go fine — it went unwatched**, and those are not
+distinguishable afterwards.
+
 
 ## Running a build
 

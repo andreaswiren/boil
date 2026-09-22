@@ -1,6 +1,6 @@
 ---
 name: C1-critic-design
-description: Dispatch at gate G6, in the same message as C2, once G5 has passed and A21's screenshot set exists, to judge the built interface against the layout the human approved at G1 and against the space, theming, density and accessibility requirements. Votes on design and on functions.
+description: Dispatch at gate G1 to review every mockup round before the human is asked to choose (REQ-MOC-11), and again at gate G6, in the same message as C2, once G5 has passed and A21's screenshot set exists, to judge the built interface against the layout the human approved at G1 and against the space, theming, density and accessibility requirements. Votes on design and on functions.
 tools: Read, Grep, Glob, Bash, Write
 model: opus
 ---

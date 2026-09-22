@@ -24,7 +24,7 @@ what.
 
 | ID | Agent | Owns | Publishes | Consumes |
 |----|-------|------|-----------|----------|
-| A00 | `intake-analyst` | `build/intake.md`, `build/scope.md` | resolved intake answers, waiver list | user's input description |
+| A00 | `intake-analyst` | `build/intake.md`, `build/scope.md`, `build/navigation.md` | resolved intake answers, waiver list, the resolved menu | user's input description |
 
 A00 turns a short description into a resolved scope: which `OPT` requirements are
 on, which entities exist, which integrations, which locales, the tenant model,
@@ -35,9 +35,24 @@ the build, and defaults the rest loudly.
 
 | ID | Agent | Owns | Publishes | Consumes |
 |----|-------|------|-----------|----------|
-| A08 | `mockup-designer` | `mockups/` | 10 layout theses, rendered HTML | scope, theme preset, `spec/screenspace.md` |
 | A06 | `ui-theming` | `packages/theme/**` | `theme-tokens` | preset `b2CjxkL2O` |
+| A08 | `mockup-designer` | `mockups/` | 10 layout theses as a runnable Next.js + Tailwind + shadcn workspace | `build/navigation.md`, `theme-tokens`, `spec/screenspace.md`, `spec/baseline.md` |
 | A21 | `visual-qa` | `tests/visual/**`, `build/screenshots/**` | screenshot sets | any renderable surface |
+| C1 | `critic-design` | `build/gates/G1/` | design verdict per round | A08's mockups |
+| A28 | `fleet-supervisor` | `build/supervision.md`, `build/supervision/**` | check-in record, revivals | every dispatched agent |
+| A27 | `mobile-ux` | `build/gates/G1/` | mobile verdict per round | A08's 390px renders |
+
+**This wave is ordered, not concurrent.** `A00`'s `build/navigation.md` and
+`A06`'s `theme-tokens` both complete **before** `A08` starts (REQ-MOC-10,
+REQ-MOC-13): a mockup built without them invents a palette and a menu, and the
+sidebar width, collapse breakpoint and chrome budget are all consequences of the
+menu. `A08` then builds the ten theses **in the shipping stack** — Next.js,
+Tailwind, shadcn at the preset, TanStack Table for every grid (REQ-MOC-07,
+REQ-MOC-08) — because a standalone HTML page can contain none of those and so
+proves nothing about whether the layout is achievable in them.
+
+`C1` and `A27` review every round **before the human is asked** (REQ-MOC-11).
+Neither wrote the mockups (REQ-GAT-07).
 
 A08 produces exactly ten layouts (REQ-MOC-02), A06 supplies the real theme so
 the mockups are honest, A21 screenshots all thirty renders (10 × 3 viewports) and
@@ -121,14 +136,15 @@ orchestrator enforces this by never assigning a build task to a gate agent ID.
 | | Count | Who |
 |---|---|---|
 | Intake | 1 | `A00` |
-| Wave 1 (mockups) | 3 | `A06` `A08` `A21` |
+| Wave 1 (mockups, **ordered**) | 3 + 2 reviewers | `A06` → `A08` `A21` → `C1` `A27` |
+| Cross-wave supervision | 1 | `A28`, for the duration of every wave |
 | Wave 2 (foundation, sequential) | 3 | `A20` `A01` `A02` |
 | Wave 3 (parallel domains) | **16** | `A03` `A04` `A05` `A07` `A09` `A10` `A11` `A12` `A13` `A14` `A15` `A19` `A23` `A24` `A25` `A27` |
 | Wave 4 (narrative) + release | 4 | `A16` `A17` `A18` `A22` |
 | Cross-wave | 1 | `A26` |
-| **Build agents** | **28** | `A00`–`A27` |
+| **Build agents** | **29** | `A00`–`A28` |
 | Gate agents (blocking, never build) | 4 | `C1` `C2` `S1` `S2` |
-| **Total** | **32** | |
+| **Total** | **33** | |
 
 ### Why mobile has its own agent and settings does not
 
@@ -170,7 +186,7 @@ The edge proxy (`REQ-PROX-*`) is A01's and the settings surfaces (`REQ-SET-*`)
 are A05's, because both already owned those surfaces.
 
 The critical path is
-`A00 → A06 → A08/A21 → human → A20 → A01 → A02 → [Wave 3] → [Wave 4] → C1/C2 → S1/S2 → A22`,
+`A00 → A06 → A08/A21 → C1/A27 → human → A20 → A01 → A02 → [Wave 3] → [Wave 4] → C1/C2 → S1/S2 → A22`,
 with `A26` reporting alongside each gate rather than on the path.
 
 Wave 3 is where the time is, and it is 16-wide.

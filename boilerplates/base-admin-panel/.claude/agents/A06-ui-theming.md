@@ -1,6 +1,6 @@
 ---
 name: A06-ui-theming
-description: Dispatch in Wave 1 alongside A08 so the mockups render at the real theme, and again in Wave 3 to deliver the in-app theme editor at full generator parity.
+description: Dispatch first in Wave 1 and run to completion **before** A08 starts, so the mockups render at the real theme rather than one the mockup agent invented (REQ-MOC-10), and again in Wave 3 to deliver the in-app theme editor at full generator parity.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---

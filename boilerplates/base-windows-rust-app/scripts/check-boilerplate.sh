@@ -32,7 +32,7 @@ root=os.path.realpath(sys.argv[1])
 pat=re.compile(r'(?:\.\./)+[A-Za-z0-9._/-]*')
 bad=[]
 for r,_,fs in os.walk(root):
-    if os.sep+'.git' in r: continue
+    if os.sep+'.git' in r or os.sep+'resources' in r: continue
     for n in fs:
         if not n.endswith(('.md','.json','.yaml','.yml')): continue
         p=os.path.join(r,n)
@@ -83,7 +83,7 @@ fi
 # fenced invocation block reads, and it is the shape that tells an agent to run
 # something. A backticked mention in prose is documentation about syntax and may
 # legitimately be a placeholder, so matching those produces false failures.
-cited=$(grep -rhoE '^/[a-z][a-z0-9-]{3,}$' "$root" --include='*.md' 2>/dev/null \
+cited=$(grep -rhoE '^/[a-z][a-z0-9-]{3,}$' "$root" --include='*.md' --exclude-dir=resources 2>/dev/null \
           | tr -d '/' | sort -u)
 if [ -n "$cited" ]; then
   missing=0
@@ -113,7 +113,7 @@ reqs=len(set(re.findall(r'^\| (REQ-[A-Z0-9]+-[0-9]+)',
 agents=len([n for n in os.listdir(os.path.join(d,'.claude','agents')) if n.endswith('.md')])
 bad=[]
 for r,_,fs in os.walk(d):
-    if os.sep+'.git' in r: continue
+    if os.sep+'.git' in r or os.sep+'resources' in r: continue
     for n in fs:
         if not n.endswith('.md'): continue
         p=os.path.join(r,n); rel=os.path.relpath(p,d)
@@ -133,11 +133,38 @@ PYCOUNT
   [ $? -eq 0 ] || fail=1
 fi
 
+# Vendored third-party resources carry an integrity pin, and our conventions do
+# not apply to them. Without the pin the copy is a comment: a file edited in
+# place still reads as "upstream at commit X" while being an undeclared fork,
+# and every gate that measures against it is measuring against something else.
+if [ -f "$root/resources/pin.json" ]; then
+  python3 - "$root/resources" <<'PYPIN'
+import hashlib,json,os,sys
+d=sys.argv[1]
+m=json.load(open(os.path.join(d,'pin.json')))
+bad=[]
+for rel,want in m.get('files',{}).items():
+    p=os.path.join(d,'next-shadcn-admin-dashboard',rel)
+    if not os.path.exists(p): bad.append(f'{rel}: missing'); continue
+    if hashlib.sha256(open(p,'rb').read()).hexdigest()!=want:
+        bad.append(f'{rel}: edited since it was pinned')
+lic=os.path.join(d,m.get('upstream',{}).get('licenseFile',''))
+if not os.path.exists(lic): bad.append('the upstream licence notice is missing, which the vendoring depends on')
+if bad:
+    for b in bad[:6]: print('  FAIL: vendored resource: '+b)
+    if len(bad)>6: print(f'  FAIL: vendored resource: ... and {len(bad)-6} more')
+else:
+    print(f"  vendored resources intact ({m['fileCount']} files at {m['upstream']['commit'][:12]})")
+sys.exit(1 if bad else 0)
+PYPIN
+  [ $? -eq 0 ] || fail=1
+fi
+
 # CONVENTIONS.md §3 — every cited requirement ID is defined.
 if [ -f "$root/spec/requirements.md" ]; then
   defined=$(grep -oE '^\| REQ-[A-Z0-9]+-[0-9]+' "$root/spec/requirements.md" | sed 's/^| //' | sort -u)
   used=$(grep -rhoE 'REQ-[A-Z0-9]+-[0-9]+' "$root" \
-           --include='*.md' --include='*.csv' --include='*.yaml' --include='*.json' | sort -u)
+           --include='*.md' --include='*.csv' --include='*.yaml' --include='*.json' --exclude-dir=resources | sort -u)
   dangling=$(comm -13 <(echo "$defined") <(echo "$used"))
   if [ -n "$dangling" ]; then
     bad "requirement IDs cited but not defined:"; echo "$dangling" | sed 's/^/    /'
@@ -203,7 +230,7 @@ while read -r p; do
 # (packages/contracts/... is the generated app's package, not this folder) or
 # inside a URL (a JSON Schema $id is not a file reference).
 done < <(grep -rhoP '(?<![\w/.-])(build|spec|contracts|gates|prompts|compliance|versions|normalizers)/[A-Za-z0-9._/-]+\.(md|csv|json|yaml)' \
-           "$root" --include='*.md' 2>/dev/null | sort -u)
+           "$root" --include='*.md' --exclude-dir=resources 2>/dev/null | sort -u)
 
 # CONVENTIONS.md §4 — no versions from memory.
 if [ -f "$root/versions/manifest.json" ]; then
@@ -242,7 +269,7 @@ walk(json.load(open(os.path.join(d,"versions","manifest.json"))))
 pat=re.compile(r"`([a-z0-9@][a-z0-9@/_.-]{1,40})`\s+(\d+\.\d+(?:\.\d+)?)")
 bad=[]
 for r,_,fs in os.walk(d):
-  if os.sep+".git" in r: continue
+  if os.sep+".git" in r or os.sep+"resources" in r: continue
   for n in fs:
       if not n.endswith(".md"): continue
       p=os.path.join(r,n)

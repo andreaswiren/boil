@@ -1,7 +1,7 @@
 # base-admin-panel — operating instructions
 
 You have been pointed at a boilerplate. It builds a multi-tenant Next.js admin
-panel from a short description, using a 32-agent fleet — 28 builders and 4
+panel from a short description, using a 33-agent fleet — 29 builders and 4
 reviewers — across 5 waves behind 9 gates.
 
 > **`CLAUDE.md` and `AGENTS.md` in this directory are byte-identical.** Some
@@ -43,7 +43,7 @@ document. Do not start a build to answer a question.
 | File | What it is |
 |------|------------|
 | `prompts/00-master-orchestrator.md` | How the build runs. Read this first. |
-| `spec/requirements.md` | 337 requirements with stable IDs. The source of truth. |
+| `spec/requirements.md` | 354 requirements with stable IDs. The source of truth. |
 | `spec/agents.md` | The fleet: agent IDs, waves, who publishes and consumes what. |
 | `contracts/ownership.md` | Who owns which path. The routing table for tasks and findings. |
 | `contracts/README.md` | Contract law. Why 16 agents can build at once. |

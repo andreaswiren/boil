@@ -170,6 +170,11 @@
       "A04",
       "impersonation",
       "G7"
+    ],
+    "ORC": [
+      "A28",
+      "(process)",
+      "G4"
     ]
   },
   "override": {
@@ -667,6 +672,41 @@
       "A23",
       "contract interface tests",
       "G7"
+    ],
+    "REQ-ORC-01": [
+      "orchestrator",
+      "(process)",
+      "G0"
+    ],
+    "REQ-ORC-06": [
+      "A28",
+      "(process)",
+      "G8"
+    ],
+    "REQ-ORC-07": [
+      "A28",
+      "(process)",
+      "G8"
+    ],
+    "REQ-ORC-08": [
+      "A28",
+      "(process)",
+      "G8"
+    ],
+    "REQ-MOC-13": [
+      "A00",
+      "(process)",
+      "G0"
+    ],
+    "REQ-MOC-14": [
+      "A00",
+      "(process)",
+      "G0"
+    ],
+    "REQ-UI-16": [
+      "A08",
+      "(process)",
+      "G1"
     ]
   },
   "spec": {
@@ -703,7 +743,8 @@
     "PORT": "portability/README.md",
     "MON": "spec/editor.md",
     "MOB": "spec/mobile-ux.md",
-    "IMP": "spec/impersonation.md"
+    "IMP": "spec/impersonation.md",
+    "ORC": "prompts/00-master-orchestrator.md"
   },
   "spec_by_id": {
     "REQ-UI-04": "spec/theming.md",

@@ -1,6 +1,6 @@
 ---
 name: A27-mobile-ux
-description: Dispatch in Wave 3, at the same moment as the other fifteen domain builders, to build the mobile primitives every surface composes — bottom navigation, sheets, thumb-reach zones, safe-area and keyboard-avoidance containers — and to own the mobile half of every surface budget.
+description: Dispatch at gate G1 to review the 390px renderings of every mockup round before the human is asked to choose (REQ-MOC-11), and in Wave 3, at the same moment as the other fifteen domain builders, to build the mobile primitives every surface composes — bottom navigation, sheets, thumb-reach zones, safe-area and keyboard-avoidance containers — and to own the mobile half of every surface budget.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 ---

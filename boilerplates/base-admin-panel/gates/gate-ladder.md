@@ -32,25 +32,74 @@ the questions that change the build; the rest is defaulted loudly.
 3. Every `SHOULD` accepted or waived; each waiver in `build/waivers.md` cites the answer
    that granted it. Zero waived `MUST`s — a waived `MUST` fails the build.
 4. Entities, integrations, locales (REQ-I18N-06), tenant model in `build/scope.md`.
+5. **`build/navigation.md`** — the resolved menu derived from those entities, the
+   settings sections (REQ-SET-01) and the tenant model: every group and item,
+   the nesting depth, the real labels, the icons and the gating permission,
+   sized for a tenant with every module enabled (REQ-MOC-13, REQ-MOC-14). G1
+   cannot start without it, because the menu is what the sidebar is sized to.
 
 **Pass:** `build/intake.md` + `build/scope.md` exist, every `OPT` has a value,
 zero waived `MUST`s. **Fail →** A00 with the unresolved item named. A missing
 human answer stalls the build; it is never guessed.
 
 ## G1 — Mockup approval
-**Runs:** A08 (layouts), A06 (real theme), A21 (capture). **Human:** yes,
-decisively — **the human names the winner.**
+**Runs:** A00 (`build/navigation.md`) and A06 (design system) **first and to
+completion**, then A08 (layouts) and A21 (capture), then C1 and A27 (review).
+**Human:** yes, decisively — **the human names the winner, and is asked last.**
+
+**Two things exist before A08 starts** (REQ-MOC-10, REQ-MOC-13). They are not
+concurrent with it:
+
+- **A06's tokens.** A08 linking a token bundle that does not exist yet is how
+  ten mockups end up at a palette and a type scale the agent invented.
+- **A00's navigation model.** Sidebar width, the collapse breakpoint and the
+  chrome budget are all consequences of the menu, so ten theses that each invent
+  their own menu are ten measurements of different things, and the human is
+  asked to compare them.
+
 1. Exactly 10 mockups differentiated by **layout**, not palette; each names its thesis
    (REQ-MOC-02); each at 390 / 834 / 1440 px — 30 renders (REQ-MOC-03).
-2. Screenshots presented in the chat response, not only on disk (REQ-MOC-04).
-3. Real rendered HTML at preset `b2CjxkL2O` (REQ-UI-04, REQ-MOC-06) — honest typography,
-   density, control sizes. Not drawings.
-4. Chrome-vs-content budget per surface stated and visible (REQ-UI-10).
+2. **Built in the shipping stack** (REQ-MOC-07): a runnable Next.js workspace,
+   Tailwind, shadcn/ui at preset `b2CjxkL2O` on base `radix`, one route per
+   thesis. `pnpm --filter mockups build` succeeds. **Standalone `index.html`
+   fails this gate** — it can contain no shadcn component, no Tailwind build and
+   no TanStack Table, so it cannot answer the only question the phase asks.
+3. **Real components, not lookalikes** (REQ-MOC-08): the dashboard and login
+   surfaces compose `dashboard-01` and `login-02` (REQ-UI-01, REQ-UI-02); every
+   tabular surface is TanStack Table (REQ-GRD-01). No hand-written `<table>`.
+4. **Every grid shows its real chrome** (REQ-MOC-12): fuzzy search top-left,
+   column chooser top-right, a sort indicator, one type-aware column filter, and
+   pagination at the bottom (REQ-GRD-02 … REQ-GRD-05, REQ-GRD-09). A grid drawn
+   as bare rows hides the chrome the layout must accommodate, which invalidates
+   the comparison the human is being asked to make.
+5. **Navigation conventions follow the baseline** (REQ-MOC-09, REQ-UI-03,
+   `spec/baseline.md`), and **every thesis renders the same menu** — the one in
+   `build/navigation.md`, with its real labels, real nesting depth and real item
+   count (REQ-MOC-13, REQ-MOC-14). Sized honestly: the longest label a tenant
+   with every module enabled actually sees, not a convenient short one.
+6. **No mockup declares a design value** (REQ-MOC-10): no hex, no raw radius,
+   font stack or spacing number outside A06's tokens. Grep the mockup sources —
+   a literal is a fail, not a note.
+7. Screenshots presented in the chat response, not only on disk (REQ-MOC-04).
+8. Chrome-vs-content budget per surface stated and visible (REQ-UI-10).
+9. **C1 and A27 have both passed this round** (REQ-MOC-11), neither having
+   written the mockups (REQ-GAT-07). C1 judges design; A27 judges the 390px
+   renderings against the touch and mobile budgets. Verdicts at
+   `build/gates/G1/C1-design-r<N>.json` and `build/gates/G1/A27-mobile-r<N>.json`.
 
-**Pass:** a human names one layout or an explicit hybrid of named ones, recorded
-in `build/approvals.md` (REQ-MOC-05). **Blocks:** all production UI code —
-nothing under `apps/<app>/components/**` or `app/(app)/**` exists before this.
-**Fail →** A08 for another round, or one narrowing question to the human.
+**Pass:** checks 1–9 green, **then** a human names one layout or an explicit
+hybrid of named ones, recorded in `build/approvals.md` (REQ-MOC-05). The human is
+asked last, not first: their attention is the one resource in this build that
+cannot be re-run, and spending it on a set two reviewers would have rejected is
+the waste this gate exists to prevent.
+
+**Blocks:** all production UI code — nothing under `apps/<app>/components/**` or
+`app/(app)/**` exists before this.
+
+**Fail →** A08 for another round, or one narrowing question to the human. A
+round that fails checks 2, 3, 4, 5 or 6 is not a design disagreement and is not
+taken to the human at all — it is a mockup set built against the wrong stack,
+and the human cannot fix that by choosing.
 
 ## G2 — Version validation
 **Runs:** A20. **Entry:** G1 passed. **Human:** only on a major jump (REQ-VER-04).
