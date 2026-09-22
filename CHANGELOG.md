@@ -9,6 +9,99 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-22
+
+Monaco editing surfaces, a dedicated mobile-UX owner, full user impersonation,
+and the tenant chooser. 337 requirements (294 → 337), 34 domains, 32 agents.
+
+### Added
+
+**Mobile UX (`REQ-MOB-01` … `REQ-MOB-12`, agent A27)**
+- `REQ-UI-07` has demanded a genuine mobile design rather than a narrowed
+  desktop since 0.1.0 and had no dedicated owner: A05 owned the desktop shell
+  and the mobile shell together. That is the arrangement the requirement warns
+  about — when one agent owns both, mobile is what gets finished second.
+- A27 owns the mobile primitives and the mobile half of every surface budget;
+  domains compose them. It owns **no route file and no shell file**, and raises
+  findings against other agents' mobile renderings rather than fixing them —
+  a fix by A27 would be an ownership violation that also hides the defect from
+  its owner.
+- `TouchBudget` extends A05's `SurfaceBudget` rather than replacing it: a
+  surface can satisfy chrome-vs-content and still have 28px buttons touching
+  each other, which is the dimension A05's metrics cannot express.
+- Landscape is deliberately **not** a fourth breakpoint — 844×390 resolves to
+  `tablet` by width and would escape the mobile budget entirely. It is handled
+  by `shortViewport`, keyed off measured height.
+- `REQ-UI-07` and `REQ-UI-15` move to A27 in the traceability matrix.
+
+**Editing surfaces (`REQ-MON-01` … `REQ-MON-12`, owned by A05)**
+- Monaco is the base for every text-editing surface, with formatting active per
+  supported file type from one language registry. Adding a language is a
+  registry entry, never a new editor.
+- Self-hosted with no CDN loader, lazy-loaded against an asserted bundle budget,
+  themed from the app's own design tokens, and schema-validated inline — a
+  mapping descriptor shows its error on the offending line, not as a toast after
+  save.
+- `REQ-MON-10`: Monaco is **not** used on touch-primary viewports. Shipping a
+  desktop code editor to a phone and calling it responsive is the same failure
+  `REQ-UI-07` names, so the surface degrades deliberately below the breakpoint.
+- Monaco is A05's, not a new agent's: one well-bounded component, and A05
+  already owned the design-token path `REQ-MON-08` needs.
+
+**Impersonation (`REQ-IMP-01` … `REQ-IMP-12`, agent A04)**
+- A global operator can enter a user's session and see exactly what that user
+  sees — their tenant, navigation, data and permitted actions.
+- `REQ-IMP-02` carries the weight: the effective permission set is the
+  **target's exactly, never the union** with the operator's. The union arises
+  naturally from a context-merging middleware and is invisible in testing,
+  because the operator can do everything so nothing fails. What it leaves behind
+  is worse than the escalation: every audit record from that session becomes a
+  false statement about what was possible.
+- `REQ-IMP-07` lists what stays refused mid-impersonation — credential change,
+  MFA change, recovery codes, API-key minting, role changes, nesting, peer and
+  self targeting — each with the escalation it prevents. Without that list,
+  impersonation is privilege escalation with a receipt.
+- The impersonated session is a **distinct object**, never a mutation of the
+  operator's. Mutation in place is the design that makes exit unreliable and
+  revocation impossible.
+- Narrowing a refusal or widening the effective-permission rule requires **S1
+  and S2 sign-off**, not orchestrator arbitration — the one place in this
+  structure where the arbitration default is overridden, because those changes
+  pass a shape-based breaking-change detector while changing what the system
+  permits.
+
+**Tenant switching (`REQ-RBA-09` … `REQ-RBA-12`, `REQ-UI-13` … `REQ-UI-15`)**
+- A chooser top-left directly beneath the logotype, shown only above one
+  accessible tenant. Position is part of the requirement: it answers *whose data
+  am I about to change* before acting.
+- Switching changes the **session, server-side**. A chooser that appends
+  `?tenant=` is the exact bug `REQ-RBA-03` exists to prevent, and it works
+  perfectly in testing because the tester is entitled to both tenants. RLS does
+  not save you — the app sets its tenant GUC from whatever it believes, so a
+  forged parameter forges the predicate too.
+- Unknown and unauthorised tenants return the **identical** 403, so the endpoint
+  is not a tenant-existence oracle.
+- A switch clears every tenant-scoped store — cache, SSE streams, in-flight
+  requests, optimistic mutations, grid preferences — and preserves personal
+  preferences. Invalidating too much makes a switch feel like a logout, and a
+  switch that feels like a logout is one people avoid, which pushes them into a
+  second browser profile and out of the audit trail.
+
+### Changed
+
+- `scripts/gen-traceability.py` replaces the generator that had been rewritten
+  inline five times, and `check-conventions.sh` now regenerates the matrix and
+  fails if the committed copy differs — so it cannot drift from the register.
+- Wave 3 is 16-wide.
+
+### Notes
+
+- Three files in this release were written by the main session after the
+  authoring agents hit the org spend limit mid-run: A27's definition,
+  `spec/tenant-switching.md` and `contracts/types/impersonation.md`.
+- Still no generated application. Every claim remains a design claim.
+
+
 ## [0.3.0] — 2026-09-21
 
 Token accounting and runtime portability. 294 requirements (272 → 294), 31
@@ -363,7 +456,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/andreaswiren/boil/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/andreaswiren/boil/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/andreaswiren/boil/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/andreaswiren/boil/releases/tag/v0.1.0
