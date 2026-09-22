@@ -74,6 +74,12 @@ with the source URL and the check timestamp recorded.
 
 A version written from memory is wrong by the time it is committed.
 
+A version *copied correctly* into a spec and then left there is wrong a month
+later, which is the harder failure: the manifest gets re-validated and the spec
+does not, and an agent builds against the spec it was handed.
+`scripts/check-conventions.sh` therefore fails on any `` `crate` X.Y.Z `` in any
+document that disagrees with the manifest entry for that crate.
+
 ## 5. Ownership before parallelism
 
 A boilerplate that dispatches more than one agent at a time must declare, in a

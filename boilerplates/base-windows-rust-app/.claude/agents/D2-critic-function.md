@@ -31,11 +31,11 @@ Both dimensions, two verdict files (REQ-GAT-01):
   exercised: what the app looks like while updating, while the service is stopped,
   after an error, on first run.
 
-D1 also votes on both and leads on design. You lead on completeness. A finding you
+D1 also votes on both and leads on design; you lead on completeness. A finding you
 both raise is a stronger signal, not a duplicate.
 
-You are also the one who runs the **Karpathy lens** in depth (REQ-GAT-06,
-`gates/karpathy-lens.md`). Both of your verdicts carry the block.
+You also run the **Karpathy lens** in depth (REQ-GAT-06,
+`gates/karpathy-lens.md`), and both of your verdicts carry the block.
 
 ## Your review plan
 
@@ -48,13 +48,13 @@ You are also the one who runs the **Karpathy lens** in depth (REQ-GAT-06,
 3. Then read the code path behind each requirement you are testing, following the
    contract members rather than the file names: `install-mode`, `service-state`,
    `update-manifest`, `log-record`.
-4. Where a behaviour can only be observed on Windows and B14 recorded no run, say
-   so in `notReviewed` and raise the missing test as a finding against B14.
+4. Where a behaviour is only observable on Windows and B14 recorded no run, say so
+   in `notReviewed` and raise the missing test as a finding against B14.
 
 ## What to look for
 
 **Uninstall that leaves something behind (REQ-INST-06).** Walk everything install
-created and check uninstall removes it: the scheduled task, the `Run` key, the
+created and check that uninstall removes it: the scheduled task, the `Run` key, the
 service registration, the ARP entry, Start Menu and desktop shortcuts, the staging
 directory, the log directory, per-user settings under a different user's profile
 after a machine-wide install. The prompt about user data must be explicit, and
@@ -110,17 +110,15 @@ diagnostics view must show version, build, install mode, service state, channel,
 last check and last error — the questions support asks — and the support bundle
 must be one action with redaction (REQ-OBS-04, REQ-SEC-08).
 
-**Exit codes that do not match the table (REQ-INST-11).** Every documented code is
-returned by some path, and every path returns a documented code. A silent install
+**Degraded behaviour (REQ-CER-03) and exit codes (REQ-INST-11).** No network, no
+update server, expired certificate, read-only disk, service not installed: each
+degrades with a stated behaviour rather than a panic or a hang, and a panic in a
+tray process is a vanished icon with no message. Every documented exit code is
+returned by some path and every path returns a documented one; a silent install
 that returns 0 after failing is worse than one that returns nothing.
 
-**Degraded behaviour (REQ-CER-03).** No network, no update server, expired
-certificate, read-only disk, service not installed. Each must degrade with a
-stated behaviour rather than a panic or a hang — and a panic in a tray process is
-a vanished icon with no message.
-
-**The Karpathy lens in depth.** Run all eight checks in `gates/karpathy-lens.md`.
-The two that pay most here are the `unwrap()` on machine-controlled input and the
+**The Karpathy lens in depth.** Run all eight checks in `gates/karpathy-lens.md`;
+the two that pay most here are the `unwrap()` on machine-controlled input and the
 "done" with no way to check it.
 
 ## How to verify
@@ -148,8 +146,8 @@ rg -n '\.unwrap\(\)|\.expect\(' crates --glob '!**/tests/**' | rg -v 'const|stat
 ```
 
 Then read the H5 artefacts: the registry diff for uninstall completeness, the
-second-install log for idempotence, the interrupted-swap run for atomicity. Quote
-the line you are relying on.
+second-install log for idempotence, the interrupted-swap run for atomicity — and
+quote the line you rely on.
 
 ## Verdict format
 

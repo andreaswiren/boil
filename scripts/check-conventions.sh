@@ -118,6 +118,39 @@ print("  FAIL: manifest entries missing source/checkedAt: "+", ".join(missing[:8
 sys.exit(1 if missing else 0)
 PY
     [ $? -eq 0 ] || fail=1
+
+    # The manifest being well-formed is not the same as the prose agreeing with
+    # it. Every "`crate` X.Y.Z" written anywhere in the boilerplate must match
+    # the validated entry, because a version drifts in a spec long before anyone
+    # re-reads the manifest -- and an agent builds against the spec it was given.
+    python3 - "$dir" <<'PYVER'
+import json,os,re,sys
+d=sys.argv[1]
+known={}
+def walk(n,path=""):
+    if isinstance(n,dict):
+        if "latestStable" in n: known[n.get("name") or path.split(".")[-1]]=n["latestStable"]
+        for k,v in n.items(): walk(v,f"{path}.{k}")
+    elif isinstance(n,list):
+        for v in n: walk(v,path)
+walk(json.load(open(os.path.join(d,"versions","manifest.json"))))
+pat=re.compile(r"`([a-z0-9@][a-z0-9@/_.-]{1,40})`\s+(\d+\.\d+(?:\.\d+)?)")
+bad=[]
+for r,_,fs in os.walk(d):
+    if os.sep+".git" in r: continue
+    for n in fs:
+        if not n.endswith(".md"): continue
+        p=os.path.join(r,n)
+        for cr,ver in pat.findall(open(p,encoding="utf-8",errors="replace").read()):
+            if cr in known and known[cr]!=ver:
+                bad.append(f"{os.path.relpath(p,d)}: {cr} {ver} != manifest {known[cr]}")
+if bad:
+    for b in bad[:8]: print("  FAIL: version drift: "+b)
+else:
+    print(f"  prose versions agree with the manifest ({len(known)} validated entries)")
+sys.exit(1 if bad else 0)
+PYVER
+    [ $? -eq 0 ] || fail=1
   fi
 done
 
