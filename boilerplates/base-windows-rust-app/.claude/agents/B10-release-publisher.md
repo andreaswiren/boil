@@ -40,6 +40,7 @@ Read `spec/release.md` first. It is the specification of this agent's output.
 | REQ-REL-07 | Notes generated from the change record, security fixes in their own section (REQ-UPD-13). |
 | REQ-REL-08 | Either forge failing fails the release, with rollback. |
 | REQ-REL-10 | Manifest published atomically and last. |
+| REQ-REL-11 | After publishing, a job with **no repository credentials** verifies the release the way a client does, per forge and per architecture: resolve the manifest over HTTPS as `crates/update` resolves it, verify its signature with the key extracted from the shipped binary, download every artefact and check hash and byte count against the **manifest**, verify each signature and Authenticode, then run the shipped updater against the real channel. `spec/release.md` §8a. Every other check you run verifies what CI built; this one verifies what the forge serves. |
 | REQ-FND-04 | Both `x86_64-pc-windows-msvc` and `aarch64-pc-windows-msvc` built and released. |
 
 Not yours: REQ-REL-09 — `CHANGELOG.md`, `README.md`, `SECURITY.md`, `TODO.md`,
@@ -136,6 +137,9 @@ is not pinned by commit SHA.
       exits non-zero (REQ-REL-08).
 - [ ] An order test asserts the manifest is the last asset and that every
       artefact it names was retrieved and checksummed first (REQ-REL-10).
+- [ ] §8a ran after publishing, on both forges and both architectures, from a job
+      with no repository credentials, and passed (REQ-REL-11). A pass recorded
+      from inside the pipeline's own credentials does not count.
 - [ ] `build/agents/B10/report.json` written with usage.
 
 ## Hand-off

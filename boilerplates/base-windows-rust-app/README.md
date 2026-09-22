@@ -79,7 +79,7 @@ with digital elements placed on the market, so Annex I applies directly rather
 than by analogy, and the auto-updater is the mechanism that satisfies the
 security-update obligation.
 
-All of it under [`spec/requirements.md`](spec/requirements.md) — 175
+All of it under [`spec/requirements.md`](spec/requirements.md) — 177
 requirements with stable IDs, each owned by an agent and checked by a gate.
 
 ## How it builds
@@ -103,7 +103,7 @@ H8 release       signed, SBOM'd, published to both forges
 | [`prompts/`](prompts/) | The orchestrator and phase prompts |
 | [`.claude/agents/`](.claude/agents/) | 19 build agents plus 4 gate agents |
 | [`.claude/skills/`](.claude/skills/) | Orchestration, version guard, release, supply chain |
-| [`spec/`](spec/) | 175 requirements and a spec per domain |
+| [`spec/`](spec/) | 177 requirements and a spec per domain |
 | [`contracts/`](contracts/) | Contract law, the ownership map, typed members |
 | [`gates/`](gates/) | The H0–H8 ladder, verdict schema, loop rules |
 | [`design/`](design/) | The design system, once approved |

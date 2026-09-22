@@ -224,6 +224,32 @@ users who cannot do anything about it (REQ-UPD-11). "Atomically" here means one
 upload of one complete file — never an edited-in-place manifest, never a manifest
 uploaded before its signature.
 
+## 8a. Verifying the published release as a client (REQ-REL-11)
+
+Step 3 above checks retrievability and the SHA-256 against `SHA256SUMS`, and it
+runs inside the pipeline with the pipeline's credentials, network and view of the
+forge. That is not the path a user takes. After both releases are published, a
+separate job with **no repository credentials** does what an installed client
+does, once per forge and once per architecture:
+
+| Step | What it proves |
+|------|----------------|
+| Resolve the update manifest URL over HTTPS exactly as `crates/update` resolves it (REQ-UPD-01, REQ-UPD-04) | The URL the shipped binary was built with points at the manifest that was just published — not at a staging host, not at a path that resolves only inside CI |
+| Verify the manifest's minisign signature with the public key **extracted from the shipped binary**, not from the release page | The key clients actually hold verifies this manifest. A key taken from the release proves the release is self-consistent and nothing more (REQ-UPD-03) |
+| Download every artefact the manifest names; check SHA-256 **and** byte count against the manifest | A truncated or wrong-asset upload. `SHA256SUMS` is our file; the manifest is what the client trusts, and those can disagree |
+| Verify each artefact's minisign signature, then Authenticode on the exe and the MSI | The signed thing and the published thing are the same thing (REQ-UPD-02, REQ-SEC-02) |
+| Run the shipped updater against the real published channel | The whole chain end to end, on the path every user takes |
+
+A failure here fails the release and triggers the §8 rollback, because a release
+that a client cannot verify is a release that will fail on every client at once.
+
+The reason this exists as its own step: every check before it verifies what CI
+built. None verifies what the forge serves. That gap is where a correct updater
+meets an asset attached to the wrong release, a manifest whose URLs resolve only
+from inside the build network, or a Gitea instance whose asset route differs by
+version (§2). It is the cheapest check in `H8` and the only one that runs the
+user's path.
+
 ## 9. Failure modes
 
 | Symptom | Cause | What the pipeline does |
@@ -234,6 +260,7 @@ uploaded before its signature.
 | Signature verify fails after signing | Wrong certificate or truncated upload | Fail before publish (REQ-SEC-02) |
 | Asset uploads to GitHub, fails on Gitea | Token scope or host version | Roll back both, fail (REQ-REL-08) |
 | Asset retrievable on one forge only | Eventual consistency or partial upload | Step 3 catches it; roll back |
+| Artefacts verify in CI, fail for a client | Wrong asset attached, truncated upload, a manifest URL that resolves only inside the build network | §8a catches it; roll back (REQ-REL-11) |
 | Manifest published before an artefact | Order violated | Cannot happen by construction; if it does, the order check in `ci/publish` is broken and that is a blocking test failure (REQ-REL-10) |
 | Reproducibility hashes differ | Unpinned toolchain, path leak, timestamp | Fail; do not publish an unreproducible release (REQ-FND-09) |
 | Advisory gate blocks mid-release | `B11`'s pass found a critical advisory | Fail; the release is not the place to accept that risk (REQ-SBM-03) |
@@ -241,6 +268,8 @@ uploaded before its signature.
 ## 10. Definition of done for a release (gate H8)
 
 - [ ] One tag started it; no manual step published anything (REQ-REL-01).
+- [ ] §8a passed on both forges and both architectures, from a job holding no
+      repository credentials (REQ-REL-11).
 - [ ] Both forges carry an identical artefact set (REQ-REL-02, REQ-REL-03).
 - [ ] Every executable artefact is signed and the signature verified in CI
       (REQ-REL-04, REQ-SEC-02).

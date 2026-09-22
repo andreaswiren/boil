@@ -146,6 +146,7 @@ build fails instead.
 | REQ-REL-08 | MUST | A failed publish to either forge fails the release. A half-published release means the update manifest and the artefacts disagree, which is worse than no release. |
 | REQ-REL-09 | MUST | `CHANGELOG.md`, `README.md`, `SECURITY.md` and `TODO.md` are updated every build, and the semver is bumped with the reason recorded. |
 | REQ-REL-10 | MUST | The update manifest is published atomically and last, after every artefact it references is retrievable. A manifest pointing at a missing artefact breaks every client at once. |
+| REQ-REL-11 | MUST | The published release is verified from outside CI, per forge and per architecture, exactly as a client does it: resolve the manifest over HTTPS, download each artefact, check hash and size against the manifest, verify the signature with the public key embedded in the shipped binary, verify Authenticode, then run the shipped updater against the real channel. Every other check verifies what CI built, not what the forge serves. |
 
 ## SBM — SBOM & supply chain
 
@@ -268,6 +269,7 @@ product, and they are `MUST` because breaking one stalls every agent at once.
 | REQ-GAT-06 | MUST | Karpathy guidelines applied as a standing review lens: no overcomplication, surgical changes, surfaced assumptions, verifiable success criteria. |
 | REQ-GAT-07 | MUST | No gate is self-approved. The agent that wrote the code never votes on it. |
 | REQ-GAT-08 | MUST | The design gate is blocking and comes first: no feature work begins before the design system is approved (REQ-MOC-01, REQ-DSN-01). |
+| REQ-GAT-09 | MUST | The verdicts that release a build must all name the same commit. Six passing verdicts spread across three commits certify a tree no reviewer saw, and whatever landed between them is unreviewed. |
 
 ## COST — Token accounting
 

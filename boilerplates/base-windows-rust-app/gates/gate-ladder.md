@@ -32,11 +32,23 @@ unresolved item named; a missing human answer stalls the build, never guessed.
 
 ## H1 — Design approved
 
-**Runs:** B03 (tokens and themes), B04 (mockups), B15 (build, run, capture).
+**Runs:** B16 (narrow pre-pass), B03 (tokens and themes), B04 (mockups),
+B15 (build, run, capture).
 **Entry:** H0 passed. **Human:** yes, decisively — **the human names the winner.**
 
 The gate that makes this boilerplate what it is, the one most likely to feel like
 a delay, and the only one whose output every later gate is measured against.
+
+0. **B16's pre-pass, before B04 writes a `Cargo.toml`.** A mockup is a compiled
+   program (REQ-MOC-02), so it needs the toolchain and the GUI framework crate,
+   and H2 blocks every dependency line until a version is externally validated
+   (REQ-VER-02, REQ-FND-08) — H2 is *after* this gate. Rather than let H1 break
+   the rule H2 enforces, B16 runs first and narrowly: the Rust toolchain, the
+   framework chosen at H0, and nothing else, validated against crates.io and the
+   release channel and written into `versions/manifest.json` with source URL and
+   timestamp like any other entry. Two entries validated is not a waiver of H2;
+   it is H2's rule applied to the two crates H1 cannot proceed without. Anything
+   the mockups do not need waits for the full pass.
 1. **Three to five mockups**, differentiated by design **direction** — density,
    typographic scale, chrome weight, accent strategy — not by accent colour
    (REQ-MOC-06), each one screen with the token set and enough controls to show
@@ -86,8 +98,13 @@ was usually shown five variations of one direction, a REQ-MOC-06 failure.
 
 **Pass:** zero entries without source URL and timestamp, zero prereleases, a
 migration note per major jump. **Blocks:** every `Cargo.toml` dependency line and
-the toolchain pin (REQ-FND-08). **Fail →** B16; a version that cannot be confirmed
-externally is a hard fail, never a fallback to memory.
+the toolchain pin (REQ-FND-08) — **except** the toolchain and the framework crate
+already validated by the H1 pre-pass, which this gate re-reads rather than
+re-deciding. If the pre-pass entry is stale by `policy.staleAfterDays` it is
+re-validated here, and a framework whose version moved under the mockups is a
+finding against B16's pre-pass, not a licence to keep the old number.
+**Fail →** B16; a version that cannot be confirmed externally is a hard fail,
+never a fallback to memory.
 
 ## H3 — Contract freeze
 
@@ -140,7 +157,16 @@ the failing check names — localised failure is the point of running this befor
 1. `cargo build --release --locked` for `x86_64-pc-windows-msvc` **and**
    `aarch64-pc-windows-msvc` (REQ-FND-04); ASLR/DEP, CFG and a stripped build
    verified (REQ-SEC-04); one self-contained exe (REQ-FND-12).
-2. **Installs on a clean Windows image.** Per-user with no elevation, machine-wide
+2. **Installs on a clean Windows image of each architecture.** Both targets build
+   at step 1, and building for ARM64 proves nothing about installing on it: the
+   install path touches the registry, ARP, shortcuts, the service account and
+   WoW64 redirection, and a cross-compiled binary exercises none of that from an
+   x64 runner. So steps 2 through 7 run on an x64 image **and** an ARM64 image,
+   and a REQ ID verified on only one of them is reported `unverified` for the
+   other rather than green (REQ-FND-04). Where no ARM64 image is available the
+   gate records which REQ IDs that leaves unverified and names it as the reason —
+   an absent runner is a stated gap, not a pass.
+   Per-user with no elevation, machine-wide
    with one UAC prompt at the moment of need (REQ-INST-02, REQ-INST-04); ARP entry
    with a working uninstall command (REQ-INST-05); install log (REQ-INST-12); run
    twice leaves the same state (REQ-INST-07); a forced mid-install failure rolls
@@ -227,7 +253,13 @@ duplicate to suppress.
 
 **Runs:** B17. **Entry:** H6 and H7 both passed. **Human:** yes — accepts the RC.
 1. **Every `MUST` green** — never waived, the build fails instead — with four H6
-   and two H7 verdicts on file, all passing.
+   and two H7 verdicts on file, all passing **and all six naming the same
+   `commit`** (REQ-GAT-09). Six passing verdicts spread across three commits certify a tree
+   that was never reviewed: D1 approved the design at commit A, T2 cleared the
+   updater at commit C, and whatever landed in between has no reviewer. The
+   `commit` field in `gates/verdict-schema.md` exists for this assertion; it is
+   also what decides whether a fix re-opens H6, so read it rather than
+   remembering which round was last.
 2. Signed binaries for **both** architectures, the MSI, the SBOM, checksums, the
    signed manifest and release notes (REQ-REL-03, REQ-REL-04, REQ-INST-03), the
    signing key in no log, repository or unencrypted CI variable.
@@ -236,14 +268,27 @@ duplicate to suppress.
    artefact breaks every client at once.
 4. **Both forges succeeded**, since a publish that succeeds on one and fails on the
    other fails the release (REQ-REL-01, REQ-REL-08).
-5. Reproducibility procedure tested from the tag (REQ-FND-09, REQ-REL-06); release
+5. **The published release is verified as a client** (REQ-REL-11), from outside
+   CI, against each forge in turn: resolve the update manifest over HTTPS the way the shipped
+   updater resolves it, download each artefact it names, check the SHA-256 and
+   the byte count against the manifest, verify the minisign signature with the
+   **embedded public key from the shipped binary** rather than a key on the
+   release page, and verify Authenticode on the downloaded exe and MSI. Then run
+   the shipped updater against the real published channel, once per forge and per
+   architecture.
+   Every step before this one verifies what CI built. None verifies what the
+   forge serves, and the gap between them is where a correct updater meets a
+   truncated upload, an asset attached to the wrong release, or a manifest whose
+   URLs resolve only from inside the build network. It is the cheapest check in
+   this gate and the only one that exercises the path every user takes.
+6. Reproducibility procedure tested from the tag (REQ-FND-09, REQ-REL-06); release
    notes generated from the change record, security fixes separated from features
    (REQ-REL-07, REQ-UPD-13).
-6. Compliance generated from repository state (REQ-CRA-10): Annex II/V/VII
+7. Compliance generated from repository state (REQ-CRA-10): Annex II/V/VII
    completed (REQ-CRA-09), the end-of-support date in About (REQ-CRA-08),
    vulnerability handling and the reporting runbook in place (REQ-CRA-05,
    REQ-CRA-06), the CER set with its reassessment date (REQ-CER-07).
-7. Semver bumped with the reason recorded; `CHANGELOG.md`, `README.md`,
+8. Semver bumped with the reason recorded; `CHANGELOG.md`, `README.md`,
    `SECURITY.md`, `TODO.md`, `VERSION` updated in the same commit (REQ-REL-09); the
    build's cost total in the release record with its completeness flag and price
    confidence (REQ-COST-03, REQ-COST-04).

@@ -11,7 +11,7 @@ Read before you start:
 
 | File | Why |
 |------|-----|
-| `spec/requirements.md` | 175 requirement IDs. The only way to refer to a requirement. |
+| `spec/requirements.md` | 177 requirement IDs. The only way to refer to a requirement. |
 | `spec/agents.md` | The fleet, the waves, who publishes and consumes what. |
 | `contracts/ownership.md` | Who owns which path. Your routing table for tasks and findings. |
 | `contracts/README.md` | Contract law. |
@@ -62,8 +62,8 @@ serialised by accident.
 | Wave | Gate first | Agents | Concurrency |
 |------|-----------|--------|-------------|
 | 0 | — | `B00` | 1 |
-| 1 | H0 | `B03` → then `B04`, `B15` | 1 then 2 |
-| 2 | H1 | `B16` → `B01` → `B02` | strictly sequential |
+| 1 | H0 | `B16` (pre-pass) → `B03` → then `B04`, `B15` | 1, 1, then 2 |
+| 2 | H1 | `B16` (full) → `B01` → `B02` | strictly sequential |
 | 3 | H3 | `B05` `B06` `B07` `B08` `B09` `B10` `B11` `B12` `B14` | **9 concurrent** |
 | 4 | H4 + H5 | `B13` `B17` | 2 |
 | Gates | H5 | `D1` `D2` then `T1` `T2` | 2 then 2 |
@@ -88,7 +88,14 @@ support period (REQ-CRA-08), and the cost ceiling.
 
 ### H1 — Design, and a human decision
 
-Dispatch `B03` first: tokens, fonts, both themes. Then `B04` and `B15` together.
+Dispatch `B16` first, for a **two-entry pre-pass**: the Rust toolchain and the
+framework `B00` chose. A mockup has to compile (REQ-MOC-02), compiling needs a
+dependency line, and H2 blocks dependency lines that no external check has
+validated — so without this pre-pass H1 cannot pass without breaking H2. It is
+H2's rule applied early to two crates, not an exception to it. Everything else
+waits for the full pass.
+
+Then `B03`: tokens, fonts, both themes. Then `B04` and `B15` together.
 
 `B04` produces three to five mockups differentiated by **direction** — density,
 typographic scale, chrome weight, accent strategy — not by accent colour
@@ -110,8 +117,10 @@ inaccessible product.
 
 ### H2 — Versions
 
-`B16` validates every crate against crates.io and the toolchain against the Rust
-release channel, writing source URL and timestamp per entry (REQ-VER-03).
+`B16` validates every *remaining* crate against crates.io and re-reads the two
+entries from its H1 pre-pass, writing source URL and timestamp per entry
+(REQ-VER-03). A pre-pass entry older than `policy.staleAfterDays` is validated
+again here rather than inherited.
 crates.io rejects a request with no `User-Agent`, and the rejection reads like a
 missing crate — if a lookup "fails", check the header before believing it.
 

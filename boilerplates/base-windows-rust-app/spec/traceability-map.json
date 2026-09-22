@@ -317,6 +317,11 @@
       "B17",
       "(release record)",
       "H8"
+    ],
+    "REQ-GAT-09": [
+      "orchestrator",
+      "(process)",
+      "H8"
     ]
   },
   "spec": {
