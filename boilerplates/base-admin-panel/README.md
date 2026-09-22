@@ -2,21 +2,36 @@
 
 Give it a paragraph. Get back a release-candidate admin panel.
 
-This is not a code template. It is a **prompt structure**: a fleet of 26 expert
-agents, a frozen contract they build against, an ownership map that lets fifteen
-of them work at the same time, and nine gates that refuse to pass work that is
-not finished.
+This is not a code template. It is a **prompt structure**: a fleet of 32 expert
+agents — 28 builders and 4 reviewers — a frozen contract they build against, an
+ownership map that lets sixteen of them work at the same time, and nine gates
+that refuse to pass work that is not finished.
+
+## Starting a build
+
+**There is no command to run.** Point an agent at this directory and describe
+what you want. It reads `AGENTS.md` (or `CLAUDE.md` — they are identical),
+which sends it to `prompts/00-master-orchestrator.md`.
 
 ```bash
-cd boilerplates/base-admin-panel
-claude
+cd my-panel      # this directory: the project root, not a folder inside it
+claude           # or muse, or any agent pointed here
 ```
 
 > Build me a panel for managing customer firewall estates across ~40 tenants.
 > Techs need devices, config backups and change history. Entra ID login.
 
-The orchestrator asks the handful of questions whose answers change the build,
-defaults everything else loudly, shows you ten layout mockups, and then builds.
+That paragraph is the trigger. `A00` asks the handful of questions whose answers
+change the build, defaults everything else loudly, shows you ten layout mockups,
+and then builds.
+
+On Claude Code, `/build-orchestrate` loads the same procedure as a shortcut. It
+is not a prerequisite: if slash commands or skills do nothing in your runtime,
+read `.claude/skills/build-orchestrate/SKILL.md` as an ordinary file.
+
+**This directory is the project root.** If you copied it into a subfolder of an
+existing project, stop and read *Where this folder sits* in `AGENTS.md` first —
+the ownership map's paths are relative to here, and nested they are ambiguous.
 
 ---
 
@@ -80,7 +95,7 @@ outbox, `en`/`sv` with ICU, Europe/Stockholm with correct DST and
 `YYYY-MM-DD HH:mm:ss`, an always-current help section with architecture charts,
 and EU CRA and CER compliance documentation generated from the repository state.
 
-All of it under [`spec/requirements.md`](spec/requirements.md) — 272 requirements
+All of it under [`spec/requirements.md`](spec/requirements.md) — 337 requirements
 with stable IDs, each owned by an agent and checked by a gate.
 
 ---
@@ -92,14 +107,14 @@ G0 intake        A00 resolves scope from your paragraph
 G1 mockups       A08 renders 10 layouts × 3 viewports  ──▶  YOU PICK ONE
 G2 versions      A20 validates every version against the real registry
 G3 freeze        A02 assembles and freezes packages/contracts@1.0.0
-G4 self-test     ┌─ 13 agents build simultaneously ─┐
+G4 self-test     ┌─ 16 agents build simultaneously ─┐
 G5 integration   └─ auth rbac shell grid pwa data   ─┘
 G6 critique      C1 and C2 must both approve design AND functions
 G7 security      S1 and S2 review independently; both must approve
 G8 release       docs, charts, compliance, semver, changelog, push
 ```
 
-Wave 3 is where the time goes, and it is fifteen agents wide. That only works
+Wave 3 is where the time goes, and it is sixteen agents wide. That only works
 because of the freeze at G3: after it, the contract changes additively or not at
 all. Nothing is renamed, removed or retyped, so no agent's work is invalidated by
 another's while they are both mid-task.
@@ -115,9 +130,9 @@ law that makes the parallelism safe.
 | Path | What |
 |------|------|
 | [`prompts/`](prompts/) | The orchestrator and the phase prompts |
-| [`.claude/agents/`](.claude/agents/) | The 24-agent fleet plus 4 gate agents |
+| [`.claude/agents/`](.claude/agents/) | The 32 agent prompts: 28 builders and 4 gate agents |
 | [`.claude/skills/`](.claude/skills/) | Orchestration, contract guard, version guard, visual QA, supply-chain audit, release |
-| [`spec/`](spec/) | 215 requirements, the fleet roster, and a spec per domain |
+| [`spec/`](spec/) | 337 requirements, the fleet roster, and a spec per domain |
 | [`contracts/`](contracts/) | Contract law, the ownership map, types, events, OpenAPI, DB and RLS contracts |
 | [`gates/`](gates/) | The G0–G8 ladder, verdict schema, loop rules, Karpathy lens |
 | [`versions/`](versions/) | The externally-validated version manifest |
@@ -128,11 +143,11 @@ law that makes the parallelism safe.
 ## Design principles
 
 **Contracts, not conversations.** Agents never message each other. They publish
-a declaration, A02 assembles it, and everyone reads the frozen result. Fifteen
-agents coordinating costs 105 conversations; fifteen agents reading one contract
+a declaration, A02 assembles it, and everyone reads the frozen result. Sixteen
+agents coordinating costs 120 conversations; sixteen agents reading one contract
 costs none.
 
-**Additive-only after the freeze.** A rename mid-wave invalidates work in fourteen
+**Additive-only after the freeze.** A rename mid-wave invalidates work in fifteen
 other agents' heads at once. So renames are not allowed — you add the new name
 and deprecate the old. A breaking change needs the orchestrator's arbitration,
 and the default answer is no.

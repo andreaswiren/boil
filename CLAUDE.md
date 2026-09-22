@@ -10,6 +10,33 @@ This repo is a collection of boilerplates and skills. Read
 > in the one being read. Do not "fix" it by deleting either file — that breaks
 > the other runtime. `scripts/check-conventions.sh` fails if the two drift.
 
+## If you came here to build something, you are one directory too high
+
+This is the **collection**, not a project. Nothing here builds an application.
+The skill in this directory, `boil-new-boilerplate`, authors a *new boilerplate
+into the collection* — it is a contributor tool and it is not a build trigger.
+
+To run a boilerplate, copy it out and work in the copy:
+
+```bash
+npx degit andreaswiren/boil/boilerplates/base-windows-rust-app my-app
+cd my-app && git init && git add -A && git commit -m "Vendor boilerplate"
+```
+
+Then describe what you want in a paragraph. There is no command.
+
+Two reasons this is not a preference. Each boilerplate's
+`contracts/ownership.md` assigns the workspace manifest, `.github/workflows/**`
+and `README.md` / `CHANGELOG.md` / `VERSION` to agents at **its** root, so a
+build run in `boilerplates/<name>/` overwrites that boilerplate's own files and
+drops a workspace manifest into this repository. And this directory's
+instructions are the contributor rules — an agent reading them will treat your
+build request as a change to the collection.
+
+Repo-level skills stay here by design (hard rule 1): a vendored boilerplate
+carries only its own `.claude/skills/`, so `boil-new-boilerplate` is correctly
+absent from your project.
+
 ## Where you are
 
 - Working **inside a boilerplate** (`boilerplates/<name>/`) — that folder's own

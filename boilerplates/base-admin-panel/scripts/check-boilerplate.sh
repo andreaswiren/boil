@@ -75,6 +75,41 @@ for d in "$root"/.claude/skills/*/; do
   [ -f "$d/SKILL.md" ] || bad "skill $(basename "$d") has no SKILL.md"
 done
 
+# Stated counts must match the register and the roster. Every "N requirements"
+# and "N-agent fleet" in a document is a number a human typed and nobody
+# re-derived when the register grew, and it is read by an agent as fact. This
+# check exists because the same defect was fixed by hand seven times in one
+# session: 165 against 175, 215 and 272 against 337, 24 and 26 against 32, 19
+# against 23, and "Thirteen expert agents" against sixteen.
+if [ -f "$root/spec/requirements.md" ] && [ -d "$root/.claude/agents" ]; then
+  python3 - "$root" <<'PYCOUNT'
+import os,re,sys
+d=sys.argv[1]
+reqs=len(set(re.findall(r'^\| (REQ-[A-Z0-9]+-[0-9]+)',
+      open(os.path.join(d,'spec','requirements.md'),encoding='utf-8').read(),re.M)))
+agents=len([n for n in os.listdir(os.path.join(d,'.claude','agents')) if n.endswith('.md')])
+bad=[]
+for r,_,fs in os.walk(d):
+    if os.sep+'.git' in r: continue
+    for n in fs:
+        if not n.endswith('.md'): continue
+        p=os.path.join(r,n); rel=os.path.relpath(p,d)
+        for line in open(p,encoding='utf-8',errors='replace').read().split('\n'):
+            for m in re.finditer(r'(\d{2,4})\s+requirements?\b', line):
+                if int(m.group(1))!=reqs:
+                    bad.append(f'{rel}: "{m.group(0)}" but the register defines {reqs}')
+            for m in re.finditer(r'(\d{1,3})[- ]agent (?:fleet|build fleet)\b', line):
+                if int(m.group(1))!=agents:
+                    bad.append(f'{rel}: "{m.group(0)}" but .claude/agents holds {agents}')
+if bad:
+    for b in sorted(set(bad))[:8]: print('  FAIL: stated count: '+b)
+else:
+    print(f'  stated counts agree with the register ({reqs} requirements, {agents} agents)')
+sys.exit(1 if bad else 0)
+PYCOUNT
+  [ $? -eq 0 ] || fail=1
+fi
+
 # CONVENTIONS.md §3 — every cited requirement ID is defined.
 if [ -f "$root/spec/requirements.md" ]; then
   defined=$(grep -oE '^\| REQ-[A-Z0-9]+-[0-9]+' "$root/spec/requirements.md" | sed 's/^| //' | sort -u)

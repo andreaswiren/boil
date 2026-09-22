@@ -58,12 +58,35 @@ git checkout main
 mv boilerplates/base-windows-rust-app ../my-app && cd ../my-app
 ```
 
-Then describe what you want in a paragraph. The orchestrator handles the rest:
+### What triggers the build
+
+**No command. You describe what you want.** The agent reads `AGENTS.md` (or
+`CLAUDE.md` — they are identical), which tells it to read
+`prompts/00-master-orchestrator.md` and start. That is deliberate: a file read
+works on every runtime, where a slash command works on some.
 
 ```
 Build me a panel for managing customer firewall estates across ~40 tenants.
 Techs need to see devices, config backups and change history. Entra ID login.
 ```
+
+That paragraph is the trigger. `A00` / `B00` resolves the rest and asks only the
+questions whose answers change the build.
+
+On Claude Code there is an optional shortcut that loads the same procedure:
+
+```
+/build-orchestrate
+```
+
+It is a shortcut, not a prerequisite. If it does nothing in your runtime —
+Muse Code 1.3.0 does not load skills — read
+`.claude/skills/build-orchestrate/SKILL.md` as an ordinary file instead.
+
+**`/boil-new-boilerplate` is not this.** It authors a *new boilerplate into this
+collection*, which is a contributor task; it lives in this repository's root
+`.claude/skills/`, so a vendored project does not have it at all. If you typed
+it expecting a build to start, you wanted the paragraph above.
 
 ### Two things not to do
 
@@ -115,11 +138,11 @@ time.
 The `base-admin-panel` structure is built around four ideas:
 
 1. **Contract-first parallelism.** One frozen contract package is the only thing
-   two domains share. Thirteen expert agents then build simultaneously without
+   two domains share. Sixteen expert agents then build simultaneously without
    merging, waiting or negotiating.
 2. **Additive-only change.** After the contract freeze, nothing is renamed,
    removed or retyped. A breaking change needs arbitration and a version. This
-   is what keeps a 13-wide wave from collapsing.
+   is what keeps a 16-wide wave from collapsing.
 3. **Single ownership.** Every file and every table has exactly one owning
    agent. Two agents writing the same file is treated as a build defect, not a
    merge conflict.
@@ -129,9 +152,11 @@ The `base-admin-panel` structure is built around four ideas:
 
 ---
 
-## Adding a boilerplate
+## Adding a new boilerplate to this collection
 
-Use the repo skill:
+This is a contributor task — authoring a new boilerplate, not running one. It
+only applies in a clone of this repository. To *run* a boilerplate, see
+[What triggers the build](#what-triggers-the-build).
 
 ```
 /boil-new-boilerplate

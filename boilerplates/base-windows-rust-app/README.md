@@ -4,14 +4,32 @@ A Windows desktop application in Rust that is finished rather than started:
 tray-resident, self-installing, self-updating, signed, and shipped to two forges
 from one tag.
 
+## Starting a build
+
+**There is no command to run.** Point an agent at this directory and describe
+what you want. It reads `AGENTS.md` (or `CLAUDE.md` — they are identical),
+which sends it to `prompts/00-master-orchestrator.md`.
+
 ```bash
-cd boilerplates/base-windows-rust-app
-claude
+cd my-app        # this directory: the project root, not a folder inside it
+claude           # or muse, or any agent pointed here
 ```
 
 > A small utility that sits in the tray, watches a folder for incoming exports,
 > normalises them and drops them on a share. Needs to keep running when nobody
 > is logged in. Releases go to our Gitea and to GitHub.
+
+That paragraph is the trigger. `B00` asks the handful of questions whose answers
+change the build and defaults the rest loudly. Then `H1` stops and waits for you
+to name a design direction — see below.
+
+On Claude Code, `/build-orchestrate` loads the same procedure as a shortcut. It
+is not a prerequisite: if slash commands or skills do nothing in your runtime,
+read `.claude/skills/build-orchestrate/SKILL.md` as an ordinary file.
+
+**This directory is the project root.** If you copied it into a subfolder of an
+existing project, stop and read *Where this folder sits* in `AGENTS.md` first —
+the ownership map's paths are relative to here, and nested they are ambiguous.
 
 ---
 

@@ -9,6 +9,43 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.7.1] — 2026-09-22
+
+Nothing in the repository said what starts a build, and the only slash command
+in the README was the one that does not.
+
+### Fixed
+
+- **The README never named the build trigger.** Its only slash command was
+  `/boil-new-boilerplate`, under a heading reading *Adding a boilerplate*, which
+  reads as "how to use one". That skill authors a *new boilerplate into the
+  collection*; it lives in this repository's root `.claude/skills/` and a
+  vendored boilerplate correctly does not carry it. Both READMEs now say what
+  actually starts a build — a paragraph, no command — name `/build-orchestrate`
+  as the optional Claude Code shortcut, and say outright that
+  `/boil-new-boilerplate` is not it.
+- **Neither boilerplate README had a "how to start" section at all**, and both
+  opened with `cd boilerplates/<name> && claude` — the build-in-place trap 0.7.0
+  removed from the repository README but not from theirs. That snippet also
+  named the boilerplate's path *inside the collection*, which is wrong in the
+  vendored project where the README is actually read.
+- **The collection root now says it is not a project.** An agent handed a clone
+  of the whole repository reads the contributor rules and will treat a build
+  request as a change to the collection. That is the likeliest root cause of a
+  build that goes nowhere.
+- Seven more stated counts that disagreed with the register: 272, 215 twice and
+  "Thirteen expert agents" in `base-admin-panel`, plus 24 and 26 agents, and the
+  "fifteen agents coordinating costs 105 conversations" arithmetic, now sixteen
+  and 120.
+
+### Added
+
+- **A stated-count check**, because the number typed into a document is never
+  re-derived when the register grows, and an agent reads it as fact. Every
+  "N requirements" and "N-agent fleet" must match the register and the roster.
+  It found two stale counts on its first run that the seven manual fixes had
+  missed, in `portability/README.md` and `prompts/00-master-orchestrator.md`.
+
 ## [0.7.0] — 2026-09-22
 
 Answers a question the repository had never stated an answer to: where a
@@ -692,7 +729,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/andreaswiren/boil/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/andreaswiren/boil/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/andreaswiren/boil/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/andreaswiren/boil/compare/v0.4.0...v0.5.0
