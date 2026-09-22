@@ -142,7 +142,7 @@ FFI wrappers you need from B01, as one CCR batch rather than five:
    error to exactly one exit code with a test per code.
 7. Write `packaging/wix/main.wxs` last, once the CLI option surface is settled,
    and keep the two in parity with a table-driven test.
-8. Run `./scripts/check-conventions.sh` from the repository root before you
+8. Run `./scripts/check-boilerplate.sh` before you
    hand off, and fix the register rather than the citation.
 
 ## Definition of done

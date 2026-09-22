@@ -25,8 +25,15 @@ test ! -e "boilerplates/$NAME" || { echo "exists"; exit 1; }
 ## 2. Scaffold
 
 ```bash
-mkdir -p boilerplates/$NAME/{.claude/{agents,skills},spec,prompts}
+mkdir -p boilerplates/$NAME/{.claude/{agents,skills},spec,prompts,scripts}
 cd boilerplates/$NAME
+
+# The conformance check ships inside the boilerplate, because the folder has to
+# work cloned alone (CONVENTIONS.md §1). Copy it rather than reaching for the
+# root one, and keep the copies identical -- the repo check fails on drift.
+cp ../../boilerplates/base-windows-rust-app/scripts/check-boilerplate.sh scripts/
+cp ../../scripts/gen-traceability.py scripts/     # only if it will have a matrix
+chmod +x scripts/check-boilerplate.sh
 ```
 
 Required files (`CONVENTIONS.md` §2):
@@ -38,6 +45,7 @@ Required files (`CONVENTIONS.md` §2):
 | `AGENTS.md` | For a non-Claude agent | A pointer to `CLAUDE.md` |
 | `spec/requirements.md` | The source of truth | Stable `REQ-<DOMAIN>-<nn>` IDs with `MUST`/`SHOULD`/`OPT` status |
 | `prompts/00-master-orchestrator.md` | The build | Phases, gates, dispatch |
+| `scripts/check-boilerplate.sh` | Self-verification | The check, runnable with nothing but this folder |
 
 Add domain folders as the boilerplate needs them — `contracts/`, `gates/`,
 `versions/`, `compliance/`. Do not create empty ones.

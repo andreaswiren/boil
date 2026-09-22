@@ -16,11 +16,19 @@ A boilerplate folder must work when it is the only thing you have.
 - **The folder explains itself.** `README.md` for a human, `CLAUDE.md` for an
   agent, and enough structure that an agent pointed at the folder with no other
   context knows what to do first.
+- **No document may tell anyone to run a file the folder does not ship.** This
+  is the rule that is easiest to break by accident: six agent briefs once ended
+  with "run `./scripts/check-conventions.sh` from the repository root", which is
+  a file that is not in the folder those briefs ship in. Each boilerplate
+  therefore carries its own `scripts/check-boilerplate.sh` and, where it has a
+  matrix, its own `scripts/gen-traceability.py`.
 
-Check it, along with every other rule in this file:
+Check it, along with every other rule in this file — from inside one
+boilerplate, or across all of them from the root:
 
 ```bash
-./scripts/check-conventions.sh
+cd boilerplates/<name> && ./scripts/check-boilerplate.sh
+./scripts/check-conventions.sh    # from the repository root
 ```
 
 That script is the enforcement. It verifies self-containment, the required
@@ -42,6 +50,9 @@ boilerplates/<name>/
 ├── .claude/
 │   ├── agents/            # the expert fleet, one file per agent
 │   └── skills/            # skills this boilerplate needs
+├── scripts/
+│   ├── check-boilerplate.sh   # the conformance check, runnable from here alone
+│   └── gen-traceability.py    # where the boilerplate has a matrix
 ├── spec/                  # requirements with stable IDs, per-domain specs
 ├── prompts/               # the orchestrator and phase prompts
 └── <domain folders>       # contracts/, gates/, compliance/, versions/, …
@@ -53,8 +64,7 @@ the boilerplate cites those IDs rather than restating requirements in prose.
 Where a boilerplate keeps a traceability matrix, it is **generated** from the
 register by `scripts/gen-traceability.py` and never hand-edited — a matrix that
 can drift from the register is worse than no matrix, because it is trusted.
-`scripts/check-conventions.sh` regenerates it and fails if the committed copy
-differs.
+The check regenerates it and fails if the committed copy differs.
 
 ## 3. Stable requirement IDs
 

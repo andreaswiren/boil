@@ -40,9 +40,17 @@ requirement without a status, an ownership map naming an agent that does not
 exist, and a broken internal reference:
 
 ```bash
-cd boilerplates/<name> && python3 ../../scripts/gen-traceability.py   # if it has a matrix
-cd - && ./scripts/check-conventions.sh
+cd boilerplates/<name>
+python3 scripts/gen-traceability.py     # if it has a matrix
+./scripts/check-boilerplate.sh          # the boilerplate's own check
+cd - && ./scripts/check-conventions.sh  # every boilerplate, plus the repo checks
 ```
+
+Both scripts ship *inside* each boilerplate, because a boilerplate has to work
+cloned alone. `scripts/check-conventions.sh` at the root runs each one and then
+checks what only makes sense from outside: that no boilerplate cites a file it
+does not ship, that every boilerplate is in the README, and that the shipped
+copies of the generator have not drifted.
 
 Fix the register, never the citation. The citation is the thing that made you
 notice.

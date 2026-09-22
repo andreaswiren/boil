@@ -144,7 +144,7 @@ on-image run below then confirms it.
    toggle never lies.
 7. Failure actions and crash-loop detection last, with the third action
    `SERVICE_ACTION_NONE` and `SERVICE_CONFIG_FAILURE_ACTIONS_FLAG` set.
-8. Run `./scripts/check-conventions.sh` from the repository root before hand-off.
+8. Run `./scripts/check-boilerplate.sh` before hand-off.
 
 ## Definition of done
 

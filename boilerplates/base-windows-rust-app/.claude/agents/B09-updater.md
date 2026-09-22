@@ -143,7 +143,7 @@ signing-capable crate; do not write a version from memory (REQ-VER-02).
    start → handshake → end`. No `sc.exe`, ever (REQ-UPD-10).
 6. Read policy from `HKLM` only, with `windows-registry` 0.100.0, surfacing the
    effective source of every setting for B05 and B12. Then run
-   `./scripts/check-conventions.sh` from the repository root before hand-off.
+   `./scripts/check-boilerplate.sh` before hand-off.
 
 ## Definition of done
 

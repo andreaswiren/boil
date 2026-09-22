@@ -324,7 +324,7 @@
       }
     },
     "_msrvCheck": {
-      "note": "REQ-VER-06. Every crates entry carries the rust_version its pinned release declares, read from the crates.io sparse index. The highest is the floor the workspace must satisfy; the pinned toolchain must be at or above it, and scripts/check-conventions.sh asserts that rather than leaving it to a build failure.",
+      "note": "REQ-VER-06. Every crates entry carries the rust_version its pinned release declares, read from the crates.io sparse index. The highest is the floor the workspace must satisfy; the pinned toolchain must be at or above it, and scripts/check-boilerplate.sh asserts that rather than leaving it to a build failure.",
       "highestMsrv": "1.95",
       "heldBy": [
         "eframe 0.36.2",

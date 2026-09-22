@@ -154,7 +154,7 @@ weak — you do not stall and you do not invent it.
 - [ ] No invented value anywhere: `grep -c 'PLACEHOLDER' compliance/` is
       non-zero on a build that has not yet been released, and every placeholder
       names what belongs there.
-- [ ] Every cited REQ ID resolves: `./scripts/check-conventions.sh` passes.
+- [ ] Every cited REQ ID resolves: `./scripts/check-boilerplate.sh` passes.
 - [ ] Not one sentence asserts a control you did not find in the code.
 
 ## Hand-off
