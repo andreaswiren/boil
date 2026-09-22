@@ -2,16 +2,17 @@
 
 This file covers the **`boil` repository itself** — prompt structures, skills and
 documentation. It is not the security policy of an application generated from a
-boilerplate; the `base-admin-panel` boilerplate ships its own coordinated
-vulnerability disclosure policy at
-[`boilerplates/base-admin-panel/compliance/cra/cvd-policy.md`](boilerplates/base-admin-panel/compliance/cra/cvd-policy.md),
-which is what a deployed product publishes.
+boilerplate. Each boilerplate ships its own coordinated vulnerability disclosure
+policy — [`base-admin-panel`](boilerplates/base-admin-panel/compliance/cra/cvd-policy.md)
+and [`base-windows-rust-app`](boilerplates/base-windows-rust-app/compliance/cra/cvd-policy.md)
+— and that is what a deployed product publishes.
 
 ## Supported versions
 
 | Version | Supported |
 |---------|-----------|
-| 0.1.x | Yes |
+| 0.5.x | Yes |
+| < 0.5 | No |
 
 The repo is pre-1.0. Structure may change between minor versions; requirement
 IDs will not (see `CONVENTIONS.md` §3).
@@ -49,10 +50,17 @@ or a requirement you would have written differently. Those are issues.
 ## What this repo does to protect itself
 
 - Every boilerplate is self-contained, so cloning one folder cannot pull in
-  anything from elsewhere in the repo (`CONVENTIONS.md` §1).
+  anything from elsewhere in the repo — including its own conformance check,
+  which ships inside it (`CONVENTIONS.md` §1). A boilerplate citing a file it
+  does not ship is a conformance failure, not a documentation nit: an agent
+  handed the folder would be unable to run the check its definition of done
+  requires, and would report done anyway.
 - No dependency version is written from memory. Versions are validated against
-  the authoritative registry with the source URL and check timestamp recorded
-  (`CONVENTIONS.md` §4).
+  the authoritative registry with the source URL and check timestamp recorded,
+  and the check fails when a version stated in any document disagrees with the
+  manifest (`CONVENTIONS.md` §4). A correctly copied version left in a spec
+  while the manifest moves on is the drift that actually happens, and the spec
+  is what an agent is handed.
 - Generated applications are gated by two independent security reviewers that did
   not write the code (`CONVENTIONS.md` §6). Findings from those reviews that
   reveal a defect in the *prompt structure* are fixed here, not just in the
@@ -62,7 +70,13 @@ or a requirement you would have written differently. Those are issues.
 
 ## Reviewing a generated application
 
-A build from `base-admin-panel` runs its own security gate (G7): two independent
-reviewers with separate review plans, plus a supply-chain audit that blocks on a
-critical or known-exploited advisory. That gate covers the generated app. It does
-not cover this repo, which is what this file is for.
+A build from either boilerplate runs its own security gate — `G7` in
+`base-admin-panel`, `H7` in `base-windows-rust-app`: two independent reviewers
+with separate review plans, plus a supply-chain audit that blocks on a critical
+or known-exploited advisory. `base-windows-rust-app` additionally verifies its
+own published release the way a client does, from a job holding no repository
+credentials (`REQ-REL-11`), because every other check in that gate verifies what
+CI built rather than what the forge serves.
+
+Those gates cover the generated app. They do not cover this repo, which is what
+this file is for.

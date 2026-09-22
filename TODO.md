@@ -3,7 +3,7 @@
 Live status for the `boil` repository. Updated in the same commit as the work it
 describes (`CLAUDE.md` hard rule 4).
 
-Repo version: **0.4.0**
+Repo version: **0.5.0**
 
 ---
 
@@ -36,7 +36,7 @@ Repo version: **0.4.0**
 - [x] `spec/` — 22 domain specifications, incl. mobile UX, editor, impersonation and tenant switching
 - [x] `portability/` — capability map and the Muse Code adapter (untested)
 - [x] `versions/pricing.json` + `pricing.md` — prices with per-entry confidence
-- [x] `scripts/check-conventions.sh` — passes clean on the whole repo
+- [x] `scripts/check-boilerplate.sh` — ships inside the boilerplate, passes clean
 - [x] `versions/manifest.json` — 83 externally validated entries with source URL
       and check timestamp (REQ-VER-02, REQ-VER-03)
 - [x] `normalizers/` — engine contract, descriptor JSON Schema, two worked
@@ -44,9 +44,76 @@ Repo version: **0.4.0**
 - [x] `compliance/` — 11 CRA and CER documents
 - [x] `versions/traps.json` — 5 inherited compatibility traps (REQ-VER-05)
 
+### base-windows-rust-app — prompt structure
+- [x] `spec/requirements.md` — 177 requirements, 20 domains, stable IDs
+- [x] `spec/traceability.csv` — 177 rows, generated from the register, every
+      requirement mapped to owner agent, contract member, gate and spec document
+- [x] `spec/agents.md` — 19 build agents in 5 waves plus 4 gate agents; Wave 3 is
+      9-wide
+- [x] `prompts/00-master-orchestrator.md` — five rules, dispatch, the H-ladder
+- [x] `contracts/README.md` + `contracts/ownership.md` — contract law
+      (`REQ-CTR-01` … `REQ-CTR-10`), the one-FFI-crate rule, registrations with
+      one owner each
+- [x] `contracts/types/design-tokens.md` — four themes, per-state tokens, the
+      contrast pair table and both tests
+- [x] `.claude/agents/` — 23 definitions (19 builders, 4 blocking reviewers)
+- [x] `gates/` — `H0`–`H8` ladder, verdict schema, loop rules, Karpathy lens
+- [x] `spec/` — 9 domain specifications (foundation, design system, mockups,
+      app surface, installer, service/autostart, updater, release, supply chain,
+      observability)
+- [x] `compliance/` — CRA obligations matrix, vulnerability handling, reporting
+      runbook, CVD policy, CER resilience
+- [x] `versions/manifest.json` — 31 crates and the toolchain, externally
+      validated with source URL, timestamp and the `rust_version` each pinned
+      release declares; `traps.json` carries 8 inherited traps
+- [x] `versions/pricing.json` + `portability/` — cost reporting and the
+      non-Claude capability map
+- [x] `scripts/check-boilerplate.sh` — ships inside the boilerplate, passes clean
+
 ---
 
-## Must resolve before the contract freeze (G3)
+## Must resolve before the contract freeze (H3) — base-windows-rust-app
+
+Two dependencies the design needs and the manifest does not cover. Neither is a
+design gap; both are versions nobody may write from memory (`REQ-VER-02`), so
+they are `B16` requests at `H2` rather than numbers in a spec.
+
+- [ ] **A record formatter/writer for `REQ-OBS-01`/`REQ-OBS-02`.** The manifest
+      carries `tracing` and nothing that can format or write. `B12` requests
+      `tracing-subscriber` at `H2` and owns the size-based rotating writer
+      itself, because `tracing-appender` rotates on a clock and cannot honour a
+      size cap.
+- [ ] **A breaking-change detector for `REQ-CTR-09`.** `cargo-semver-checks` is
+      not in the manifest. Same route: a `B16` request, not a guessed version.
+- [ ] **A signing-capable crate for the updater's negative-test fixtures.**
+      `minisign-verify` verifies and cannot sign, so the wrong-key,
+      mutated-signature and tampered-artefact fixtures are generated out of band
+      and committed. Generating them in CI needs a crate the manifest does not
+      cover. This is the one place the design depends on something unvalidated.
+
+## Only a real build will settle these — base-windows-rust-app
+
+- [ ] **`REQ-TST-08` / `REQ-DSN-11` cannot be driven from code.** Changing a
+      display's scale factor has no supported API, so the DPI matrix is a
+      property of the test image, and desktop capture needs an interactive
+      session a session-0 CI agent cannot provide. `B15` reports the affected
+      REQ IDs `unverified` rather than passing them.
+- [ ] **ARM64 integration cannot run on an x64 runner.** `H5` now requires a
+      clean image per architecture (`REQ-FND-04`); without an ARM64 image the
+      gate records which REQ IDs that leaves unverified.
+- [ ] **`REQ-UPD-13` / `REQ-CRA-07` separability is partial by construction.**
+      One binary and no maintenance branches means `SecurityUpdatesOnly=1` gives
+      an operator "take 1.4.2, skip 1.5.0" but still carries everything that
+      shipped before 1.4.2. Real backports are a release-engineering decision,
+      not something the updater can fake.
+- [ ] **`REQ-UI-05` depends on the framework choice.** Fully specified for
+      `eframe` plus AccessKit. A framework with no accessibility adapter makes
+      the requirement unmeetable, so it is an `H0` blocker rather than an `H6`
+      finding.
+
+---
+
+## Must resolve before the contract freeze (G3) — base-admin-panel
 
 Three contract members that the setup wizard's steps legally depend on. They are
 not design gaps — `spec/setup-wizard.md` specifies all three fully and builds
@@ -83,7 +150,8 @@ list: `AuditEvent.settingsScope` and the `acme` / `edge` values on the
 
 ## In progress
 
-Nothing. 0.1.0 is the complete prompt structure; nothing is half-landed.
+Nothing half-landed. Both boilerplates' prompt structures are complete and both
+pass their own conformance check; neither has produced an application.
 
 ---
 
@@ -147,12 +215,20 @@ is a design claim, not an observed one.
       identity / organisation / asset / event would save a wave.
 
 ### Next boilerplates
-- [ ] Decide the second boilerplate. Candidates: a service/API-only backend with
-      the same contract discipline and no UI; a data-pipeline boilerplate reusing
-      the normalizer engine; a CLI tool boilerplate.
-- [ ] Extract what is genuinely reusable across boilerplates into the repo-level
-      skill library — but only after a second boilerplate exists, so the
-      abstraction is drawn from two cases rather than guessed from one.
+- [x] Second boilerplate: `base-windows-rust-app`. Pointing the conformance check
+      at a second boilerplate immediately found two real holes in it — an
+      agent-existence check hardcoded to the first boilerplate's id scheme, which
+      reported "named agents resolve" while all 23 definitions were missing, and
+      a broken-reference check that did not chase a boilerplate citing a script
+      it does not ship. That is the argument for having two.
+- [ ] Extract what is genuinely reusable into the repo-level skill library. Two
+      cases now exist, so the abstraction can be drawn rather than guessed. The
+      first candidates are visible: the gate ladder's shape, the verdict schema,
+      the cost-reporting hand-off paragraph, and `check-boilerplate.sh` itself —
+      which is already duplicated by design and guarded by a drift check.
+- [ ] Decide the third. Candidates: a service/API-only backend with the same
+      contract discipline and no UI; a data-pipeline boilerplate reusing the
+      normalizer engine; a CLI tool boilerplate.
 
 ---
 
@@ -164,9 +240,14 @@ Nothing.
 
 ## Gate state
 
-The G0–G8 ladder applies to a *build*, not to the repo. No build has run, so no
-gate has a state. This section becomes meaningful on the first run.
+A gate ladder applies to a *build*, not to the repo. No build has run in either
+boilerplate, so no gate has a state. This section becomes meaningful on the first
+run.
 
-| Gate | State |
-|------|-------|
-| G0 … G8 | not yet exercised |
+| Boilerplate | Ladder | State |
+|-------------|--------|-------|
+| `base-admin-panel` | `G0` … `G8` | not yet exercised |
+| `base-windows-rust-app` | `H0` … `H8` | not yet exercised |
+
+The namespaces differ on purpose: a verdict file names its gate, and a `G6`
+verdict read against an `H6` row would certify the wrong thing quietly.

@@ -9,6 +9,141 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-09-22
+
+The repository becomes a collection of two boilerplates rather than one, and
+the enforcement machinery moves inside each of them. `base-windows-rust-app`
+joins `base-admin-panel`: 177 requirements, 20 domains, 23 agents, gates
+`H0`–`H8`.
+
+### Added
+
+**`base-windows-rust-app` — a Windows desktop app in Rust with `windows-rs`**
+- Tray-resident, self-installing with scoped elevation, optional service mode
+  and login autostart, signature-verified auto-update, SBOM embedded in the
+  binary, signed releases to GitHub and Gitea from one tag, and the same EU CRA
+  and CER documentation set as the admin panel.
+- **The design gate blocks first and mockups are compiled programs**
+  (`REQ-MOC-01`, `REQ-MOC-02`). Three to five mockups, each a Rust binary that
+  builds with `cargo build -p mockup-<n>` from a clean checkout, each stating
+  its direction and its tradeoff, differentiated by density, type scale, chrome
+  weight and accent strategy rather than by accent colour (`REQ-MOC-06`). A
+  picture proves a shape can be drawn; it does not prove the framework's
+  styling model can express it, which is the only question the gate asks.
+- **One FFI boundary** (`REQ-FND-03`). `crates/ffi` is the only crate that
+  calls `windows-rs`. Nine agents writing their own `unsafe` Win32 calls
+  produce nine assumptions about handle lifetime and string encoding, and those
+  bugs are memory-unsafe rather than merely wrong.
+- **Gates are `H0`–`H8`, deliberately not `G0`–`G8`.** A verdict file cannot be
+  read against the wrong ladder by accident.
+- 31 crate versions and the toolchain validated against crates.io and the Rust
+  release channel, each with source URL and timestamp; eight compatibility
+  traps recorded in `versions/traps.json` so they are inherited rather than
+  rediscovered.
+
+**Per-state design tokens (`contracts/types/design-tokens.md`)**
+- `contracts/README.md` promised the `design-tokens` member carried per-state
+  tokens and it carried none: `REQ-DSN-10`'s seven states existed only as prose
+  in `spec/design-system.md`, which is one agent's document rather than the
+  frozen coupling nine crates build against. `State`, `StateStyle`, `StateSet`
+  and `Selection` now exist, stated as diffs against `StateStyle::REST`.
+- Hover and active are alphas over `palette.text_primary`, so one number works
+  in both themes. High contrast carries state by stroke weight and a dashed
+  disabled border, never by alpha: an 8% grey over a two-colour palette is the
+  tint `REQ-DSN-08` forbids, and 38% of black on white is a grey that fails the
+  contrast test the theme exists to pass.
+- The state set has its own test, including `differs_from_rest`. The other
+  assertions fail when someone writes a wrong value; that one fails when
+  someone writes no value, which is how `busy` becomes a dimmed button.
+
+**`REQ-REL-11` — the published release is verified as a client**
+- Every other release check verifies what CI built. None verified what the
+  forge serves. After publishing, a job holding no repository credentials
+  resolves the manifest as the shipped updater does, verifies it with the key
+  extracted from the shipped binary rather than one from the release page,
+  checks hash and byte count against the manifest, verifies Authenticode, and
+  runs the shipped updater against the real channel — per forge, per
+  architecture.
+
+**`REQ-GAT-09` — releasing verdicts must name the same commit**
+- `H8` required four `H6` and two `H7` verdicts "on file, all passing" without
+  requiring them to concern the same tree. One reviewer could approve the
+  design at commit A and another clear the updater at commit C, leaving
+  whatever landed between them unreviewed.
+
+### Changed
+
+**The conformance check ships inside each boilerplate**
+- Hard rule 1 says a boilerplate never reaches outside its own folder. Six
+  agent briefs ended with "run `./scripts/check-conventions.sh` from the
+  repository root" — a file not in the folder those briefs ship in, so an agent
+  handed the folder could not run the check its own definition of done
+  required. Each boilerplate now carries `scripts/check-boilerplate.sh`, and
+  the root script is a driver plus the checks that only make sense from outside
+  one: no boilerplate cites a file it does not ship, every boilerplate is in
+  the README, and the shipped generator copies have not drifted.
+- The first of those found all six citations on its first run.
+
+**`build/` is committed in both boilerplates**
+- Both declared it gitignored working state while their CRA obligations matrix
+  cited `build/gates/<verdict>.json` as Annex I II(3) evidence — at the
+  strongest tier, on the stated grounds that an auditor can check a path. An
+  auditor cannot check a path that is not in the repository. This also makes
+  `REQ-MOC-08` true: a human's design approval recorded in a gitignored file is
+  not recorded.
+
+**`H1` no longer requires breaking `H2`**
+- `H1` requires every mockup to build, building needs a dependency line, and
+  `H2` — which runs after `H1` — blocks every dependency line no external check
+  has validated. The first gate in the ladder was unsatisfiable. `B16` now runs
+  a two-entry pre-pass at `H1` for the toolchain and the chosen framework,
+  validated the same way; `H2` re-reads those entries rather than re-deciding
+  them.
+
+**`H5` installs per architecture**
+- It built both targets and then installed on "a clean Windows image",
+  singular. The install path touches the registry, ARP, shortcuts, the service
+  account and WoW64 redirection, none of which a cross-compiled binary
+  exercises from an x64 runner. A `REQ` ID verified on one image is now
+  reported unverified for the other rather than green (`REQ-FND-04`).
+
+**Version drift and MSRV are enforced, not just documented (`§4`, `REQ-VER-06`)**
+- `CONVENTIONS.md` §4 banned versions written from memory, and the check
+  verified only that each manifest entry carried a source and a timestamp. The
+  harder failure was unguarded: a version copied correctly into a spec and left
+  there while the manifest is re-validated. The check now fails on any
+  `` `crate` X.Y.Z `` in any document that disagrees with the manifest.
+- No manifest entry carried an MSRV, so `REQ-VER-06` had nothing to check. All
+  30 crate entries now carry the `rust_version` their pinned release declares,
+  read from the crates.io sparse index; the real floor is 1.95, and the check
+  fails when the highest recorded MSRV rises above the pinned toolchain.
+
+### Fixed
+
+- `Elevation::FLAT_ALL` and `HIGH_CONTRAST_LIGHT_PALETTE` were named by the
+  design-tokens contract and defined nowhere — one in a comment, one not at
+  all — while the contract's own test iterates all four themes by name. A
+  contract snippet that names something it never defines does not compile, and
+  that file is the shape nine agents build against.
+- `B16`'s brief carried a parallel `VER-TRAP-*` numbering that disagreed with
+  `versions/traps.json`, including one trap the register did not have, and its
+  example wrote a trap id into `manifest.json` that nothing could look up. The
+  register's `WIN-TRAP-*` ids are now the only ones. The `sha2`/`digest`
+  pairing is `WIN-TRAP-008`, verified rather than assumed: `sha2` 0.11.0
+  declares `digest ^0.11`, so a dependency holding `digest 0.10` puts two
+  `Digest` generations in one binary and a hash one computes is one the other
+  cannot verify — which is exactly `REQ-UPD-02`'s comparison.
+- The brief's example claimed `windows` 0.62.2 needs Rust 1.74; the index says
+  1.82.
+- `B02`'s freeze manifest moved from `contracts/frozen.json` to
+  `build/contract-freeze.json`. `contracts/` is the boilerplate's own
+  specification tree, and a CI check cannot read a manifest the boilerplate
+  never ships.
+- Requirement and fleet counts stated inconsistently: 165 requirements in four
+  places against 175 defined; a "19-agent fleet" where 19 are builders and 4
+  are the reviewers rule 9 depends on; the admin panel's "28-agent fleet"
+  against 32 in its roster.
+
 ## [0.4.0] — 2026-09-22
 
 Monaco editing surfaces, a dedicated mobile-UX owner, full user impersonation,
@@ -456,7 +591,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/andreaswiren/boil/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/andreaswiren/boil/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/andreaswiren/boil/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/andreaswiren/boil/compare/v0.1.0...v0.2.0
