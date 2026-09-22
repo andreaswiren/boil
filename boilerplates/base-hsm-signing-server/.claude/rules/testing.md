@@ -1,0 +1,2 @@
+# Testing Rules
+Every requirement needs automated tests where technically possible. Security bugs get regression tests. Hardware integration tests must support a software/mock mode plus explicitly tagged real-HSM tests.

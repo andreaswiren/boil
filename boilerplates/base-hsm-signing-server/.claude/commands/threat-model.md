@@ -1,0 +1,2 @@
+# /threat-model
+Update `spec/02-threat-model.md` using assets, actors, trust boundaries, abuse cases, mitigations, detection, residual risk, and tests. Include agentic-build compromise and signing-oracle abuse.

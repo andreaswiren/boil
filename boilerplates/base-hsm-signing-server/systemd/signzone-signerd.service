@@ -1,0 +1,25 @@
+[Unit]
+Description=SignZone HSM signing daemon
+After=pcscd.service
+Requires=pcscd.service
+
+[Service]
+User=signzone-signer
+Group=signzone
+ExecStart=/usr/local/libexec/signzone-signerd
+Restart=on-failure
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/run/signzone /var/lib/signzone/artifacts /var/lib/signzone/wrapped-keys
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

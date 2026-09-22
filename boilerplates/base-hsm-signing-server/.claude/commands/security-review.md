@@ -1,0 +1,2 @@
+# /security-review
+Invoke security-reviewer and adversarial-reviewer. Check threat model, authz, secret handling, audit coverage, SSRF/CSRF/XSS/SQLi, privilege boundaries, HSM misuse, approval binding, rollback behavior, and fail-closed behavior.

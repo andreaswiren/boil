@@ -1,0 +1,92 @@
+openapi: 3.1.0
+info:
+  title: SignZone API
+  version: 0.1.0
+servers:
+  - url: https://signzone.example/api/v1
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        '200':
+          description: Health summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /signing-requests:
+    post:
+      operationId: createSigningRequest
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, minLength: 8, maxLength: 200 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSigningRequest'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SigningRequest' }
+  /signing-requests/{id}:
+    get:
+      operationId: getSigningRequest
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Signing request
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SigningRequest' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [ok, degraded, unavailable] }
+    Artifact:
+      type: object
+      additionalProperties: false
+      required: [name, sha256, size]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        sha256: { type: string, pattern: '^[a-fA-F0-9]{64}$' }
+        size: { type: integer, minimum: 1 }
+    CreateSigningRequest:
+      type: object
+      additionalProperties: false
+      required: [repository, ref, commit, buildId, artifact, profile]
+      properties:
+        repository: { type: string, minLength: 1, maxLength: 300 }
+        ref: { type: string, minLength: 1, maxLength: 500 }
+        commit: { type: string, minLength: 7, maxLength: 128 }
+        buildId: { type: string, minLength: 1, maxLength: 200 }
+        artifact: { $ref: '#/components/schemas/Artifact' }
+        profile: { type: string, minLength: 1, maxLength: 100 }
+    SigningRequest:
+      type: object
+      required: [id, state]
+      properties:
+        id: { type: string, format: uuid }
+        state:
+          type: string
+          enum: [received, validating, policy_denied, awaiting_approval, approved, signing, timestamping, verifying, completed, failed, cancelled]

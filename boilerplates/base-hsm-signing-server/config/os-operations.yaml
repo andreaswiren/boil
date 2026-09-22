@@ -1,0 +1,8 @@
+version: 1
+approvedServices:
+  - signzone-web.service
+  - signzone-signerd.service
+  - nginx.service
+  - postgresql.service
+  - pcscd.service
+# This is an allowlist. signzone-osd must reject arbitrary service names and commands.

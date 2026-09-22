@@ -9,6 +9,66 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-09-22
+
+### Added
+
+**`base-hsm-signing-server` — a hardened Debian code-signing appliance
+(SignZone).** Contributed as a working tree and converted to the conventions
+rather than rewritten: 37 requirements, 34 agents, 19 domain skills, 17 domain
+specifications. A Next.js admin surface that is unprivileged by construction, a
+Rust signer daemon holding the only path to the Nitrokey HSM 2, a typed
+allowlisted OS-control daemon in place of any shell, a REST signing API, a PWA
+that approves with transaction binding rather than a push notification, DKEK
+ceremonies with a secondary HSM, an append-only hash-chained audit log, and an
+ESXi-style console on tty1.
+
+**Its requirement IDs are `SZ-`, and they stayed that way.** `CONVENTIONS.md` §3
+requires IDs that are stable and never renumbered; it never required one
+spelling. Renaming 37 IDs across 161 documents would have produced exactly the
+dangling-citation failure the convention exists to prevent, to gain nothing. The
+conformance check now **derives** the prefix from the register instead of
+assuming `REQ-` — the same mistake the agent-roster check made and had already
+been fixed for.
+
+### Fixed in the contributed tree
+
+- **Two copies of every agent, already drifted.** `agents/<name>.md` held the
+  27-line brief and `.claude/agents/<name>.md` a 7-line stub saying "Read and
+  follow `agents/<name>.md`". Claude Code loads the stub's content as the
+  subagent prompt, so a subagent received seven lines of routing instead of its
+  mission — the same pointer pattern removed from `AGENTS.md` in 0.6.0. Merged:
+  frontmatter plus the full brief, one file each.
+- **A third routing copy** at `.claude/CLAUDE.md`, pointing at `../AGENTS.md`
+  and at an `agents/` directory that no longer exists. Its unique content — the
+  ways this system is most likely to be broken by someone trying to help — is
+  now in the entry pair, where it is read rather than followed to.
+- **`CLAUDE.md` was a three-line pointer** to `AGENTS.md`, which held the
+  substance. On a runtime that reads `CLAUDE.md` and ignores `AGENTS.md` the 17
+  non-negotiable operating rules never loaded at all. They are now a
+  byte-identical pair.
+- **The `.gitignore` missed private key material.** It knew `*.pin`, `*.dkek`
+  and `*.wrapped` — genuinely domain-aware — but not `*.key`, `*.pem`, `*.pfx`
+  or `*.p12`. For a signing appliance whose own `SZ-SEC-005` lists source
+  control among the places a secret may never appear, that file is the only
+  thing enforcing it. The public/private asymmetry is spelled out: `*.pub` is
+  re-included, because a blanket rule on "keys" takes both halves and breaks
+  verification while protecting nothing.
+
+### Changed
+
+Three checks stopped hardcoding what they should derive, each found by pointing
+them at a third boilerplate:
+
+- The requirement-ID prefix is read from the register.
+- A cited script is checked for **existence** rather than against a hardcoded
+  pair of names — the allowlist version failed this boilerplate for citing
+  `scripts/harden.sh`, which it ships. The same check then needed the lookbehind
+  the broken-reference check already had, since `packages/theme/scripts/…` is
+  the generated app's script and not the boilerplate's.
+- Naming a sibling boilerplate in a full `https://` URL is a citation anyone can
+  resolve, not the filesystem dependency hard rule 1 forbids.
+
 ## [0.9.0] — 2026-09-22
 
 Reported from a real build: the working tree fills with dependencies, build
@@ -936,7 +996,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/andreaswiren/boil/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/andreaswiren/boil/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/andreaswiren/boil/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/andreaswiren/boil/compare/v0.7.2...v0.8.0

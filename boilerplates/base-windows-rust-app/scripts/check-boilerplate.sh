@@ -108,7 +108,7 @@ if [ -f "$root/spec/requirements.md" ] && [ -d "$root/.claude/agents" ]; then
   python3 - "$root" <<'PYCOUNT'
 import os,re,sys
 d=sys.argv[1]
-reqs=len(set(re.findall(r'^\| (REQ-[A-Z0-9]+-[0-9]+)',
+reqs=len(set(re.findall(r'^\| ([A-Z][A-Z0-9]*-[A-Z0-9]+-[0-9]+)',
       open(os.path.join(d,'spec','requirements.md'),encoding='utf-8').read(),re.M)))
 agents=len([n for n in os.listdir(os.path.join(d,'.claude','agents')) if n.endswith('.md')])
 bad=[]
@@ -209,18 +209,27 @@ else
 fi
 
 # CONVENTIONS.md §3 — every cited requirement ID is defined.
+#
+# The prefix is DERIVED from the register, not assumed to be REQ-. §3 requires
+# IDs that are stable and never renumbered; it does not require one spelling,
+# and a boilerplate that arrives with a load-bearing prefix of its own should
+# keep it rather than have every citation rewritten to satisfy the checker.
+# Hardcoding the scheme is the same mistake the agent-roster check already made.
 if [ -f "$root/spec/requirements.md" ]; then
-  defined=$(grep -oE '^\| REQ-[A-Z0-9]+-[0-9]+' "$root/spec/requirements.md" | sed 's/^| //' | sort -u)
-  used=$(grep -rhoE 'REQ-[A-Z0-9]+-[0-9]+' "$root" \
+  prefix=$(grep -oE '^\| [A-Z][A-Z0-9]*-[A-Z0-9]+-[0-9]+' "$root/spec/requirements.md" \
+             | sed 's/^| //; s/-.*//' | sort | uniq -c | sort -rn | head -1 | awk '{print $2}')
+  prefix=${prefix:-REQ}
+  defined=$(grep -oE "^\| ${prefix}-[A-Z0-9]+-[0-9]+" "$root/spec/requirements.md" | sed 's/^| //' | sort -u)
+  used=$(grep -rhoE "${prefix}-[A-Z0-9]+-[0-9]+" "$root" \
            --include='*.md' --include='*.csv' --include='*.yaml' --include='*.json' --exclude-dir=resources | sort -u)
   dangling=$(comm -13 <(echo "$defined") <(echo "$used"))
   if [ -n "$dangling" ]; then
     bad "requirement IDs cited but not defined:"; echo "$dangling" | sed 's/^/    /'
   else
-    note "requirement IDs: $(echo "$defined" | wc -l | tr -d ' ') defined, none dangling"
+    note "requirement IDs: $(echo "$defined" | wc -l | tr -d ' ') ${prefix}-* defined, none dangling"
   fi
   # Every requirement must carry a status.
-  missing_status=$(grep -cE '^\| REQ-[A-Z0-9]+-[0-9]+ \| (MUST|SHOULD|OPT) \|' "$root/spec/requirements.md")
+  missing_status=$(grep -cE "^\| ${prefix}-[A-Z0-9]+-[0-9]+ \| (MUST|SHOULD|OPT) \|" "$root/spec/requirements.md")
   total=$(echo "$defined" | wc -l | tr -d ' ')
   [ "$missing_status" -eq "$total" ] || bad "some requirements lack a MUST/SHOULD/OPT status"
 fi

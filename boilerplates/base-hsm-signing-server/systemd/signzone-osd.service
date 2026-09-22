@@ -1,0 +1,21 @@
+[Unit]
+Description=SignZone privileged appliance control daemon
+After=network-pre.target
+Before=signzone-web.service
+
+[Service]
+User=root
+Group=root
+ExecStart=/usr/local/libexec/signzone-osd
+Restart=on-failure
+PrivateTmp=yes
+ProtectHome=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+RestrictRealtime=yes
+LockPersonality=yes
+UMask=0077
+# Root is required for a narrow allowlist of appliance operations. Implement application-level syscall/process restrictions before production.
+
+[Install]
+WantedBy=multi-user.target

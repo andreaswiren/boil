@@ -1,0 +1,2 @@
+# Contract Rules
+OpenAPI, signer RPC, OS RPC, DB schema, policy schema, audit schema, and signing state transitions are contracts. Change them through the contract-owner agent and update traceability/docs.

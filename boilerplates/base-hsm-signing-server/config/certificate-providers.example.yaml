@@ -1,0 +1,10 @@
+version: 1
+providers:
+  digicert:
+    enabled: false
+    docs: https://docs.digicert.com/en/certcentral/order-and-manage-certificates/request-certificates/request-a-code-signing-or-ev-code-signing-certificate.html
+    compatibilityVerified: false
+  sectigo:
+    enabled: false
+    docs: https://www.sectigo.com/ssl-certificates-tls/code-signing
+    compatibilityVerified: false

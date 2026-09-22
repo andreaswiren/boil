@@ -1,0 +1,84 @@
+# This file ships with the boilerplate because the boilerplate becomes the
+# project root, so it is in place before the first agent writes anything.
+#
+# This is a signing appliance. The secret inventory below is not generic
+# hygiene — it is the product's threat model expressed as ignore rules
+# (SZ-SEC-005: secrets never in logs, audit payloads, command-line arguments,
+# URLs, browser storage, source control, or telemetry). Source control is in
+# that list, and this file is the only thing enforcing it.
+
+# ── Dependencies and build output ───────────────────────────────────────────
+node_modules/
+.next/
+out/
+dist/
+target/
+**/target/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# ── Test and capture output ─────────────────────────────────────────────────
+coverage/
+playwright-report/
+test-results/
+*.profraw
+
+# ── Key material and secrets. These are the lines that matter ───────────────
+# HSM PINs, SO-PINs, DKEK shares and wrapped key blobs (SZ-HSM-*, SZ-SEC-001).
+# A DKEK share in a git history is a recoverable signing key, and deleting the
+# file later does not remove it from the history.
+*.pin
+*.dkek
+*.wrapped
+dkek-share*
+*.key
+*.pem
+*.pfx
+*.p12
+*.jks
+*.keystore
+!**/*.pub
+secrets/
+state/
+
+# ── Runtime and environment ─────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+config/*.yaml
+!config/*.example.yaml
+!config/os-operations.yaml
+*.log
+*.sqlite
+*.sqlite3
+
+# ── Local and OS noise ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NEVER ignore these. Each looks like generated or local state and is not:
+#
+#   spec/           The requirement register every review cites and the 17
+#                   domain specifications. The register is the product.
+#   contracts/      The ownership map that makes parallel work safe.
+#   docs/           The operator and integration documentation the appliance
+#                   ships with — an appliance whose runbook is not in the
+#                   repository has no runbook.
+#   packaging/, systemd/   The nftables, AppArmor, nginx and unit files that
+#                   are the hardening (SZ-OS-*). They are configuration, not
+#                   build output, and regenerating them by hand is how a
+#                   hardened appliance quietly stops being hardened.
+#   config/*.example.yaml, .env.example   The templates. They carry no secret
+#                   by construction and they are how an operator starts.
+#   **/*.pub        Public keys are meant to be committed. Note the asymmetry
+#                   above: *.key is excluded, *.pub is re-included. A blanket
+#                   rule on "keys" takes both halves and breaks verification
+#                   while protecting nothing.
+#
+# scripts/check-boilerplate.sh fails if any of them is ignored.

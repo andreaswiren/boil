@@ -1,0 +1,2 @@
+# Security Rules
+See `AGENTS.md` and `spec/02-threat-model.md`. Security invariants override convenience. Never introduce generic shell/exec, raw HSM remote access, secret logging, or approval bypasses.

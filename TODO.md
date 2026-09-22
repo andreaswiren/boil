@@ -3,7 +3,7 @@
 Live status for the `boil` repository. Updated in the same commit as the work it
 describes (`CLAUDE.md` hard rule 4).
 
-Repo version: **0.9.0**
+Repo version: **0.10.0**
 
 ---
 
@@ -226,7 +226,10 @@ is a design claim, not an observed one.
       first candidates are visible: the gate ladder's shape, the verdict schema,
       the cost-reporting hand-off paragraph, and `check-boilerplate.sh` itself —
       which is already duplicated by design and guarded by a drift check.
-- [ ] Decide the third. Candidates: a service/API-only backend with the same
+- [x] Third boilerplate: `base-hsm-signing-server`, contributed as a working tree
+      and converted. Pointing the checks at it found three more places they
+      hardcoded what they should derive.
+- [ ] Decide the fourth. Candidates: a service/API-only backend with the same
       contract discipline and no UI; a data-pipeline boilerplate reusing the
       normalizer engine; a CLI tool boilerplate.
 

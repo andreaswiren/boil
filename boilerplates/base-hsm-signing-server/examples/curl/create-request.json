@@ -1,0 +1,1 @@
+{"repository":"org/app","ref":"refs/tags/v1.0.0","commit":"0123456789abcdef","buildId":"1234","artifact":{"name":"app.exe","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","size":123456},"profile":"production-authenticode"}

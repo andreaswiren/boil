@@ -31,14 +31,17 @@ printf '\n== repository ==\n'
 # is not in the folder those briefs ship in.
 for dir in boilerplates/*/; do
   name=$(basename "$dir")
-  hits=$(grep -rn '\(\./\)\?scripts/[a-z-]*\.\(sh\|py\)' "$dir" \
-           --include='*.md' --include='*.json' 2>/dev/null \
-         | grep -v "$name/scripts/" \
-         | grep -vE '`?(\./)?scripts/(check-boilerplate\.sh|gen-traceability\.py)`?' || true)
-  if [ -n "$hits" ]; then
-    bad "$name cites a script it does not ship:"
-    printf '%s\n' "$hits" | sed 's/^/    /'
-  fi
+  # Test that the cited script EXISTS, rather than that it is one of a hardcoded
+  # pair. The allowlist version failed a boilerplate for citing scripts/harden.sh
+  # -- which it ships. The rule is "cites a file it does not ship", so check that.
+  # The lookbehind keeps this from matching a scripts/ fragment inside a longer
+  # path: packages/theme/scripts/generate-presets.ts is the GENERATED app's
+  # script, not this folder's. Same trap the broken-reference check already hit.
+  for sref in $(grep -rhoP '(?<![\w/.-])(\./)?scripts/[A-Za-z0-9_-]+\.(sh|py|ts)' "$dir" \
+                  --include='*.md' --include='*.json' 2>/dev/null \
+                | sed 's|^\./||' | sort -u); do
+    [ -f "$dir/$sref" ] || bad "$name cites $sref, which it does not ship"
+  done
 done
 
 # Hard rule 1: no boilerplate depends on a sibling. Naming one is the dependency
@@ -52,7 +55,10 @@ for dir in boilerplates/*/; do
   for other in boilerplates/*/; do
     o=$(basename "$other")
     [ "$o" = "$name" ] && continue
-    hits=$(grep -rn "$o" "$dir" --include='*.md' --include='*.json' --include='*.yaml' 2>/dev/null || true)
+    # A full https:// URL naming a sibling resolves for anyone from anywhere, so
+    # it is a citation, not a dependency. A path is the dependency rule 1 forbids.
+    hits=$(grep -rn "$o" "$dir" --include='*.md' --include='*.json' --include='*.yaml' 2>/dev/null \
+             | grep -v 'https\?://' || true)
     if [ -n "$hits" ]; then
       bad "$name names the sibling boilerplate $o:"
       printf '%s\n' "$hits" | head -4 | sed 's/^/    /'

@@ -1,0 +1,16 @@
+version: 1
+profiles:
+  production-authenticode:
+    artifactExtensions: [.exe, .dll, .msi, .ps1, .psm1, .psd1]
+    digest: sha256
+    timestampMode: rfc3161
+    requireApproval: true
+    approvals: 2
+    requireStepUp: true
+    requireSbom: true
+    requireProvenance: true
+rules:
+  - repositories: ["platform/*"]
+    refs: ["refs/tags/v*"]
+    profiles: [production-authenticode]
+    requireTrustedWorkloadIdentity: true

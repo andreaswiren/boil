@@ -1,0 +1,10 @@
+#include <tunables/global>
+/usr/local/libexec/signzone-signerd flags=(attach_disconnected) {
+  #include <abstractions/base>
+  /usr/local/libexec/signzone-signerd mr,
+  /run/signzone/** rw,
+  /var/lib/signzone/artifacts/** rw,
+  /var/lib/signzone/wrapped-keys/** rw,
+  /usr/lib/** r,
+  /etc/ssl/certs/** r,
+}

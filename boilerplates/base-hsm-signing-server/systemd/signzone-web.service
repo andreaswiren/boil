@@ -1,0 +1,28 @@
+[Unit]
+Description=SignZone Web
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+User=signzone-web
+Group=signzone
+WorkingDirectory=/opt/signzone/current
+EnvironmentFile=/etc/signzone/signzone.env
+ExecStart=/usr/bin/node /opt/signzone/current/server.js
+Restart=on-failure
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/signzone /run/signzone
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

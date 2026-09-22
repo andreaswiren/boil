@@ -1,0 +1,16 @@
+[Unit]
+Description=SignZone Direct Console User Interface
+After=multi-user.target
+Conflicts=getty@tty1.service
+
+[Service]
+ExecStart=/usr/local/libexec/signzone-dcui
+StandardInput=tty-force
+StandardOutput=tty
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
