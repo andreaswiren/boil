@@ -5,17 +5,18 @@
 REQ-DSN-10, REQ-DSN-11, REQ-TST-05, REQ-UI-01.
 **Consumed by:** B04, B05, B06, B12, B14, B15.
 
-Tokens are `const` Rust values. A view reads `Tokens`; it never names a colour.
-The compiler is what stops a view inventing a twelfth colour role. Rationale is
+Tokens are `const` Rust values. A view reads `Tokens`; it never names a colour,
+so the compiler is what stops a twelfth colour role appearing. Rationale is
 `spec/design-system.md`; this is the frozen shape.
 
 ---
 
 ## 1. `Rgba8`
 
-`crates/design` depends on no UI framework. The conversion is feature-gated, so
-an intake that picks `iced` or `slint` over `eframe` (`versions/manifest.json`,
-REQ-UI-01) replaces one `impl`, not the palette.
+`crates/design` depends on no UI framework: an intake that picks `iced` or
+`slint` over `eframe` (`versions/manifest.json`, REQ-UI-01) replaces one `impl`,
+not the palette. There is no `Rgba8::new` — three decimal `u8` arguments is how
+a raw colour gets past the §7 lint.
 
 ```rust
 // crates/design/src/color.rs
@@ -24,13 +25,9 @@ pub struct Rgba8 { pub r: u8, pub g: u8, pub b: u8, pub a: u8 }
 
 impl Rgba8 {
     /// 0xRRGGBB, opaque. The only way a colour enters the token module.
-    pub const fn hex(v: u32) -> Self {
-        Self { r: (v >> 16) as u8, g: (v >> 8) as u8, b: v as u8, a: 0xFF }
-    }
+    pub const fn hex(v: u32) -> Self { Self { r: (v >> 16) as u8, g: (v >> 8) as u8, b: v as u8, a: 0xFF } }
     /// 0xRRGGBBAA. Shadow and scrim only — never a contrast participant.
-    pub const fn hexa(v: u32) -> Self {
-        Self { r: (v >> 24) as u8, g: (v >> 16) as u8, b: (v >> 8) as u8, a: v as u8 }
-    }
+    pub const fn hexa(v: u32) -> Self { Self { r: (v >> 24) as u8, g: (v >> 16) as u8, b: (v >> 8) as u8, a: v as u8 } }
 }
 
 #[cfg(feature = "egui")]
@@ -39,15 +36,12 @@ impl From<Rgba8> for egui::Color32 {
 }
 ```
 
-There is no `Rgba8::new`. Three decimal `u8` arguments is how a raw colour gets
-past the §7 lint, so the constructor does not exist.
-
 ## 2. The token struct
 
-Every scalar is in **logical points** at 96 DPI. Nothing here is pre-multiplied
-by a scale factor; scaling is applied once at the renderer, from the DPI of the
-monitor the window is currently on (REQ-DSN-11). All structs below derive
-`Clone, Copy, Debug`; `Palette` and `ThemeId` also derive `PartialEq, Eq`.
+Every scalar is in **logical points** at 96 DPI, never pre-multiplied: scaling
+is applied once at the renderer from the DPI of the monitor the window is on
+(REQ-DSN-11). All structs below derive `Clone, Copy, Debug`; `Palette` and
+`ThemeId` also derive `PartialEq, Eq`.
 
 ```rust
 // crates/design/src/tokens.rs
@@ -85,6 +79,22 @@ impl Motion {
     }
 }
 
+impl Shadow {
+    /// Fully transparent, zero geometry. Not "a very light shadow" — a renderer
+    /// that skips a zero-alpha draw and one that blends it must agree.
+    pub const NONE: Self = Self { y: 0.0, blur: 0.0, spread: 0.0, color: Rgba8::hexa(0x00000000) };
+}
+
+impl Elevation {
+    /// Every level collapsed to nothing, for the two high-contrast themes (§4).
+    /// Named rather than repeated at each use site so that "high contrast draws
+    /// no shadows" is one declaration a reviewer can check, not two identical
+    /// literals that can drift apart.
+    pub const FLAT_ALL: Self = Self {
+        flat: Shadow::NONE, raised: Shadow::NONE, overlay: Shadow::NONE, modal: Shadow::NONE,
+    };
+}
+
 pub struct Tokens {
     pub id: ThemeId, pub version: u32, pub palette: Palette, pub space: Spacing,
     pub radius: Radii, pub text: TypeScale, pub elevation: Elevation, pub motion: Motion,
@@ -93,11 +103,11 @@ pub struct Tokens {
 
 ## 3. `LIGHT` and `DARK` — two designed themes (REQ-DSN-03)
 
-Neither is derived from the other, and the values say so. `LIGHT.accent_text` is
-white on a deep blue fill; `DARK.accent_text` is near-black on a light blue fill
-— the accent strategy flips polarity rather than shifting lightness. `DARK`
-separates `surface_raised` from `surface` by 1.11:1 where `LIGHT` uses 1.04:1,
-because a dark surface needs more separation to read as lifted.
+Neither is derived from the other and the values say so. `LIGHT.accent_text` is
+white on a deep blue fill, `DARK.accent_text` near-black on a light blue fill —
+the accent flips polarity rather than shifting lightness. `DARK` separates
+`surface_raised` from `surface` by 1.11:1 where `LIGHT` uses 1.04:1, because a
+dark surface needs more separation to read as lifted.
 
 ```rust
 const LIGHT_PALETTE: Palette = Palette {
@@ -133,23 +143,53 @@ pub const LIGHT: Tokens = Tokens {
     space:  Spacing { xxs: 2.0, xs: 4.0, sm: 8.0, md: 12.0, lg: 16.0, xl: 24.0, xxl: 32.0 },
     radius: Radii { sm: 3.0, md: 6.0, lg: 10.0, pill: 999.0 },
     elevation: Elevation {                              // y, blur, spread, 0xRRGGBBAA
-        flat:   Shadow { y: 0.0, blur:  0.0, spread:  0.0, color: Rgba8::hexa(0x00000000) },
-        raised: Shadow { y: 1.0, blur:  3.0, spread:  0.0, color: Rgba8::hexa(0x0F141F1F) },
-        overlay:Shadow { y: 4.0, blur: 12.0, spread: -2.0, color: Rgba8::hexa(0x0F141F2E) },
-        modal:  Shadow { y: 8.0, blur: 28.0, spread: -4.0, color: Rgba8::hexa(0x0F141F3D) },
+        flat:    Shadow { y: 0.0, blur:  0.0, spread:  0.0, color: Rgba8::hexa(0x00000000) },
+        raised:  Shadow { y: 1.0, blur:  3.0, spread:  0.0, color: Rgba8::hexa(0x0F141F1F) },
+        overlay: Shadow { y: 4.0, blur: 12.0, spread: -2.0, color: Rgba8::hexa(0x0F141F2E) },
+        modal:   Shadow { y: 8.0, blur: 28.0, spread: -4.0, color: Rgba8::hexa(0x0F141F3D) },
     },
     motion: Motion { instant: 0, fast: 90, normal: 160, slow: 260, ease_out: [0.16, 1.0, 0.3, 1.0] },
 };
-/// Same shape with `DARK_PALETTE` and shadow alpha 0x3D/0x52/0x66 — a shadow on
+/// The remaining three share `BASE_TYPE`, `space`, `radius` and `motion` with
+/// `LIGHT` and differ only where the comment says. Spelled out rather than
+/// elided because §7's test iterates all four by name: a snippet that names a
+/// const the contract never defines is a snippet that does not compile, and
+/// this file is the shape agents build against.
+///
+/// `DARK` — shadow alpha 0x3D/0x52/0x66 instead of 0x1F/0x2E/0x3D. A shadow on
 /// a dark surface is read by its spread, not by its darkness.
-pub const DARK: Tokens = /* … */;
+pub const DARK: Tokens = Tokens {
+    id: ThemeId::Dark, palette: DARK_PALETTE,
+    elevation: Elevation {
+        flat:    Shadow { y: 0.0, blur:  0.0, spread:  0.0, color: Rgba8::hexa(0x00000000) },
+        raised:  Shadow { y: 1.0, blur:  3.0, spread:  0.0, color: Rgba8::hexa(0x0000003D) },
+        overlay: Shadow { y: 4.0, blur: 12.0, spread: -2.0, color: Rgba8::hexa(0x00000052) },
+        modal:   Shadow { y: 8.0, blur: 28.0, spread: -4.0, color: Rgba8::hexa(0x00000066) },
+    },
+    ..LIGHT
+};
+
+/// The two high-contrast themes collapse **every** elevation to `flat` (§4).
+/// A shadow carries no information when the palette is two colours, so the
+/// border stroke does the work instead. `motion` is unchanged here — reduced
+/// motion is a separate system setting (REQ-DSN-08) and conflating the two
+/// would make high contrast silently disable animation for users who did not
+/// ask for that.
+pub const HIGH_CONTRAST_LIGHT: Tokens = Tokens {
+    id: ThemeId::HighContrastLight, palette: HIGH_CONTRAST_LIGHT_PALETTE,
+    elevation: Elevation::FLAT_ALL, ..LIGHT
+};
+pub const HIGH_CONTRAST_DARK: Tokens = Tokens {
+    id: ThemeId::HighContrastDark, palette: HIGH_CONTRAST_DARK_PALETTE,
+    elevation: Elevation::FLAT_ALL, ..LIGHT
+};
 ```
 
 ## 4. High contrast replaces the palette (REQ-DSN-08)
 
 Separate `const Palette` values. Nothing is tinted, no alpha is blended, and
-every elevation collapses to `flat` plus a 1pt `border` stroke — a shadow
-carries no information in high contrast, so it becomes a boundary.
+every elevation collapses to `flat` plus a 1pt `border` stroke: a shadow carries
+no information here, so it becomes a boundary.
 
 ```rust
 const HIGH_CONTRAST_DARK_PALETTE: Palette = Palette {
@@ -160,18 +200,22 @@ const HIGH_CONTRAST_DARK_PALETTE: Palette = Palette {
     success:     Rgba8::hex(0x4CFF9E), border:         Rgba8::hex(0xFFFFFF),
     focus_ring:  Rgba8::hex(0xFFFFFF),
 };
-// HIGH_CONTRAST_LIGHT: surface and surface_raised 0xFFFFFF, text_primary and
-// text_muted 0x000000, accent 0x0000C0 with accent_text 0xFFFFFF, danger
-// 0xA30000, warning 0x5C3A00, success 0x004B1C, border and focus_ring 0x000000.
+const HIGH_CONTRAST_LIGHT_PALETTE: Palette = Palette {
+    surface:     Rgba8::hex(0xFFFFFF), surface_raised: Rgba8::hex(0xFFFFFF),  // equal; §5 asserts the border
+    text_primary:Rgba8::hex(0x000000), text_muted:     Rgba8::hex(0x000000),  // equal; muting is a lie here
+    accent:      Rgba8::hex(0x0000C0), accent_text:    Rgba8::hex(0xFFFFFF),
+    danger:      Rgba8::hex(0xA30000), warning:        Rgba8::hex(0x5C3A00),
+    success:     Rgba8::hex(0x004B1C), border:         Rgba8::hex(0x000000),
+    focus_ring:  Rgba8::hex(0x000000),
+};
 ```
 
 `text_muted == text_primary` is the point of REQ-DSN-07: where colour cannot
-differentiate, weight, icon and label must already be doing it. A view that
-reads as ambiguous in high contrast was relying on `text_muted` alone.
-
-These constants are the **fallback**. The live scheme is the user's own, read
-through B01's FFI wrapper (§6). They exist so the §5 test has something compiled
-to assert over when no Windows session is present — every CI run.
+differentiate, weight, icon and label must already be doing it. A view that is
+ambiguous in high contrast was relying on `text_muted` alone. These constants
+are the **fallback** — the live scheme is the user's own, read through B01's FFI
+wrapper (§6) — and they exist so the §5 test has something compiled to assert
+over when no Windows session is present, which is every CI run.
 
 ## 5. The contrast test contract (REQ-DSN-06, REQ-TST-05)
 
@@ -186,7 +230,7 @@ ratio(a, b) = (max(La, Lb) + 0.05) / (min(La, Lb) + 0.05)
 ```
 
 Tokens are opaque, so there is no compositing step. The test iterates a
-**declared pair table**, not a cross product — a cross product asserts pairs
+**declared pair table**, not a cross product: a cross product asserts pairs
 nobody draws and then fails on them.
 
 ```rust
@@ -207,24 +251,23 @@ fn every_pair_meets_aa_in_every_theme() {
 }
 ```
 
-The 19 pairs per theme: `text_primary`, `text_muted`, `accent`, `danger`,
+The 18 pairs per theme: `text_primary`, `text_muted`, `accent`, `danger`,
 `warning` and `success` each on `surface` and on `surface_raised` at `Text`;
 `accent_text` on `accent` at `Text`; `border` and `focus_ring` each on both
 surfaces at `NonText`; `surface` on `accent` at `Adjacent`.
 
-That last pair is the two-tone focus ring, and it is why `focus_ring` on
-`accent` is **not** a pair. A single ring on a filled accent button cannot reach
-3:1 in any of the four themes — the ratio is 1.73 in `LIGHT` and 1.07 in
-`HIGH_CONTRAST_DARK`. So the ring is 2pt `focus_ring` outside a 1pt `surface`
-gap: that gap scores 6.02:1 against the `LIGHT` accent fill and 19.56:1 in
-`HIGH_CONTRAST_DARK`, so one of the two edges always clears 3:1 against what is
-behind it. `border` on `accent` is 1.93 in `LIGHT` and is likewise not a pair —
-a filled control's boundary is its fill.
+`focus_ring` on `accent` is deliberately **not** a pair. A single ring on a
+filled accent button cannot reach 3:1 in any of the four themes — 1.73 in
+`LIGHT`, 1.07 in `HIGH_CONTRAST_DARK`. So the ring is 2pt `focus_ring` outside a
+1pt `surface` gap, and the `Adjacent` pair asserts the gap: 6.02:1 against the
+`LIGHT` accent fill, 19.56:1 in `HIGH_CONTRAST_DARK`. One of the two edges
+always clears 3:1 against what is behind it. `border` on `accent` is 1.93 in
+`LIGHT` and is not a pair either — a filled control's boundary is its fill.
 
-At `TOKENS_VERSION = 1` the lowest ratio per tier is `Text` 5.97
-(`LIGHT.text_muted` on `surface`), `NonText` 3.06 (`DARK.border` on
-`surface_raised`), `Adjacent` 6.02. The `NonText` margin is thin on purpose: a
-border nudged one step lighter fails the test.
+Lowest ratio per tier at `TOKENS_VERSION = 1`: `Text` 5.97 (`LIGHT.text_muted`
+on `surface`), `NonText` 3.06 (`DARK.border` on `surface_raised`), `Adjacent`
+6.02. The `NonText` margin is thin on purpose — a border nudged one step lighter
+fails the test.
 
 ## 6. Resolving a theme at runtime
 
@@ -235,18 +278,18 @@ pub fn resolve(appearance: SystemAppearance, override_: Option<ThemeId>) -> Toke
 `SystemAppearance` carries three Windows facts: app light/dark mode, high
 contrast on/off with its scheme, and whether client-area animation is enabled.
 All three come from B01's `crates/ffi` wrapper — `windows-rs` is called from one
-crate only (REQ-FND-03), so B03 files a CCR for the wrapper rather than calling
-Win32 itself. `spec/design-system.md` names the APIs and the one `unconfirmed`.
+crate only (REQ-FND-03) — so B03 files a CCR, it does not call Win32.
+`spec/design-system.md` names the APIs and the one marked `unconfirmed`.
 
 Precedence, highest first: high contrast (a user who turned it on is not
-overridden by an app setting), then the app's explicit light/dark override, then
-the system preference (REQ-DSN-04).
+overridden by an app setting), then the app's light/dark override, then the
+system preference (REQ-DSN-04).
 
 ## 7. The lint: no raw colour outside the token module (REQ-DSN-09)
 
 `crates/design/src/{tokens,color,high_contrast}.rs` are the only files allowed a
-colour literal. Each `mockups/mockup-<n>/src/tokens.rs` is also allowed one — a
-mockup proposes a palette, so that is where a literal is legitimate (REQ-MOC-06).
+colour literal, plus each `mockups/mockup-<n>/src/tokens.rs` — a mockup proposes
+a palette, so that is where a literal is legitimate (REQ-MOC-06).
 
 ```bash
 # ci/lint-no-raw-colour.sh — fails the build, not a warning (REQ-TST-05)
@@ -260,9 +303,8 @@ hits=$(grep -rnE 'Color32::from_rgb|from_rgba_(un)?multiplied|Rgba8::hexa?\(|0x[
 Two defeats get past that grep and both have passed a review somewhere: a colour
 read from a config string, and a framework constant such as `Color32::RED`. So
 the config schema carries no colour field (B02 refuses one) and
-`crates/design/clippy.toml` bans the framework's named-colour constants through
-`disallowed_methods`. Three rules for one requirement, because one rule has
-three holes.
+`crates/design/clippy.toml` bans named-colour constants via `disallowed_methods`.
+Three rules for one requirement, because one rule has three holes.
 
 ## 8. Additive vs breaking
 
