@@ -15,9 +15,13 @@ Status: `MUST` (release-candidate blocking), `SHOULD` (blocking unless intake
 waives it), `OPT` (enabled per intake answer). A `MUST` cannot be waived; the
 build fails instead.
 
-The prose behind each row is in `spec/requirements-functional-source.md` and
-`spec/requirements-security-source.md`, which are the documents this register was
-derived from and are kept as the rationale.
+**This file is the only register.** It previously coexisted with a
+`spec/requirements.md` holding a second copy and with two "source" documents that
+contained nothing but pointers to it. The YAML had already drifted — 37 entries
+against this file's 59 — which is what a duplicated source of truth always does,
+so it was removed rather than resynchronised. The machine-readable artefact is
+`spec/traceability.csv`, and that one is *generated* from this file and
+drift-checked, which is the difference that matters.
 
 ---
 
@@ -40,6 +44,7 @@ derived from and are kept as the rationale.
 | SZ-SEC-004 | MUST | Security-sensitive operations shall fail closed and require explicit authorization. |
 | SZ-SEC-005 | MUST | Secrets shall never be stored in logs, audit payloads, command-line arguments, URLs, browser storage, source control, or telemetry. |
 | SZ-SEC-006 | MUST | Failed-authentication rate limits are stated as numbers, not as the word "rate limiting": **one failed unlock attempt per second per source address**, and **one failed authentication per second per source address and username** (NetHSM's figures, `docs/system-design.md` §Rate Limiting). A limit without a number cannot be tested, and an untested limit is an assumption. |
+| SZ-SEC-007 | MUST | The web surface enforces a strict Content Security Policy — per-request nonces, no `unsafe-inline`, no `unsafe-eval` — and the application works without them rather than needing an exception. The approval screen is where a human decides what gets signed, so a script injected into that page can lie about what is being approved; WebAuthn step-up narrows this because the assertion binds to a challenge derived from the request, but the CSP is what stops the injection. No secret reaches the client bundle, asserted by scanning the built output rather than by convention. |
 | SZ-SEC-011 | MUST | The appliance **refuses to become operational without its entropy sources**. On first provisioning, the Device Key is not generated until the TPM RNG and the kernel CSPRNG have both been confirmed healthy; if a source required at boot is absent, the system logs to the console and stops in a non-operational state rather than proceeding with degraded entropy. NetHSM halts rather than generating a key it cannot vouch for, and a signing key generated from weak entropy is unrecoverable — it must be rotated, and everything it signed re-examined. |
 
 

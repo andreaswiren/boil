@@ -9,6 +9,62 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.14.0] — 2026-09-23
+
+`base-hsm-signing-server` no longer has stubs. Every domain spec, every skill and
+the operator guides now carry real content.
+
+### Added
+
+**Twelve domain specifications**, replacing one-paragraph stubs:
+`00-product`, `01-architecture`, `02-threat-model`, `03-data-model`,
+`04-identity-auth`, `06-signing`, `08-remote-pkcs11`, `09-pwa-approvals`,
+`10-audit`, `12-dcui`, `13-installer-setup`, `14-testing`, `15-documentation`,
+`16-ui`. Each ends with how it is verified, because a spec with no verification
+section is a description.
+
+The ones that carry the most: `02-threat-model` states the residual risk without
+hedging — a kernel privilege escalation reaches `signerd`'s memory and **no
+control in the document prevents it** — and says who should buy NetHSM instead.
+`06-signing` draws the line the product rests on: anything a caller *states* is
+an assertion, anything the appliance *derives* is evidence, so policy rules match
+verified token claims and never body fields.
+
+**Eighteen skills rewritten.** Every one was the same generic sixteen lines with
+a different name, which costs context and gives nothing. Each now carries its own
+failure modes — the `(t,n)`-versus-`n`-of-`n` trap in `dkek-ceremonies`, the
+direction of number matching in `pwa-approvals`, the boot-phase sealing in
+`linux-appliance-hardening`, and the standing pressure to add a shell in
+`os-control-rpc`.
+
+**`docs/operations/recovery.md`**, written failure-first because it is read by
+someone whose appliance will not boot, opening with the two things to know before
+starting: full DR is **two** procedures, and factory reset is the last step
+rather than a fix.
+
+### Fixed
+
+- **`docs/hsm/dkek-backup-restore.md` said "m-of-n ceremony".** It is `n` of `n`.
+  The `(t,n)` threshold protects a share's password, not the DKEK — verified
+  against OpenSC's source. A custodian following the old text would have believed
+  they had threshold recovery and discovered otherwise during a disaster.
+- **`spec/requirements.yaml` was a second copy of the register and had already
+  drifted** — 37 entries against the register's 59. Removed rather than
+  resynchronised; the generated `traceability.csv` is the machine-readable
+  artefact, and it is drift-checked.
+- Two "requirement source" documents containing nothing but pointers, and a claim
+  in the register that they held the rationale. They did not.
+- The skills README instructed readers to keep two copies of every skill
+  synchronized. The duplicate directory had already diverged and is gone.
+
+### Added — one requirement the writing turned up
+
+`SZ-SEC-007`: strict CSP with per-request nonces, no `unsafe-inline`, no
+`unsafe-eval`, and no secret in the client bundle. The UI spec relied on it and
+nothing in the register required it. Found because a citation to a non-existent
+`SZ-SEC-008` failed the conformance check — the citation was wrong, but it was
+pointing at a real gap.
+
 ## [0.13.0] — 2026-09-23
 
 Two more stub specs replaced, and the documentation agent given the backend-OS
@@ -1184,7 +1240,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/andreaswiren/boil/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/andreaswiren/boil/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/andreaswiren/boil/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/andreaswiren/boil/compare/v0.10.0...v0.11.0

@@ -2,7 +2,7 @@
 
 You are the lead agent for **SignZone (SZ)**, a high-security Debian 13 code-signing appliance. Treat this repository as the authoritative development boilerplate.
 
-Read in order: `AGENTS.md`, `.claude/CLAUDE.md`, `spec/requirements.md`, `spec/requirements.yaml`, `spec/00-product.md`, `spec/01-architecture.md`, `spec/02-threat-model.md`, then `agents/orchestrator.md`.
+Read in order: `AGENTS.md`, `.claude/CLAUDE.md`, `spec/requirements.md`, `spec/requirements.md`, `spec/00-product.md`, `spec/01-architecture.md`, `spec/02-threat-model.md`, then `agents/orchestrator.md`.
 
 Your job is to implement production-quality software by delegating to the provided agents and skills. Freeze contracts before parallel coding. Keep the web UI unprivileged, HSM work in `signzone-signerd`, privileged OS work in `signzone-osd`, physical console work in `signzone-dcui`, and all network-facing automation behind the versioned REST API and policy engine.
 

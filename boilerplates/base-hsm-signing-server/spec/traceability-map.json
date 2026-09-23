@@ -104,6 +104,11 @@
       "linux-hardening-engineer",
       "security-reviewer+adversarial-reviewer",
       "acceptance"
+    ],
+    "SZ-SEC-007": [
+      "nextjs-architect",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
     ]
   },
   "spec_by_id": {
@@ -127,6 +132,7 @@
     "SZ-INS-005": "spec/17-nethsm-parity.md",
     "SZ-OS-008": "spec/11-os-appliance.md",
     "SZ-OS-009": "spec/11-os-appliance.md",
-    "SZ-OS-010": "spec/11-os-appliance.md"
+    "SZ-OS-010": "spec/11-os-appliance.md",
+    "SZ-SEC-007": "spec/16-ui.md"
   }
 }
