@@ -9,6 +9,72 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-09-23
+
+Two of `base-hsm-signing-server`'s stub specs replaced with real ones, and three
+requirements they turned up.
+
+### Added
+
+**`spec/18-backup-restore.md` — the backup design, matched to NetHSM's.** The
+property that drives it is not "encrypt the backup" but *what does an attacker
+get by stealing the backup client*, and the answer is nothing readable: reading a
+backup needs **two independent secrets held by different parties**, and the
+backup role holds neither. The inner layer is not applied at backup time — it is
+the encryption the data is already under, so `signerd` serialises without
+decrypting and a compromised backup path cannot become a disclosure path.
+
+Beyond NetHSM's design, two things it leaves to the operator:
+
+- The manifest carries the **unlock-passphrase epoch**, so an appliance can say
+  *which* passphrase a backup needs. Without it, restoring a backup that predates
+  a passphrase rotation fails with a decryption error indistinguishable from
+  corruption.
+- A partial restore **shows a named diff and takes step-up against it** before
+  writing. Restore means "make the state match the backup", so it deletes; an
+  operator approving a deletion should have seen which users and keys.
+
+It also states what a restore cannot recover — non-exportable key material and
+the Device Key — because full DR is *two* procedures, and an operator who runs
+only the backup restore has an appliance that knows about keys it cannot use.
+
+**`spec/11-os-appliance.md` — immutable root, encrypted state, and what it costs
+to run.** The shape is the one immutable hosts converged on independently
+([Lightwhale](https://lightwhale.asklandd.dk/) live-boots a read-only ~200 MB
+system with all state on a separate volume; Talos and Container Linux take the
+same position), and it is also NetHSM's. On Debian: a `dm-verity` A/B root whose
+hash rides in the signed UKI, and one LUKS2 volume for everything mutable.
+
+The part worth reading is the **TPM sealing policy**. `PCR 11` carries every PE
+section of the UKI *and* the boot-phase strings measured by `systemd-pcrphase*`
+([systemd `TPM2_PCR_MEASUREMENTS.md`](https://github.com/systemd/systemd/blob/main/docs/TPM2_PCR_MEASUREMENTS.md),
+read rather than recalled). Sealing against the value that exists **before
+`ready`** means an attacker who gets root on the *running* appliance cannot
+unseal the Device Key — the TPM refuses a policy that no longer matches. That is
+the closest a standard distribution gets to NetHSM's "only S-Keyfender reaches
+the key store".
+
+The operational cost is stated rather than discovered: **a kernel update changes
+PCR 11 and the disk stops unsealing.** So re-enrolment runs inside the update
+transaction before commit, a recovery key is shown once at provisioning and never
+stored, and the DCUI surfaces pending re-enrolment — because an operator meeting
+this at boot has met it too late.
+
+`SZ-OS-008` (verity root), `SZ-OS-009` (LUKS2 sealed to PCR 7 + 11, with the
+recovery-key and re-enrolment obligations), `SZ-OS-010` (the posture is asserted
+by tests: the disk must refuse to unlock with Secure Boot off, and refuse to
+unlock from a shell on the running system — CIS deviations recorded with a
+reason, because a benchmark score is not a threat model).
+
+### Still true
+
+§5 of the OS spec says without hedging where this remains weaker than NetHSM: a
+Debian kernel is millions of lines and a local privilege escalation in it reaches
+the signer's memory, `dm-verity` covers the root and not `/var`, and we adopt
+NetHSM's *halt on entropy failure* without its second hardware TRNG. Choose
+NetHSM if the threat model is a remote attacker with kernel exploits; choose this
+if it is a team that must operate the thing for five years.
+
 ## [0.11.0] — 2026-09-23
 
 ### Added
@@ -1067,7 +1133,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/andreaswiren/boil/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/andreaswiren/boil/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/andreaswiren/boil/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/andreaswiren/boil/compare/v0.8.1...v0.9.0

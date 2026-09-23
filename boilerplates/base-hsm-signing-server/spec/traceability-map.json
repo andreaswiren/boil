@@ -89,6 +89,21 @@
       "security-architect",
       "security-reviewer+adversarial-reviewer",
       "acceptance"
+    ],
+    "SZ-OS-008": [
+      "linux-hardening-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "SZ-OS-009": [
+      "linux-hardening-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "SZ-OS-010": [
+      "linux-hardening-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
     ]
   },
   "spec_by_id": {
@@ -97,8 +112,8 @@
     "SZ-HSM-008": "spec/17-nethsm-parity.md",
     "SZ-HSM-009": "spec/17-nethsm-parity.md",
     "SZ-HSM-010": "spec/17-nethsm-parity.md",
-    "SZ-HSM-011": "spec/17-nethsm-parity.md",
-    "SZ-HSM-012": "spec/17-nethsm-parity.md",
+    "SZ-HSM-011": "spec/18-backup-restore.md",
+    "SZ-HSM-012": "spec/18-backup-restore.md",
     "SZ-OS-006": "spec/17-nethsm-parity.md",
     "SZ-OS-007": "spec/17-nethsm-parity.md",
     "SZ-SEC-006": "spec/17-nethsm-parity.md",
@@ -109,6 +124,9 @@
     "SZ-AUTH-005": "spec/17-nethsm-parity.md",
     "SZ-AUTH-006": "spec/17-nethsm-parity.md",
     "SZ-AUTH-007": "spec/17-nethsm-parity.md",
-    "SZ-INS-005": "spec/17-nethsm-parity.md"
+    "SZ-INS-005": "spec/17-nethsm-parity.md",
+    "SZ-OS-008": "spec/11-os-appliance.md",
+    "SZ-OS-009": "spec/11-os-appliance.md",
+    "SZ-OS-010": "spec/11-os-appliance.md"
   }
 }
