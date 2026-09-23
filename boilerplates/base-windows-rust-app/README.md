@@ -121,7 +121,7 @@ H8 release       signed, SBOM'd, published to both forges
 | [`prompts/`](prompts/) | The orchestrator and phase prompts |
 | [`.claude/agents/`](.claude/agents/) | 19 build agents plus 4 gate agents |
 | [`.claude/skills/`](.claude/skills/) | Orchestration, version guard, release, supply chain |
-| [`spec/`](spec/) | 179 requirements and a spec per domain |
+| [`spec/`](spec/) | 212 requirements and a spec per domain |
 | [`contracts/`](contracts/) | Contract law, the ownership map, typed members |
 | [`gates/`](gates/) | The H0–H8 ladder, verdict schema, loop rules |
 | [`design/`](design/) | The design system, once approved |

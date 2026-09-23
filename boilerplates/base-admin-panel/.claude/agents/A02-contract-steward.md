@@ -123,3 +123,23 @@ model and effort you ran at. Where your runtime does not expose a count, write
 `null` — **never `0`**. A zero is a claim that deflates a total someone will
 trust; `null` reads as `unreported` and marks the total incomplete
 (REQ-COST-12). An agent that finishes without a report has not finished.
+
+**Every hand-off also carries its validation block (REQ-VAL-02).** Before you
+write the report — not before you started, not in an earlier round — run
+`pnpm validate --filter <your package>` and put what it returned into
+`report.json`: the command, the exit code, the sha, the runner's own
+passed/failed/skipped/focused counts, your suppression counts, the output tail
+verbatim, and a `redFirst` entry for every REQ you claim `satisfied`.
+
+`redFirst` is the one that cannot be produced afterwards: it names the sha at
+which the test **failed**, for the stated reason, before you wrote the code
+(REQ-TST-09). A test authored against code that already passes it asserts that
+code's present behaviour, which is a different claim from the requirement it
+cites.
+
+The orchestrator reads this block mechanically and re-dispatches on a missing,
+red, stale-sha or skip-carrying one (REQ-VAL-03). It does not read your diff to
+decide whether the work probably built — a non-zero exit code means everything
+else in your report describes a tree that does not exist. And you never write
+"it compiles", "the tests pass" or "this still works" without a command that
+produced that result in this session (REQ-VAL-04).

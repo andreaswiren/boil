@@ -59,6 +59,33 @@ export const ClaimSchema = z.object({
   note:     z.string().optional(),                // required by §5 unless "satisfied"
 }).strict();
 
+export const ValidationSchema = z.object({        // REQ-VAL-02 — the proof, not the claim
+  command:    z.string().min(1),                  // "pnpm validate --filter @app/grid"
+  exitCode:   z.number().int(),                   // 0, or this hand-off is rejected
+  sha:        z.string().regex(/^[0-9a-f]{40}$/), // the tree it was run against (REQ-VAL-08)
+  startedAt:  Timestamp,
+  durationMs: z.number().int().nonnegative(),
+  counts: z.object({                              // the runner's own numbers (REQ-TST-15)
+    passed:  z.number().int().nonnegative(),
+    failed:  z.literal(0),                        // non-zero cannot be reported as a hand-off
+    skipped: z.number().int().nonnegative(),      // non-zero is a gate finding (REQ-TST-12)
+    focused: z.number().int().nonnegative(),      // a stray .only reports green on one test
+  }).strict(),
+  suppressions: z.object({                        // REQ-VAL-07 — watched, not trusted
+    tsExpectError:  z.number().int().nonnegative(),
+    eslintDisable:  z.number().int().nonnegative(),
+    allowAttribute: z.number().int().nonnegative(),
+  }).strict(),
+  outputTail: z.string().min(1),                  // the last lines, verbatim, never paraphrased
+  redFirst: z.array(z.object({                    // REQ-TST-09 — the test failed without the code
+    req:      z.string().regex(/^REQ-[A-Z0-9]+-[0-9]{2}$/),
+    test:     z.string().min(1),                  // "tests/grid/filters.spec.ts:88"
+    redSha:   z.string().regex(/^[0-9a-f]{40}$/), // it failed here, for the stated reason
+    greenSha: z.string().regex(/^[0-9a-f]{40}$/), // it passed here
+    assertion: z.string().min(1),                 // one sentence: what it would catch
+  }).strict()),
+}).strict();
+
 export const AgentReportSchema = z.object({
   schemaVersion: z.literal("1.0.0"),
   agentId: AgentIdSchema,  wave: WaveSchema,  taskId: TaskIdSchema,
@@ -72,6 +99,7 @@ export const AgentReportSchema = z.object({
   claims:    z.array(ClaimSchema),
   attribution: CostAttributionSchema,             // §4
   usage:       TokenUsageSchema,                  // §3
+  validation:  ValidationSchema,                  // §3a — required on every complete hand-off
 }).strict();
 export type AgentReport = z.infer<typeof AgentReportSchema>;
 ```
@@ -144,6 +172,38 @@ reports `wave-build`. A26 may **re-attribute** it to the finding it raised and
 records the rewrite. Re-attribution moves a row between buckets; it never
 changes a count — A26 rewriting one is a build defect.
 
+## 3a. `Validation` — an exit code, not a sentence (REQ-VAL-02 … REQ-VAL-04)
+
+`usage` exists because a number an agent invents is worse than no number.
+`validation` exists for the same reason one layer up: **"implemented, tests
+added" is the cheapest sentence in this build, it reads exactly like the true
+version, and nothing downstream tells them apart until a gate.**
+
+So the report carries the command and what it returned, and the orchestrator
+reads the block rather than the diff (REQ-VAL-03). There is no judgement step:
+
+| Field | Rejected when |
+|-------|---------------|
+| `command` | absent — the claim has nothing behind it |
+| `exitCode` | non-zero — everything else in the report describes a tree that does not build |
+| `sha` | not the tree's head — it was green somewhere else |
+| `counts.skipped` / `counts.focused` | non-zero — a `.only` left in one file reports green having run one test |
+| `redFirst` | missing an entry for a REQ the agent claims `satisfied` |
+| `suppressions` | any class above the previous gate's total (REQ-VAL-07) |
+
+`outputTail` is the runner's own words. A paraphrase of test output is a claim
+about test output, and those are the two things this whole contract exists to
+keep apart.
+
+`redFirst` is the one that cannot be produced after the fact: it names a sha at
+which the test failed. A test written against code that already passes it
+asserts the code's present behaviour, which is a different claim from the
+requirement it cites (REQ-TST-09).
+
+`validation` is part of `1.0.0` — this is the shape the contract is published
+with at `G3`, not a field added to a frozen contract. A build that has already
+frozen and needs it adds it as optional and versions to `1.1.0` (§6).
+
 ## 5. What A02 validates at assembly
 
 Assembly runs `pnpm contracts:validate-reports` over `build/agents/**`. Each
@@ -161,9 +221,12 @@ rule is a hard failure naming the file and — where two parties are involved �
 3. Claim collision: two agents claiming `satisfied` on one REQ ID fails naming
    both — `traceability.csv` has one owner per requirement — and every
    `claims[].req` exists in `spec/requirements.md`. IDs are never invented.
-4. `status: "complete"` requires a `satisfied` claim and a `usage` object;
-   `"blocked"` requires `blockedBy`; a `partial` or `not-satisfied` claim
-   requires `note`.
+4. `status: "complete"` requires a `satisfied` claim, a `usage` object **and** a
+   `validation` block with `exitCode: 0` at the current head sha; `"blocked"`
+   requires `blockedBy`; a `partial` or `not-satisfied` claim requires `note`.
+4a. Every `satisfied` claim has a matching `validation.redFirst` entry
+   (REQ-TST-09), and `validation.counts.skipped` and `.focused` are zero
+   (REQ-TST-12). Failure names the agent and the REQ, not the file.
 5. `endedAt >= startedAt`, both parsing as RFC 3339 `Z`; a `gate-finding-fix`
    finding ref resolves to a verdict file under `build/gates/`; a non-null
    `usage.model` is a key in `versions/pricing.json`.

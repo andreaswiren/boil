@@ -86,6 +86,12 @@ behaviour you found.
 - [ ] Any disagreement found between a document and the system is raised as a
       finding against the owning agent, with the artefact quoted.
 - [ ] Traceability entries updated for the REQ IDs the documentation covers.
+- [ ] `make validate` run at the current sha and the block recorded (`SZ-VAL-002`)
+      — documentation is the one role most likely to skip this, and the doc
+      build, the OpenAPI examples and the generated client are all in it.
+- [ ] Every command claimed as executed was executed **in this session**
+      (`SZ-VAL-004`). A command that worked three rounds ago is not evidence
+      about the tree you are documenting now.
 
 ## Hand-off
 

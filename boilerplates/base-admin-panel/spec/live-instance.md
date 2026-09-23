@@ -63,6 +63,25 @@ missing password rather than on a design decision.
 
 Generated per build, never fixed strings, and never committed.
 
+## 4a. What `/_build` shows (`REQ-LIV-01`, `REQ-VAL-10`, `REQ-CAP-05`)
+
+The status page is the human's console on the build, so it carries the three
+things they would otherwise have to ask an agent for:
+
+| Panel | Source | Why it is there |
+|-------|--------|-----------------|
+| **Fleet** | `build/supervision.md` | current wave and gate, each agent's state and elapsed time, what is waiting on a human |
+| **Validation** | `build/validation/` | the last `pnpm validate` result, its sha, its counts, and the suppression deltas (`REQ-VAL-12`) |
+| **Screenshots** at `/_build/screenshots` | `build/screenshots/index.json` | the capture feed, newest first, each image beside its previous capture of the same surface (`REQ-CAP-05`) |
+| **Cost** | `build/costs.md` | the running table, with `unreported` shown as such (`REQ-COST-12`) |
+
+**A failing validation rolls the instance back to the last green build**
+(`REQ-VAL-10`), and the status page says so — naming the failing command, the
+sha and the owning agent. It does not serve a broken build and it does not go
+down. Both of those teach the human to stop looking at the URL, which costs more
+than the failure that caused it: the whole value of this requirement is a human
+who checks the page out of habit.
+
 ## 5. Keeping it up (`REQ-LIV-04`)
 
 `A28` includes the instance in every check-in (`REQ-ORC-01`):

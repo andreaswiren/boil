@@ -173,7 +173,10 @@ root=sys.argv[1]
 must_commit=[l.strip() for l in open(os.path.join(root,'.gitignore'),encoding='utf-8')
              if l.startswith('#   ') and '/' in l]
 # paths the boilerplate declares must never be ignored, plus the universal ones
-probe=['build/gates/verdict.json','build/approvals.md']
+probe=['build/gates/verdict.json','build/approvals.md',
+       'build/validation/G4.json',                      # the proof the tree was green
+       'build/screenshots/s__1440__dark__abc1234.png',  # the capture feed
+       'build/screenshots/s__1440__dark__abc1234.json'] # and its sidecar
 for extra in ('resources/pin.json','mockups/theses.ts','mockups/m01/main.rs',
               'crates/update/keys/update-current.pub',
               'crates/update/tests/fixtures/wrong-key.sig',

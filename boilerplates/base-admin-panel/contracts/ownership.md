@@ -25,6 +25,10 @@ treats it as a failed task and reassigns, rather than accepting the diff.
 | `CHANGELOG.md`, `README.md`, `SECURITY.md`, `TODO.md`, `VERSION`, all `version` fields | A22 | No other agent edits these, ever |
 | `versions/pricing.json`, `versions/pricing.md`, `build/costs.md` | A26 | The only agent that derives money. It owns no product code and no table. |
 | `build/supervision.md`, `build/supervision/**` | A28 | The supervisor. It owns no product path and votes at no gate, and it never finishes a dead agent's work — completing someone else's task hides the failure and takes an ownership violation at the same time (REQ-ORC-02). |
+| `scripts/validate/**`, the `validate` / `validate:quick` / `validate:full` scripts | A01 | The one validation entry point (REQ-VAL-01). Written in Wave 0 and green on the empty scaffold before the first domain agent is dispatched. |
+| `apps/<app>/app/_build/**` | A01, except `_build/screenshots` (A21) | The build status page, serving from Wave 0 and for the whole build (REQ-LIV-01, REQ-CAP-05). |
+| `build/validation/**` | the orchestrator writes the gate records; each agent writes its own `wave-<n>/<agent>.json` | Per-hand-off and per-gate proof that the tree was green (REQ-VAL-12). `req-coverage.md` is A23's, generated (REQ-TST-11). |
+| `build/screenshots/**` | A21 | Images, sidecars and `index.json`. The capture feed, not a gate deliverable (REQ-CAP-01 … REQ-CAP-05). |
 | `build/navigation.md` | A00 | The resolved menu, derived at G0. G1 cannot start without it: the sidebar is sized to it (REQ-MOC-13, REQ-MOC-14). |
 | `resources/**` | nobody | Vendored third-party reference, pinned by `resources/pin.json`. **No agent edits it.** Our conventions do not apply to it and the conformance check skips it (REQ-UI-16). |
 | `.github/workflows/**` | A01, except `supply-chain.yml` (A19) | |

@@ -1,6 +1,6 @@
 # Skills
 
-Eighteen domain skills. Each carries the decisions and failure modes for its
+Nineteen domain skills. Each carries the decisions and failure modes for its
 area — not a restatement of the generic development process, which is in
 `CLAUDE.md`.
 
@@ -28,6 +28,7 @@ already diverged, which is what duplicated sources of truth always do.
 | `postgres-drizzle` | Persistence |
 | `certificate-providers` | CA enrollment and renewal |
 | `security-review` | Before any security feature is called complete |
+| `validate-and-test` | Before any hand-off, at every phase boundary and gate — the validation block, the negative suite, and proving the suite can fail |
 
 If a skill is not loaded, its `SKILL.md` is a plain file. Nothing here depends on
 the skill mechanism (`spec/17-nethsm-parity.md` — Muse Code 1.3 does not load

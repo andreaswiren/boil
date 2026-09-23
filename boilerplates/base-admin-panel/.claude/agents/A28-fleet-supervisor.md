@@ -26,6 +26,9 @@ purpose — you read state and re-dispatch, you do not reason about the product.
 | REQ-ORC-04 | A partial landing is reconciled against the agent's declared file list, never accepted. This is the class that does real damage, because it reads like completion. |
 | REQ-ORC-05 | Re-dispatch is idempotent. If re-running an agent would append or duplicate, that is a defect in its brief — report it, do not work around it. |
 | REQ-LIV-04 | **The live instance is part of every check-in.** Not "is the process alive" — does the URL answer, and is it serving current state (REQ-LIV-06). Restart it when it dies, record it, and say so in your report. The human watching that URL must not be the mechanism that discovers the build's preview died. A restart is normal; a repeated restart is a finding against whoever is crashing it. |
+| REQ-VAL-11 | **The shared tree is part of every check-in too.** Run `pnpm validate:quick` over the workspace each interval. If the contract package, the lockfile, the root tsconfig or the workspace config is red, say so immediately and loudly: fifteen agents are building on a base that does not compile, and every hand-off produced while it stays red will have to be redone. You do not fix it — you name the file, name its owner from `contracts/ownership.md`, and tell the orchestrator to stop dispatching into the wave. |
+| REQ-VAL-03 | **Check the validation block on every `report.json` you see land.** Missing, non-zero exit, stale sha, or non-zero `skipped`/`focused` is class `unvalidated` — and that is the class that looks most like success, which is why you check the block before you read the report. |
+| REQ-CAP-01 | **The capture feed is part of every check-in.** When did `A21` last write to `build/screenshots/`, and does the newest capture match the tree's head sha? A feed that stopped three waves ago is a build nobody has looked at since, and it stops silently — nothing errors when screenshots simply are not taken. |
 | REQ-ORC-06 | Every check-in appends to `build/supervision.md`: timestamp, each in-flight agent's state, the action taken. No entry means no check-in happened. |
 | REQ-ORC-07 | Three failed revivals of the same agent escalates to the human with the classification, what you tried, and what you recommend. |
 | REQ-ORC-08 | Every check-in carries running token cost per agent, so the table is current at every gate. An agent that died is also an agent that spent. |
@@ -59,6 +62,7 @@ For each in-flight agent, one of five states:
 | `stall` | dispatched, no new output across **two** consecutive check-ins | re-dispatch with the same brief. One check-in of silence is a long tool call, two is a stall. |
 | `partial` | files written, no `report.json` | **reconcile** — see below. |
 | `malformed` | `report.json` exists but required artefacts are missing | re-dispatch, naming the specific gap. Do not accept and do not patch it yourself. |
+| `unvalidated` | `report.json` complete, `validation` block absent, non-zero, at a stale sha, or carrying skipped or focused tests | re-dispatch naming the failing condition (REQ-VAL-03). Everything about this state reads as success — the files are there, the report is well-formed, the prose is confident — and the tree does not build. |
 
 ## Reconciling a partial landing
 
@@ -94,7 +98,9 @@ Append to `build/supervision.md` at every check-in. One block, no prose:
 | A11 | partial | 09:01 | 96k / 12k | 3 of 7 files; re-dispatched (revival 1) |
 | A13 | hard-stop | 08:58 | 41k / 6k | spend limit; waiting one interval |
 
-live instance: http://localhost:3000 — responding, serving wave 3
+live instance: http://localhost:3000 — responding, serving wave 3 (sha 4f2a9c1)
+shared tree:   pnpm validate:quick — green at 4f2a9c1
+capture feed:  newest build/screenshots/wave-3/ at 4f2a9c1, 08:59 — current
 ```
 
 A wave with no entries did not go fine — it went unwatched.

@@ -9,6 +9,163 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.16.0] — 2026-09-23
+
+Reported as a bug, and it was one, in three parts: **no real testing in the
+stages, no continuous screenshot feed, and no code validation or compilation at
+any phase.** The specific finding on inspection was worse than the report: the
+HSM boilerplate had a good testing document (`spec/14-testing.md`) that **nothing
+in its register cited**, so no gate could verify it and no agent had to follow
+it. All 65 of its requirements were about the product; none were about whether
+the product had been compiled or tested. The other two boilerplates concentrated
+testing in one agent at two late gates, and nothing forced an individual hand-off
+to build.
+
+### Added
+
+**`REQ-VAL-01`…`14`, `REQ-VAL-01`…`14` and `SZ-VAL-001`…`014` — validation and
+compilation at every phase.**
+
+The failure has a shape: an agent writes nine files, reads them back, concludes
+they are consistent, and reports "implemented `REQ-GRD-04`, tests added". The
+tree does not compile. Nothing discovers it until a gate two waves later, by
+which point fourteen other agents have built on the assumption that it did. The
+sentence is cheap to write, it reads exactly like the true version, and nothing
+downstream separated them.
+
+- **One validation command per boilerplate, written in Wave 0 and green on the
+  empty scaffold** before the first domain agent is dispatched — `pnpm validate`,
+  `cargo xtask validate`, `make validate`. A validation command first authored
+  mid-build, when there is already something to hide, is authored to pass.
+- **A validation block on every hand-off**: command, exit code, sha, the runner's
+  own counts, suppression counts, output tail verbatim, and red-first evidence.
+  Added to `contracts/types/agent-report.md` §3a beside the token-usage block,
+  for the same reason — a number an agent invents is worse than no number.
+- **The orchestrator rejects it mechanically.** Missing block, non-zero exit,
+  stale sha, non-zero skips, or a claimed requirement with no red-first entry:
+  re-dispatch. It does not read the diff and form a view about whether the work
+  looks finished. Forming that view is what it did before, and it was wrong in
+  the one direction that costs a wave.
+- **Three sentences nobody may write without a command behind them in the same
+  session**: "it compiles", "the tests pass", "this still works". A result from
+  round 2 is not evidence about round 3 — the tree changed, which is what a round
+  is.
+- **Warnings are errors, and suppressions are watched rather than trusted.**
+  Every `@ts-expect-error`, `eslint-disable`, `#[allow]`, `unsafe` block and
+  `#[ignore]` carries the requirement it trades against and a removal condition,
+  and **a count that rose since the previous gate is a finding** — the ordinary
+  way a red tree becomes green is not a fix. On the signing appliance a new
+  `unsafe` block additionally means a surface both reviewers cleared has changed
+  since they cleared it.
+- **A red shared tree stops dispatch.** Fifteen concurrent agents building on a
+  contract package that does not compile produce fifteen hand-offs that all have
+  to be redone, and the first to notice is always the gate.
+- **One sha for all evidence.** Validation records, capture sidecars and gate
+  verdicts name the same commit, or the gate does not pass. Two reviewers
+  clearing two different trees have jointly cleared nothing.
+- **The artefact, not only the source**: the image builds and the stack boots;
+  the MSI installs on a clean image and upgrades from the previous release; the
+  installer reaches the setup wizard over HTTPS on clean Debian 13. A workspace
+  that compiles and a thing that runs are two different claims, and the user only
+  ever meets the second.
+
+**`SZ-TEST-001`…`013` — the HSM boilerplate's testing document became
+requirements.**
+
+`spec/14-testing.md` was already right about what matters on a signing appliance:
+most of the value is in what it refuses, and a disabled negative test is a removed
+control. It had no IDs, so nothing cited it, no gate verified it, and the register
+mapped no requirement to it. It now has thirteen, including the mutation check
+(`SZ-TEST-012`): at every phase gate, disable a control — the digest re-check,
+the approval binding — and assert the suite goes red. A suite nobody has watched
+fail is evidence of nothing.
+
+**`REQ-TST-09`…`16` and `REQ-TST-10`…`17` — testing moved into the work.**
+
+- **Red first.** A feature is not done until a test failed without it, and the
+  failing sha is recorded. A test written afterwards against code that already
+  passes it asserts that code's present behaviour, which is a different claim
+  from the requirement it cites — and the two are indistinguishable in a report
+  unless someone checks the shas, so the test engineer now audits them.
+- **Tests land in the same task as the behaviour**, never in a later cleanup.
+  That phase is the first one cut when a wave runs long, and it is cut by an
+  orchestrator that has already reported the features done.
+- **Nothing is skipped, `.only`-scoped, `#[ignore]`d or quarantined to reach
+  green.** A stray `.only` in one file reduces a 400-test suite to one test and
+  reports green; a suite with 40 skipped reports green and verifies 360.
+- **Every `MUST` maps to a test or to a recorded reason it cannot be tested**, in
+  a generated coverage report, checked at the release gate. Line coverage is
+  reported and never gated on: 95% with the isolation suite absent is a confident
+  number about the wrong thing.
+- **The silent suites run at every gate**, not once at integration — tenant
+  isolation, permission denial, MFA, audit emission; the updater's trust-chain
+  negatives; the appliance's fourteen refusals. Nothing about the product changes
+  when these break, which is the entire reason they get their own rule.
+- **`unverified` is a first-class result** on the appliance: a test needing real
+  hardware reports unverified with its requirement ID, never green and never a
+  silent skip.
+
+**`REQ-CAP-01`…`10`, `REQ-CAP-01`…`11` and `SZ-CAP-001`…`008` — the capture feed.**
+
+Screenshots were a deliverable produced twice, at the design gate and at
+integration, which leaves every wave between them unobserved.
+
+- **Continuous**: every UI-touching hand-off, every wave boundary, every gate.
+- **Delivered both ways, every time** — images in the reply *and* a durable
+  folder, served at `/_build/screenshots` on the live instance where there is
+  one, a generated `index.md` where there is not. The reply is immediate and
+  scrolls away; the folder persists and nobody watches it unprompted. Both were
+  asked for; doing one is not doing the requirement.
+- **A sidecar per image**: URL, viewport, theme, sha, the requirement IDs the
+  surface serves, the interaction that preceded it, and the console or log errors
+  observed. An image that cannot be tied to a tree is a picture, not evidence.
+- **A capture carries its console**, and a surface captured with a page error is
+  reported as failing. This is the hole a screenshot leaves on its own: a page
+  whose fetch 500s and whose error boundary renders tidily photographs as a
+  working feature.
+- **States, not screens** — a grid with a filter and a sort applied and page two
+  reached, a form at its validation-error state, the five desktop view states,
+  and on the appliance all four of `Unprovisioned` / `Locked` / `Operational` /
+  `Failed` plus the `412` refusal nobody looks at.
+- **A gate does not pass on a stale capture.** Capture never blocks a wave; it
+  always blocks a gate, because that is when the evidence is relied on.
+- **`SZ-CAP-007`: no secrets in a capture.** Screenshots are committed, so a
+  screenshot is a durable greppable copy of whatever was on screen — and this
+  product puts things on screen that operating rule 9 forbids storing. Every
+  capture is scanned for a PIN field, a DKEK share, a recovery code list, a
+  session token or a live enrolment QR, and a hit fails the capture rather than
+  being cropped.
+
+### Changed
+
+- `CONVENTIONS.md` §2 now requires all three of these of every boilerplate, so a
+  fourth does not repeat the gap, and `boil-new-boilerplate` scaffolds
+  `spec/validation.md`, `spec/testing.md` and `spec/capture.md` with IDs of their
+  own. A testing document nothing in the register cites is a document, not a
+  control — which is exactly how the HSM boilerplate shipped with one.
+- `CONVENTIONS.md` §2 also stopped describing `AGENTS.md` as "a pointer to
+  `CLAUDE.md`". It has been byte-identical since 0.6.0 and the check enforces
+  that; the structure diagram had not been updated.
+- Every agent brief across all three boilerplates gained the validation rule in
+  its hand-off or completion gate — 27, 19 and 32 briefs.
+- The three copies of `check-boilerplate.sh` now probe that `.gitignore` keeps
+  `build/validation/` and `build/screenshots/` with their sidecars. Both look
+  like build output and are the evidence the gates rest on.
+- `base-hsm-signing-server`'s `test-automation-engineer` went from a 16-line
+  generic brief to the fleet's red-first auditor, coverage generator and mutation
+  checker. Its `.claude/rules/testing.md` went from three sentences to the eleven
+  rules the register now carries, and a `validation.md` rule file joined it.
+- Stated counts: 362 → 394, 179 → 212, 65 → 100 requirements.
+
+### Fixed
+
+- `base-hsm-signing-server` cited 19 domain skills in `CLAUDE.md` and "Eighteen"
+  in `.claude/skills/README.md`, against 18 on disk. Now 19 of each, with
+  `validate-and-test` added.
+- The HSM orchestrator prompt listed `spec/requirements.md` twice in its reading
+  order and pointed at `.claude/CLAUDE.md`, a file removed in 0.10.0.
+
+
 ## [0.15.0] — 2026-09-23
 
 Reported as a bug, and it was one: **neither boilerplate had any notion of a

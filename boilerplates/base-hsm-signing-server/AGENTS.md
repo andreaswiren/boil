@@ -32,15 +32,18 @@ document. Do not start a build to answer a question.
 | File | What it is |
 |------|------------|
 | `prompts/00-master-orchestrator.md` | How the build runs. Read this first. |
-| `spec/requirements.md` | 65 requirements with stable `SZ-*` IDs. The source of truth. |
+| `spec/requirements.md` | 100 requirements with stable `SZ-*` IDs. The source of truth. |
 | `spec/00-product.md` … `16-ui.md` | One specification per domain, each ending with how it is verified. |
 | `spec/17-nethsm-parity.md` | The gap analysis against NetHSM, and the divergences decided on purpose. Read it before adding an endpoint. |
 | `spec/18-backup-restore.md` | The backup design: two secrets to read a backup, and the backup client holds neither. |
 | `spec/19-live-instance.md` | The live URL the human follows the build on — up from the first minute, never wired to a real key. |
 | `spec/11-os-appliance.md` | Read-only verity root, LUKS2 sealed to PCR 7 + 11, and what that costs to operate. |
+| `spec/20-validation.md` | The one validation command, the block a hand-off is accepted on, and what may not be claimed without running it. |
+| `spec/14-testing.md` | What evidence exists that each requirement is true — and why the negative suite is the suite. |
+| `spec/21-capture.md` | The continuous screenshot feed, the four appliance states it must cover, and the secret scan before an image is written. |
 | `contracts/ownership.md` | Who owns which path. The routing table for tasks and findings. |
 | `.claude/agents/` | The 34 agent prompts themselves. |
-| `.claude/skills/` | 19 domain skills — PKCS#11, DKEK ceremonies, Authenticode on Linux, appliance hardening, and the rest. |
+| `.claude/skills/` | 19 domain skills — PKCS#11, DKEK ceremonies, Authenticode on Linux, appliance hardening, the validation and test-evidence procedure, and the rest. |
 | `spec/traceability.csv` | Every requirement mapped to an owner. |
 
 **The ID prefix here is `SZ-`, not `REQ-`.** It is load-bearing across the whole
@@ -66,10 +69,20 @@ register rather than assuming one.
 14. Network/firewall changes require automatic rollback if management connectivity is not confirmed.
 15. Setup mode must become permanently unavailable after successful initialization unless explicitly reset from the physical maintenance console.
 16. Prefer fail-closed behavior.
-17. Tests are part of the requirement, not optional cleanup.
+17. Tests are part of the requirement, not optional cleanup — `SZ-TEST-001` …
+    `SZ-TEST-013` make that checkable: every `MUST` maps to a citing test, the
+    test is seen to fail before the code exists, the negative suite runs on every
+    commit, and nothing is skipped to reach green. A disabled negative test is a
+    removed control.
 18. **No private key material is ever committed.** `.gitignore` excludes it, and
     the conformance check verifies that — but the check is the backstop, not the
     control. A git history is not something you can un-leak.
+19. **Nothing is done until it is green.** Every hand-off carries the validation
+    block from `make validate` at the current sha — command, exit code, counts,
+    suppressions, output tail, red-first evidence (`SZ-VAL-002`). A hand-off
+    without one is rejected mechanically, without reading the diff
+    (`SZ-VAL-003`), and no agent writes "it compiles" or "the tests pass"
+    without a command that produced that result in this session (`SZ-VAL-004`).
 
 ## Mandatory security behaviour
 

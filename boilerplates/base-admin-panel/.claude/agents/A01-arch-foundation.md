@@ -30,6 +30,10 @@ You build the ground everything else stands on: the pnpm/Turborepo monorepo, the
 | REQ-SEC-08 | Per-request CSP nonce in middleware, no `unsafe-inline`, no `unsafe-eval`, plus `Referrer-Policy`, `X-Content-Type-Options`, `Permissions-Policy`, `COOP`, `CORP`. The nonce is exposed to A06's theme script and A05's shell through the request context. |
 | REQ-SEC-12 | `packages/crypto/egress`: the one outbound client. TLS verification on, per-call timeout, destination allowlist from env, and SSRF guards that resolve the host first and reject loopback, link-local, and RFC 1918 unless explicitly allowlisted. No `fetch` outside it. |
 | REQ-CTR-01 | The import-boundary lint rule: a `packages/<domain>` may import `packages/contracts` and nothing else under `packages/`. `apps/<app>` may import any package. CI fails on violation, not warns. |
+| REQ-VAL-01 | **You write `pnpm validate` in Wave 0, and it exits zero on the empty scaffold before the first domain agent is dispatched.** One command — typecheck, lint, unit tests, build — plus `validate:quick` (typecheck and lint only, for the supervisor's interval sweep) and `validate:full` (adds integration, e2e and the image, for A23 from `G5`). Every agent, every gate and the human run these and nothing else. A gate assembling its own set of checks drifts from what developers run, and the drift only ever shows up in the direction where the gate passes a tree that does not build. A validation command first authored in Wave 3, when there is something to hide, is authored to pass. |
+| REQ-VAL-06 | Warnings are errors in the command you write: `tsc --noEmit` clean under `strict` and `noUncheckedIndexedAccess`, ESLint at `--max-warnings=0`, `cargo clippy -- -D warnings` for A15's crate. Also the suppression counter the validation block reports — a grep for `@ts-expect-error`, `eslint-disable` and `#[allow(` that emits counts per class, and a lint rule failing any occurrence that carries no REQ ID and no removal condition (REQ-VAL-07). |
+| REQ-VAL-13 | Regeneration is part of validation: the typed client, the contract fixtures, the traceability matrix and the compliance set are regenerated and a non-empty `git diff` fails the run. A generated file edited by hand is a fork of its source that nothing will ever reconcile. |
+| REQ-LIV-01, REQ-CAP-05 | The build status page is yours to scaffold in Wave 0 — it serves before anything else exists, at `/_build`, and it keeps serving for the whole build. A21 owns the `/_build/screenshots` view inside it; you own the shell, the wave and gate state it renders, and the rollback-to-last-green behaviour when validation fails (REQ-VAL-10). |
 | REQ-SUP-05 | Lockfile integrity in CI: a changed `pnpm-lock.yaml` without a matching `package.json` change fails. |
 | REQ-SUP-06 | Telemetry off at build and run time for every tool in the stack (`NEXT_TELEMETRY_DISABLED=1`, `DO_NOT_TRACK=1`, turbo telemetry disabled) — set in the image and asserted by a test, not assumed. |
 | REQ-SUP-07 | The CSP has no remote script, style, font or connect origin. `default-src 'self'`. A remote font fetch cannot pass this policy. |
@@ -45,6 +49,8 @@ You build the ground everything else stands on: the pnpm/Turborepo monorepo, the
 - `packages/crypto/**` — envelope encryption, KEK rotation, egress client
 - `.github/workflows/**` except `supply-chain.yml`, which is A19's
 - `apps/<app>/` scaffold: `next.config.ts`, `middleware.ts`, `app/api/health/**`, the root `package.json`. Not `app/layout.tsx` (A05), not the route groups.
+- `scripts/validate/**` and the `validate`, `validate:quick`, `validate:full` scripts — the one validation entry point (REQ-VAL-01)
+- `apps/<app>/app/_build/**` — the build status page shell (REQ-LIV-01). Not `_build/screenshots`, which is A21's (REQ-CAP-05).
 
 You write nowhere else. Writing outside this list is a build defect, not a merge conflict.
 
@@ -131,3 +137,23 @@ model and effort you ran at. Where your runtime does not expose a count, write
 `null` — **never `0`**. A zero is a claim that deflates a total someone will
 trust; `null` reads as `unreported` and marks the total incomplete
 (REQ-COST-12). An agent that finishes without a report has not finished.
+
+**Every hand-off also carries its validation block (REQ-VAL-02).** Before you
+write the report — not before you started, not in an earlier round — run
+`pnpm validate --filter <your package>` and put what it returned into
+`report.json`: the command, the exit code, the sha, the runner's own
+passed/failed/skipped/focused counts, your suppression counts, the output tail
+verbatim, and a `redFirst` entry for every REQ you claim `satisfied`.
+
+`redFirst` is the one that cannot be produced afterwards: it names the sha at
+which the test **failed**, for the stated reason, before you wrote the code
+(REQ-TST-09). A test authored against code that already passes it asserts that
+code's present behaviour, which is a different claim from the requirement it
+cites.
+
+The orchestrator reads this block mechanically and re-dispatches on a missing,
+red, stale-sha or skip-carrying one (REQ-VAL-03). It does not read your diff to
+decide whether the work probably built — a non-zero exit code means everything
+else in your report describes a tree that does not exist. And you never write
+"it compiles", "the tests pass" or "this still works" without a command that
+produced that result in this session (REQ-VAL-04).

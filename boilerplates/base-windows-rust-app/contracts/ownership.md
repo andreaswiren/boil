@@ -12,6 +12,9 @@ rejects the task result and reassigns rather than accepting the diff.
 | Path | Owner | Notes |
 |------|-------|-------|
 | `Cargo.toml` (workspace), `Cargo.lock`, `rust-toolchain.toml`, `.cargo/config.toml` | B01 | Version fields are B17's |
+| `xtask/**` | B01 | The one validation command (REQ-VAL-01). Written in Wave 0, green on the empty workspace before the first domain agent is dispatched. |
+| `build/validation/**` | the orchestrator writes the gate records; each agent writes its own `wave-<n>/<agent>.json` | Per-hand-off and per-gate proof that the workspace was green (REQ-VAL-12). `req-coverage.md` is B14's, generated (REQ-TST-12). |
+| `build/screenshots/**` | B15 | Images, sidecars and `index.md`. A capture feed, not a gate deliverable (REQ-CAP-01 … REQ-CAP-05). |
 | `deny.toml` | B11 | |
 | `.gitignore` | B01 | Present from the first commit. It never excludes `build/`, `mockups/`, the `*.pub` update keys or the updater test fixtures (REQ-FND-13, REQ-FND-14). |
 | `crates/contracts/**` | B02 | Frozen at H3. CCR-only afterwards |

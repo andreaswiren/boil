@@ -180,6 +180,16 @@
       "A28",
       "(process)",
       "G1"
+    ],
+    "VAL": [
+      "orchestrator",
+      "validation-record",
+      "G4"
+    ],
+    "CAP": [
+      "A21",
+      "capture-record",
+      "G5"
     ]
   },
   "override": {
@@ -739,7 +749,7 @@
     "FND": "spec/baseline.md",
     "SEC": "compliance/cra/secure-by-default.md",
     "SUP": "compliance/cra/vulnerability-handling.md",
-    "TST": "gates/gate-ladder.md",
+    "TST": "spec/testing.md",
     "REL": "gates/gate-ladder.md",
     "OBS": "spec/data-normalization.md",
     "MAIL": "spec/api.md",
@@ -755,7 +765,9 @@
     "MOB": "spec/mobile-ux.md",
     "IMP": "spec/impersonation.md",
     "ORC": "prompts/00-master-orchestrator.md",
-    "LIV": "spec/live-instance.md"
+    "LIV": "spec/live-instance.md",
+    "VAL": "spec/validation.md",
+    "CAP": "spec/capture.md"
   },
   "spec_by_id": {
     "REQ-UI-04": "spec/theming.md",

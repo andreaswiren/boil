@@ -42,10 +42,19 @@ Required files (`CONVENTIONS.md` §2):
 |------|---------|--------------|
 | `README.md` | For a human | What it produces, how to run it, how it builds |
 | `CLAUDE.md` | For an agent | Where to start, the map, the non-negotiable rules |
-| `AGENTS.md` | For a non-Claude agent | A pointer to `CLAUDE.md` |
+| `AGENTS.md` | For a runtime that reads it instead | **Byte-identical** to `CLAUDE.md` — a pointer loses everything in the file that is not read (CONVENTIONS.md §4) |
 | `spec/requirements.md` | The source of truth | Stable `REQ-<DOMAIN>-<nn>` IDs with `MUST`/`SHOULD`/`OPT` status |
 | `prompts/00-master-orchestrator.md` | The build | Phases, gates, dispatch |
 | `scripts/check-boilerplate.sh` | Self-verification | The check, runnable with nothing but this folder |
+| `spec/validation.md` | Proof the tree compiles | The one validation command, the validation block on every hand-off, and what may not be claimed without running it (CONVENTIONS.md §2) |
+| `spec/testing.md` | Proof the requirements are true | Who writes which tests, red-first, no skips, every `MUST` mapped |
+| `spec/capture.md` | Proof someone looked | The continuous capture feed, where it lands, how it is delivered — for a boilerplate with a visual surface |
+
+The last three are not optional and not "add them later". A boilerplate without
+them produces a build that reports success it has not earned, and the report is
+indistinguishable from the true one. Give them requirement IDs of their own
+(`VAL`, `TST`, `CAP` or the equivalent in this boilerplate's scheme) — a
+testing document nothing in the register cites is a document, not a control.
 
 Add domain folders as the boilerplate needs them — `contracts/`, `gates/`,
 `versions/`, `compliance/`. Do not create empty ones.

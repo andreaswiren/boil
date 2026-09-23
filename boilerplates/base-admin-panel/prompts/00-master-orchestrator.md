@@ -11,7 +11,10 @@ Read before you start:
 
 | File | Why |
 |------|-----|
-| `spec/requirements.md` | 362 requirement IDs. The only way to refer to a requirement. |
+| `spec/requirements.md` | 394 requirement IDs. The only way to refer to a requirement. |
+| `spec/validation.md` | The one validation command, the validation block, and what may not be claimed without running it. |
+| `spec/testing.md` | Who writes which tests, red-first, and why green is a number rather than a sentence. |
+| `spec/capture.md` | The continuous screenshot feed: when it runs, where it lands, how it is delivered. |
 | `spec/agents.md` | The fleet, the waves, who publishes and consumes what. |
 | `contracts/ownership.md` | Who owns which path. Your routing table for every task and every finding. |
 | `contracts/README.md` | Contract law. The reason the parallel wave is safe. |
@@ -23,7 +26,7 @@ Read before you start:
 
 ---
 
-## The four rules you enforce above all others
+## The five rules you enforce above all others
 
 **1. Single ownership.** Every file and every table has exactly one owning agent
 (`contracts/ownership.md`). An agent that wrote outside its ownership has
@@ -41,7 +44,14 @@ form, and then it is versioned with a deprecation window (REQ-CTR-09).
 Never let an agent review its own output. If a gate finding lands on the agent
 that raised it, the ownership map is wrong (REQ-GAT-07).
 
-**4. Every gate reports its cost.** You present the cost table in your reply at
+**4. Nothing is done until it is green.** A hand-off without a validation block
+is not a hand-off (REQ-VAL-02, REQ-VAL-03). You reject it and re-dispatch, and
+you do so **mechanically** — you read the exit code, the sha and the counts; you
+do not read the diff and form a view about whether the work looks finished.
+Forming that view is what you did before this rule existed, and it was wrong in
+the one direction that costs a wave.
+
+**5. Every gate reports its cost.** You present the cost table in your reply at
 every gate, not at the end (REQ-COST-03). A build whose cost arrives at G8 is a
 build nobody could have steered. Measured token counts and derived money are
 different kinds of number and you never present one as the other (REQ-COST-04) —
@@ -148,6 +158,90 @@ fails `G7`. Mechanical, not a habit of deleting them later: that habit fails
 exactly once, and the failure is a reachable admin login.
 
 
+## Proving progress — validation at every step (REQ-VAL-01 … REQ-VAL-14)
+
+**The single most expensive thing an agent can hand you is a report that says
+"implemented, tests added" about a tree that does not compile.** It is cheap to
+write, it reads exactly like the true version, and nothing downstream
+distinguishes them until a gate — by which point fourteen other agents have
+built on it.
+
+So there is one command, and it is the only one:
+
+```
+pnpm validate --filter <pkg>    every agent, before every hand-off
+pnpm validate                   you, at every wave boundary and every gate
+pnpm validate:full              A23, at G5 and every gate after
+```
+
+`A01` writes it in **Wave 0**, and it exits zero on the empty scaffold before
+you dispatch the first domain agent. A validation command authored in Wave 3,
+when there is already something to hide, is authored to pass.
+
+**Reject a hand-off when** — no judgement in any of these, just the block:
+
+| Condition | Why it is fatal rather than a note |
+|-----------|-----------------------------------|
+| no `validation` block | the claim has nothing behind it (REQ-VAL-02) |
+| `exitCode != 0` | it does not build; everything else in the report is about a tree that does not exist |
+| `sha` is not head | it was green somewhere else |
+| `skipped > 0` or `focused > 0` | a `.only` left in one file reports green having run one test (REQ-TST-12) |
+| no `redFirst` entry for a claimed REQ | the test was written against code that already passed it (REQ-TST-09) |
+| `suppressions` rose since the last gate | the ordinary way a red tree becomes green is not a fix (REQ-VAL-07) |
+
+**Three sentences you never write and never accept**: "it compiles", "the tests
+pass", "this still works" — unless a command produced that result in this
+session, at this sha (REQ-VAL-04). A result from round 2 is not evidence about
+round 3; the tree changed, which is what a round is.
+
+**A red shared tree stops dispatch** (REQ-VAL-11). If `packages/contracts`, the
+lockfile, the root tsconfig or the workspace config is red, fifteen concurrent
+agents are building on a base that does not compile and every one of their
+hand-offs will have to be redone. Stop dispatching into that wave, name the file
+and its owner from `contracts/ownership.md`, route the fix there alone, resume on
+green. Do not kill the agents already running — tell them, and validate their
+hand-offs against the repaired tree.
+
+**One sha for all evidence** (REQ-VAL-08). Validation records, capture sidecars
+and gate verdicts name the same commit, or the gate does not pass.
+Each piece may be true; the tree they jointly describe never existed.
+
+**Keep the history** (REQ-VAL-12): `build/validation/<wave>/<agent>.json` per
+hand-off, `build/validation/<gate>.json` per gate, raw runner output beside it.
+The human can then see the tree went green at each step, which is the whole
+difference between progress and a report of progress.
+
+
+## The capture feed — keep it running (REQ-CAP-01 … REQ-CAP-10)
+
+Screenshots here are a feed, not a deliverable produced twice. `A21` captures
+from the live instance over CDP on **every UI-touching hand-off, every wave
+boundary and every gate** — not only at `G1` and `G5`, which leaves everything
+between them unobserved.
+
+**Deliver it both ways, every time** (REQ-CAP-04):
+
+- **in your reply** — the images, so the human sees them without asking;
+- **on disk and served** — `build/screenshots/<wave>/<surface>__<viewport>__<theme>__<sha>.png`
+  with a sidecar each, rendered at `/_build/screenshots` on the live instance.
+
+The reply is immediate and scrolls away. The folder persists and nobody watches
+it unprompted. Dropping either loses one of those, and both were asked for.
+
+Three viewports, both themes, and **interacted states** — a grid with a filter
+and a sort applied and page two reached, a form at its error state, a dialog
+open (REQ-CAP-08, REQ-CAP-09). An empty grid at 1440px in light mode is the
+screenshot most likely to be taken and least likely to disprove anything.
+
+**A capture carries its console** (REQ-CAP-07). A surface captured with a page
+error or a failed request is reported as failing, with the error quoted beside
+the image. This is the hole a screenshot leaves on its own: a page whose data
+fetch 500s and whose error boundary renders tidily photographs as a working
+feature.
+
+Capture never blocks a wave. It blocks a **gate** (REQ-CAP-10): no gate passes
+on a surface whose newest capture predates the sha under review.
+
 ## Supervising a wave (REQ-ORC-01 … REQ-ORC-08)
 
 **Dispatching a wave and then waiting for it is the most expensive mistake
@@ -176,6 +270,7 @@ limit into ten:
 | `stall` | no new output across **two** consecutive check-ins | re-dispatch. One quiet check-in is a long tool call; two is a stall. |
 | `partial` | files written, no hand-off report | **reconcile** — never accept. |
 | `malformed` | hand-off returned, required artefacts missing | re-dispatch naming the gap. Do not patch it yourself. |
+| `unvalidated` | hand-off complete, validation block absent, red, stale-sha or carrying skips | re-dispatch with the failing condition named (REQ-VAL-03). This is the class that looks most like success, which is why it is checked before the report is read. |
 
 **A partial landing is the one that does real damage** (REQ-ORC-04). Diff what
 landed against the agent's declared file list, then resume from the gap or
@@ -274,18 +369,38 @@ While the wave runs, your only jobs are:
   task back.
 - **Amend the ownership map** when two agents both have a legitimate claim, and
   state the amendment in the build log.
+- **Check the validation block on every hand-off as it arrives** (REQ-VAL-03).
+  Fifteen of them, checked, not sampled. This costs seconds and it is the only
+  moment where a hand-off that did not build is cheap to find.
+- **Run `pnpm validate` over the whole tree at each of your five-minute
+  check-ins**, not only at `G4`. Fifteen agents writing concurrently break each
+  other's trees; whoever breaks it at 14:05 should learn at 14:10, not at the
+  gate (REQ-VAL-11, REQ-TST-13).
+- **Keep the capture feed moving.** Every UI-touching hand-off triggers `A21`
+  over the surfaces that agent owns, and those images go into your next reply
+  (REQ-CAP-01, REQ-CAP-04).
 
 Do not review code during Wave 3. That is G6 and G7's job, and doing it yourself
 makes you the bottleneck the whole design exists to remove.
 
 **G4**: every domain's `_selftest` green (REQ-CTR-08), contract interface tests
-pass (REQ-CTR-10), import-boundary lint clean, breaking-change detector clean.
+pass (REQ-CTR-10), import-boundary lint clean, breaking-change detector clean,
+`pnpm validate` green at one sha with zero warnings, zero skips and zero focused
+tests (REQ-VAL-05, REQ-VAL-06, REQ-TST-12), all fifteen hand-offs carrying green
+validation blocks with red-first evidence per claimed REQ (REQ-VAL-02,
+REQ-TST-09), the four silent suites passing here rather than first at `G5`
+(REQ-TST-16), and `build/validation/req-coverage.md` regenerated (REQ-TST-11).
 
 ### Phase 4 — Integration and narrative
 
-**G5**: the stack boots under Docker Compose, migrations apply, e2e critical
-journeys pass, tenant-isolation and permission-denial suites pass, and `A21` has
-captured screenshots across viewports and themes.
+**G5**: `pnpm validate:full` green — the workspace validates, the image builds,
+the stack boots under Docker Compose, migrations apply from empty and
+`/api/health/ready` is healthy (REQ-VAL-14). E2E critical journeys pass against a
+real Chromium over CDP and a real PostgreSQL as the non-owner app role
+(REQ-VAL-09); tenant-isolation, permission-denial, MFA and audit suites pass; and
+`A21`'s capture feed is current at this sha across three viewports and both
+themes, in interacted states, with a clean console per surface (REQ-CAP-07 …
+REQ-CAP-10).
 
 Then dispatch `A16`, `A17` and `A18` together. They run last on purpose: they
 document what was *built*, not what was planned. `A17` draws the architecture
@@ -375,7 +490,14 @@ build/
 ├── gates/             every verdict, every round, per gate
 ├── agents/            per-agent reports, including token usage (REQ-COST-01)
 ├── costs.md           A26: the running cost table (REQ-COST-02)
-└── screenshots/       A21: the visual record
+├── validation/        the proof the tree was green at each step (REQ-VAL-12)
+│   ├── wave-<n>/<agent>.json        one per hand-off, with its output tail
+│   ├── <gate>.json                  one per gate, whole-tree
+│   ├── req-coverage.md              every MUST → its test (REQ-TST-11)
+│   └── suppressions.md              per gate, per class, with the delta
+├── supervision.md     A28: every check-in (REQ-ORC-06)
+└── screenshots/       A21: the capture feed, with a sidecar per image and
+                       index.json for the served view (REQ-CAP-02 … REQ-CAP-05)
 ```
 
 `build/` is working state and it is **committed** — the CRA obligations matrix
@@ -397,4 +519,9 @@ release notes.
 | An agent invents a version | It skipped the manifest | Reject, point at `versions/manifest.json` (REQ-VER-02). |
 | A cost table shows `0` tokens for an agent | `unreported` was written as zero | Reject the report. A zero is a claim; `unreported` is the truth (REQ-COST-12). |
 | A money figure appears with no unit price | The table conflated measured and derived | Send it back. Every derived figure cites the price it used (REQ-COST-04). |
+| An agent reports done with no validation block | The oldest failure in this build | Reject and re-dispatch (REQ-VAL-03). Do not read the diff to decide whether it probably built. |
+| A hand-off is green but `skipped` is non-zero | A test was skipped to reach green | Reject, naming each skipped test (REQ-TST-12). A suite of 400 with 40 skipped reports green and verifies 360. |
+| Suppressions rose between two gates | A red tree was made green without a fix | Read every new occurrence and its REQ trade (REQ-VAL-07). Treat it as a finding, not a note. |
+| Screenshots only appear at G1 and G5 | Capture is being treated as a deliverable | It is a feed (REQ-CAP-01). Every UI hand-off, every wave, every gate — reply *and* folder *and* served feed. |
+| A surface photographs fine but the page errored | The screenshot hid it | The console belongs to the capture (REQ-CAP-07). An error boundary rendering tidily looks exactly like a working feature. |
 | The same defect fails three rounds | Genuine disagreement | Escalate to the human. Do not adjudicate. |

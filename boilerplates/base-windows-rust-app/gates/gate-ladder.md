@@ -8,6 +8,41 @@ the rule that a check with no recorded command output is a claim, not a result.
 
 ---
 
+## The validation criterion, at every gate
+
+Every gate below carries this without repeating it:
+
+> **The workspace is green at the sha under review** (REQ-VAL-05, REQ-VAL-08).
+> `cargo xtask validate` has been run — this session, at this sha — and exited
+> zero: `fmt --check` clean, `clippy -D warnings` clean, `check --all-targets
+> --all-features` clean, `cargo test` with zero failures and **zero ignored**
+> (REQ-TST-13). The record is at `build/validation/<gate>.json` with the command,
+> the exit code, the counts, the duration and the output tail (REQ-VAL-12).
+
+A gate does not pass on an agent's statement that the workspace builds. It passes
+on an exit code someone obtained by running the command (REQ-VAL-04).
+
+Three derived refusals, all mechanical:
+
+- **Evidence spanning two shas does not pass** (REQ-VAL-08, REQ-GAT-09).
+- **A suppression count that rose since the previous gate is a finding**
+  (REQ-VAL-07) — `#[allow]`, `unsafe` blocks, `#[ignore]`, `.expect()` on a
+  fallible path, each new occurrence named and its REQ trade read. On a build
+  with an FFI surface, a growing `unsafe` count also means a surface T1 and T2
+  already reviewed has changed since they reviewed it.
+- **A stale capture does not pass** (REQ-CAP-10): every view the gate covers has
+  a capture at this sha, with a clean log (REQ-CAP-07), and anything that could
+  not be captured is named rather than dropped (REQ-CAP-11).
+
+## The capture criterion, at every gate
+
+> **The capture feed is current and delivered both ways** (REQ-CAP-01,
+> REQ-CAP-04): images in the reply, `build/screenshots/` holding them with their
+> sidecars, `index.md` regenerated. Both themes, high contrast as its own
+> variant, the DPI ladder, and all five view states (REQ-CAP-08, REQ-CAP-09).
+
+---
+
 ## H0 — Intake resolved
 
 **Runs:** B00. **Entry:** the user's description exists. **Human:** yes — answers
@@ -26,8 +61,19 @@ the questions that change the build; the rest is defaulted loudly in
    all `MUST` plus one `OPT`, so a non-empty waiver file means a `MUST` was waived
    — **that fails the build** rather than waiving.
 
+4. **`cargo xtask validate` exists and exits zero on the empty workspace**
+   (REQ-VAL-01). `B01` writes it in Wave 0, before there is anything to hide — a
+   validation command first authored in Wave 3 is authored to pass.
+5. **The capture pipeline is proven end to end** on a placeholder window
+   (REQ-CAP-06): a binary builds, `request_screenshot` returns an image, the
+   sidecar is written, `index.md` regenerates, and whether desktop capture is
+   available in this session is recorded rather than assumed (REQ-CAP-11).
+   Proving it on a window with nothing at stake is much cheaper than finding out
+   at `H1` that it does not work.
+
 **Pass:** `build/intake.md` and `build/scope.md` exist, the `OPT` has a value, the
-ceiling and support date are recorded, zero waived `MUST`s. **Fail →** B00 with the
+ceiling and support date are recorded, zero waived `MUST`s, `validate` green and
+the capture pipeline proven. **Fail →** B00 with the
 unresolved item named; a missing human answer stalls the build, never guessed.
 
 ## H1 — Design approved
@@ -148,6 +194,22 @@ member.
    `Cargo.lock` committed, build `--locked` (REQ-SBM-08); the no-telemetry
    assertion green including build-time network access (REQ-SBM-06, REQ-FND-10).
 
+5. **Every Wave 3 hand-off carried a green validation block at its own sha**
+   (REQ-VAL-02) — checked, not sampled. A hand-off accepted without one was
+   accepted in error, and the work behind it is unverified (REQ-VAL-03).
+6. **Red-first evidence for every claimed REQ** (REQ-TST-10): each agent's
+   `redFirst` names the test, the sha at which it failed and the sha at which it
+   passed. `B14` audits these — an entry whose `redSha` equals its `greenSha`, or
+   whose test did not exist at `redSha`, is a finding against that agent.
+7. **Zero ignored tests** across the workspace (REQ-TST-13), reported with the
+   command that produced the count. `cargo test` prints `N ignored` and nobody
+   reads it, which is what makes it the cheapest way past a gate.
+8. **The trust-chain negatives run here, not first at `H5`** (REQ-TST-17): wrong
+   signature, tampered artefact, downgrade, interrupted swap. An updater that
+   stopped verifying signatures updates faster and looks identical.
+9. **`build/validation/req-coverage.md` regenerated** (REQ-TST-12): every `MUST`
+   maps to a test or to a recorded reason it cannot be tested.
+
 **Pass:** every check above green for every crate. **Fail →** the single owning agent
 the failing check names — localised failure is the point of running this before H5.
 
@@ -198,7 +260,17 @@ the failing check names — localised failure is the point of running this befor
    different scale factors (REQ-TST-08, REQ-DSN-11); screenshots in both themes in
    chat (REQ-TST-04); a screen reader over the primary flows (REQ-TST-09).
 
-**Pass:** every suite green, the screenshot set complete, the upgrade path proven.
+9. **`cargo xtask validate --full` green** (REQ-VAL-14): the workspace validates,
+   the MSI builds, installs on a clean image, upgrades from the previous release,
+   and the installed binary launches. A workspace that compiles and an installer
+   that works are two different claims, and the user only ever meets one of them.
+10. **The capture feed covers every view at this sha** — five states, both
+    themes, high contrast, the DPI ladder — with a clean log per capture
+    (REQ-CAP-07 … REQ-CAP-10) and anything uncapturable in this session named
+    rather than dropped (REQ-CAP-11).
+
+**Pass:** every suite green, `validate --full` green, the capture feed current at
+this sha, the upgrade path proven.
 **Fail →** the owning agent per `contracts/ownership.md`; a failure spanning owners
 goes to the orchestrator to split, never to whoever is nearest.
 
@@ -259,7 +331,10 @@ duplicate to suppress.
    updater at commit C, and whatever landed in between has no reviewer. The
    `commit` field in `gates/verdict-schema.md` exists for this assertion; it is
    also what decides whether a fix re-opens H6, so read it rather than
-   remembering which round was last.
+   remembering which round was last. `build/validation/req-coverage.md` shows a
+   test or a recorded untestable-reason per `MUST` (REQ-TST-12); zero ignored and
+   zero quarantined tests (REQ-TST-13, REQ-TST-15); the suppression ledger shows
+   no unexplained rise across the ladder, `unsafe` blocks included (REQ-VAL-07).
 2. Signed binaries for **both** architectures, the MSI, the SBOM, checksums, the
    signed manifest and release notes (REQ-REL-03, REQ-REL-04, REQ-INST-03), the
    signing key in no log, repository or unencrypted CI variable.

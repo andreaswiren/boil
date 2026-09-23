@@ -46,7 +46,7 @@ which is why a reference to one must always carry its `build/` prefix.
 boilerplates/<name>/
 ├── README.md              # what it produces, how to run it — for a human
 ├── CLAUDE.md              # operating instructions — for an agent
-├── AGENTS.md              # pointer to CLAUDE.md, for non-Claude agents
+├── AGENTS.md              # byte-identical to CLAUDE.md (§4), for runtimes that read it
 ├── .claude/
 │   ├── agents/            # the expert fleet, one file per agent
 │   └── skills/            # skills this boilerplate needs
@@ -65,6 +65,37 @@ Where a boilerplate keeps a traceability matrix, it is **generated** from the
 register by `scripts/gen-traceability.py` and never hand-edited — a matrix that
 can drift from the register is worse than no matrix, because it is trusted.
 The check regenerates it and fails if the committed copy differs.
+
+### Every boilerplate proves its own progress
+
+Three things are mandatory because a build that skips them reports success it has
+not earned, and the report is indistinguishable from the true one:
+
+1. **One validation command**, defined before the first agent is dispatched and
+   green on the empty scaffold — typecheck or compile, lint at zero warnings,
+   tests, and a build. Agents run it before every hand-off, gates run it at every
+   gate, the human runs the same thing. A gate that assembles its own set of
+   checks drifts from what developers run, and the drift only ever shows up in
+   the direction where the gate passes a tree that does not build.
+
+2. **A validation block on every hand-off** — the command, the exit code, the
+   commit sha, the runner's own counts, the suppression counts and the output
+   tail — checked mechanically. An orchestrator that reads the diff and forms a
+   view about whether the work looks finished is the failure this replaces.
+   Nothing may be reported as compiling, passing or still working without a
+   command that produced that result in the same session, at the same sha.
+
+3. **Tests and captures as evidence, not deliverables.** A test is written and
+   seen to fail before the behaviour exists, and the failing sha is recorded; no
+   test is skipped or disabled to reach green; every `MUST` maps to a test or to
+   a recorded reason it cannot be tested. Screenshots run as a continuous feed
+   from a single live instance — every hand-off that touches a surface, every
+   phase boundary, every gate — delivered both in the reply and to a durable
+   folder, each image with a sidecar naming the sha it was taken at.
+
+The boilerplate names its own commands and its own IDs. What is not optional is
+that a phase cannot end on a tree nobody compiled, and a requirement cannot be
+called done on a test nobody watched fail.
 
 ## 3. Stable requirement IDs
 

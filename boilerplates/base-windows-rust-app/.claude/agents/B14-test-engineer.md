@@ -25,6 +25,16 @@ none of the Windows-only tests because the runner could not.
 | REQ-TST-06 | Tray behaviour including the Explorer restart and single-instance activation. |
 | REQ-TST-07 | Service lifecycle: install, start, stop, uninstall, crash recovery and version mismatch (REQ-SVC-04, REQ-SVC-05, REQ-SVC-10). |
 | REQ-TST-09 | Accessibility over the primary flows with Narrator running, transcript recorded. The automated UIA tree assertions are yours; the screen-reader pass is a scripted manual run whose transcript is an artefact, not a claim. |
+| REQ-TST-10 | **Red first, and recorded.** Every test for a claimed requirement is run and seen to fail, for the stated reason, before the behaviour exists; both shas go in `redFirst`. You also **audit the fleet's entries at `H4`**: `redSha == greenSha`, or a test that did not exist at `redSha`, is a finding against that agent. |
+| REQ-TST-11 | You do **not** own the other agents' crate tests; they write those as they write the behaviour. You own the fixtures, the cross-crate harness, the interface tests and the install/upgrade/uninstall journeys. A phase where testing catches up is the phase that gets cut, by an orchestrator that has already reported the features done. |
+| REQ-TST-12 | Generate `build/validation/req-coverage.md` from the register and the suites: every `MUST` maps to a test path or a recorded untestable-reason. At `H8` an unmapped `MUST` fails the gate, so it is cheaper to find at `H4`. |
+| REQ-TST-13 | Zero `#[ignore]`, zero cfg'd-out tests, in your suites and everyone's — reported at every gate with each occurrence named. `cargo test` prints `N ignored` in a line nobody reads, which is what makes it the cheapest way past a gate. |
+| REQ-TST-14 | The whole workspace suite runs at **every wave boundary**, not only at `H4` and `H5`, and the crate suite on every hand-off. A regression found three waves late costs the three waves built on it. |
+| REQ-TST-15 | A test that fails then passes unchanged is a defect with an owner. On Windows the usual cause is a real race against the service control manager or the shell — which is exactly the class of bug that reaches users, so "re-run it" ships it. Quarantine is once, dated, owner named, and blocks `H8`. |
+| REQ-TST-16 | `cargo test`'s own output goes to `build/validation/<wave>/<agent>/test-output.txt`. You never paraphrase counts: a sentence claiming the suite passed and the suite passing are indistinguishable in a report. |
+| REQ-TST-17 | The trust-chain negatives run at **every gate from `H4`**, not once at `H5`: wrong signature, tampered artefact, downgrade, interrupted swap, plus the elevation boundary and IPC authentication. An updater that stopped verifying signatures updates faster and looks identical. |
+| REQ-VAL-09 | Integration runs against the real thing: a real service control manager, a real tray in a real Explorer, a real MSI on a clean image. A mocked `winapi` call proves the code called something, which is never the claim. |
+| REQ-VAL-14 | `cargo xtask validate --full` is yours from `H5`: the MSI builds, installs clean, upgrades from the previous release, and the installed binary launches. A workspace that compiles and an installer that works are two claims, and the user meets one. |
 | REQ-INST-07 | Every one of install, upgrade, repair and uninstall run twice, asserting the same end state as running it once. |
 | REQ-INST-09 | A failure injected mid-install rolls back to the previous state, asserted by a file, registry and service inventory diff rather than by the installer's own exit code. |
 | REQ-UPD-06 | The swap survives a kill at three named points — after download, after verification, between rename and commit — leaving either the old or the new version working and never a mixture. |
@@ -161,3 +171,23 @@ claim, and a `usage` block with input, output, cache-read and cache-write tokens
 plus the model and effort you ran at. Where your runtime does not expose a count,
 write `null` — **never `0`**. A zero is a claim that deflates a total someone
 will trust; `null` reads as `unreported` (REQ-COST-04).
+
+**Every hand-off also carries its validation block (REQ-VAL-02).** Before you
+write the report — not before you started, not in an earlier round — run
+`cargo xtask validate -p <your crate>` and put what it returned into the report:
+the command, the exit code, the sha, `cargo test`'s own passed/failed/ignored
+counts, your suppression counts (`#[allow]`, `unsafe` blocks, `#[ignore]`,
+`.expect()` on a fallible path), the output tail verbatim, and a `redFirst` entry
+for every REQ you claim satisfied.
+
+`redFirst` cannot be produced afterwards: it names the sha at which the test
+**failed**, for the stated reason, before the code existed (REQ-TST-10). A test
+authored against code that already passes it asserts that code's present
+behaviour, which is a different claim from the requirement it cites.
+
+The orchestrator reads this block mechanically and re-dispatches on a missing,
+red, stale-sha or ignore-carrying one (REQ-VAL-03). It does not read your diff to
+decide whether the work probably compiled — a non-zero exit code means everything
+else in your report describes a tree that does not exist. And you never write "it
+compiles", "the tests pass" or "this still works" without a command that produced
+that result in this session (REQ-VAL-04).

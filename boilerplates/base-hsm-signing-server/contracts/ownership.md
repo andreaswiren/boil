@@ -35,3 +35,17 @@ Ownership is primary responsibility, not exclusive access. Cross-boundary edits 
 - **documentation-engineer** — docs
 - **release-engineer** — release,ci
 - **dependency-license-reviewer** — supply-chain,review
+
+## Build-state paths
+
+These are not product code, and they are **committed**: the reviews and the
+release record cite them as evidence, and evidence nobody can open is not
+evidence.
+
+| Path | Owner | Note |
+|------|-------|------|
+| `build/validation/<phase>/<agent>.json` | the agent that produced the hand-off | Its own validation block and output tail (`SZ-VAL-002`, `SZ-VAL-012`). |
+| `build/validation/<gate>.json` | orchestrator | The whole-tree record per phase gate. |
+| `build/validation/req-coverage.md`, `build/validation/unverified.md` | test-automation-engineer | Generated. Every `MUST` to its citing test; every REQ ID no available environment could verify (`SZ-TEST-001`, `SZ-TEST-007`). |
+| `build/validation/suppressions.md` | orchestrator | Per gate, per class, with the delta (`SZ-VAL-007`). |
+| `build/screenshots/**` | ui-ux-engineer | Images, sidecars and `index.json`. A capture feed, not a gate deliverable (`SZ-CAP-001` … `SZ-CAP-008`). Scanned for secrets before writing (`SZ-CAP-007`). |

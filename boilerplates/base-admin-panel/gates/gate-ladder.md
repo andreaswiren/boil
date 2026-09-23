@@ -24,6 +24,40 @@ If a cost ceiling was declared at intake and this gate crosses it, the gate
 **pauses and asks** rather than failing or continuing (REQ-COST-09). A pause is
 not a gate failure and does not start a loop round.
 
+## The validation criterion, at every gate
+
+The second criterion every gate below carries without repeating it:
+
+> **The tree is green at the sha under review** (REQ-VAL-05, REQ-VAL-08).
+> `pnpm validate` has been run — this session, at this sha — and exited zero,
+> with zero warnings (REQ-VAL-06), zero skipped and zero focused tests
+> (REQ-TST-12). The record is at `build/validation/<gate>.json` with the
+> command, the exit code, the counts, the duration and the output tail
+> (REQ-VAL-12).
+
+A gate does not pass on an agent's statement that the tree builds. It passes on
+an exit code someone obtained by running the command (REQ-VAL-04). These are
+different things, and the gap between them is where a wave gets lost.
+
+Three derived refusals, all mechanical:
+
+- **Evidence spanning two shas does not pass** (REQ-VAL-08). Each
+  piece may be true; the tree they jointly describe never existed.
+- **A suppression count that rose since the previous gate is a finding**
+  (REQ-VAL-07), with each new occurrence named and its REQ trade read. Rising
+  suppressions is the ordinary way a red tree becomes a green one.
+- **A stale capture does not pass** (REQ-CAP-10). Every surface the gate covers
+  has a capture at this sha, with its console clean (REQ-CAP-07).
+
+## The capture criterion, at every gate
+
+> **The capture feed is current and has been delivered both ways**
+> (REQ-CAP-01, REQ-CAP-04): the images are in the reply, `build/screenshots/`
+> holds them with their sidecars, and `/_build/screenshots` on the live instance
+> serves them. Three viewports, both themes, interacted states, console clean
+> (REQ-CAP-06 … REQ-CAP-09).
+
+
 ## G0 — Intake resolved
 **Runs:** A00. **Entry:** the user's description exists. **Human:** yes — answers
 the questions that change the build; the rest is defaulted loudly.
@@ -42,8 +76,17 @@ the questions that change the build; the rest is defaulted loudly.
    been given to the human in the reply (REQ-LIV-02). It serves the build status
    page; there is no UI yet and that is expected.
 
+7. **`pnpm validate` exists and exits zero on the empty scaffold** (REQ-VAL-01).
+   Authored by `A01` in Wave 0, before there is anything to hide. A validation
+   command first written in Wave 3 is a validation command written to pass.
+8. **The capture pipeline runs end to end on the status page** (REQ-CAP-06):
+   Playwright resolves a browser, connects over CDP to the live instance,
+   captures six images, writes six sidecars and renders `/_build/screenshots`.
+   Proving the pipeline works on a page with nothing at stake is much cheaper
+   than discovering at `G1` that it does not.
+
 **Pass:** `build/intake.md` + `build/scope.md` exist, every `OPT` has a value,
-zero waived `MUST`s. **Fail →** A00 with the unresolved item named. A missing
+zero waived `MUST`s, `pnpm validate` green, the capture pipeline proven. **Fail →** A00 with the unresolved item named. A missing
 human answer stalls the build; it is never guessed.
 
 ## G1 — Mockup approval
@@ -159,10 +202,22 @@ colliding member.
    clean against 1.0.0 (REQ-CTR-07).
 4. Migration lint clean — no table missing the envelope and not listed exempt in
    `contracts/types/entity-base.md` (REQ-ENT-03).
-5. `strict` + `noUncheckedIndexedAccess`, zero TS errors (REQ-FND-03).
+5. `strict` + `noUncheckedIndexedAccess`, zero TS errors (REQ-FND-03), ESLint at
+   `--max-warnings=0` (REQ-VAL-06).
+6. **Every Wave 3 hand-off carried a green validation block at its own sha**
+   (REQ-VAL-02) — fifteen of them, checked, not sampled. A hand-off accepted
+   without one was accepted in error and its work is unverified (REQ-VAL-03).
+7. **Red-first evidence for every claimed REQ** (REQ-TST-09): each agent's
+   `validation.redFirst` names the test, the failing sha and the passing sha.
+8. **The four silent suites pass here, not first at `G5`** (REQ-TST-16): tenant
+   isolation, permission denial, MFA enforcement, audit emission.
+9. **`build/validation/req-coverage.md` regenerated** (REQ-TST-11): every `MUST`
+   in the register maps to a test or to a recorded reason it cannot be tested.
+10. **Generated artefacts regenerate to an empty diff** (REQ-VAL-13): the typed
+    client, the fixtures, the traceability matrix.
 
 **Pass:** every self-test green, interface tests green, both linters and the
-detector clean. **Fail →** the single owning agent the failing self-test names.
+detector clean, every hand-off validated, coverage map complete. **Fail →** the single owning agent the failing self-test names.
 Localised failure is the point of the self-test.
 
 ## G5 — Integration
@@ -181,7 +236,16 @@ Localised failure is the point of the self-test.
    (REQ-TST-03), presented in chat (REQ-TST-04). axe at AA in both themes (REQ-TST-06);
    surface budgets assert at every breakpoint (REQ-UI-10).
 
-**Pass:** all suites green, screenshot set complete, budgets met. **Fail →** the
+6. **`pnpm validate:full` green** (REQ-VAL-14): the workspace validates, the
+   image builds, the stack boots, migrations apply from empty and
+   `/api/health/ready` is healthy. A workspace that typechecks and an image that
+   starts are two different claims and both are being made here.
+7. **The capture feed covers every surface at this sha** with interacted states
+   and a clean console (REQ-CAP-07 … REQ-CAP-10) — a page whose fetch 500s and
+   whose error boundary renders tidily photographs as a working feature.
+
+**Pass:** all suites green, `validate:full` green, capture feed current at this
+sha, budgets met. **Fail →** the
 owning agent per `contracts/ownership.md`; a failure spanning owners goes to the
 orchestrator to split, never to whoever is nearest.
 
@@ -235,7 +299,11 @@ signal, not a duplicate to suppress.
 2. Compliance set generated from repository state (REQ-CRA-10); SBOM per build
    (REQ-CRA-03); CER set current.
 3. **Every `MUST` green** — a `MUST` is never waived (REQ-REL-07). Four G6 verdicts and
-   two G7 verdicts on file, all passing.
+   two G7 verdicts on file, all passing, all naming this sha (REQ-VAL-08).
+   `build/validation/req-coverage.md` shows a test or a recorded
+   untestable-reason per `MUST` (REQ-TST-11); zero skipped, zero focused, zero
+   quarantined tests (REQ-TST-12, REQ-TST-14); the suppression ledger shows no
+   unexplained rise across the ladder (REQ-VAL-07).
 4. Semver bumped, level derived from the change set and recorded (REQ-REL-02).
 5. `CHANGELOG.md` in Keep a Changelog form citing REQ IDs (REQ-REL-03); `README.md`,
    `SECURITY.md` and `TODO.md` with live gate state current (REQ-REL-04/05/06).

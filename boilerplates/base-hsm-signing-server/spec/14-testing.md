@@ -1,11 +1,16 @@
 # Testing
 
-Owner: `test-automation-engineer`. Requirements: every `MUST` in the register —
-that is the point of this document.
+Owner: `test-automation-engineer`. Requirements: `SZ-TEST-001` … `SZ-TEST-013`,
+and through `SZ-TEST-001`, every `MUST` in the register — that is the point of
+this document.
 
-## 1. A requirement without a test is an intention
+Compilation is the separate and earlier question, and it has its own document:
+`spec/20-validation.md` (`SZ-VAL-001` … `SZ-VAL-014`). A suite that passes says
+nothing about a tree that did not build.
 
-`spec/requirements.md` carries 65 requirements. The traceability matrix maps each
+## 1. A requirement without a test is an intention (SZ-TEST-001)
+
+`spec/requirements.md` carries 100 requirements. The traceability matrix maps each
 to an owner. This document is the other half: **what evidence exists that each is
 true.**
 
@@ -13,6 +18,16 @@ The rule is `SZ-*` by ID. A test that does not cite a requirement is testing
 something nobody asked for; a requirement with no citing test is an intention.
 The completion gate on every agent brief says the traceability entries are
 updated, and that is what it means.
+
+**Red first (SZ-TEST-002).** The test is run and seen to fail, for the reason you
+expect, before the behaviour exists — and both shas go in the hand-off's
+`redFirst` (`spec/20-validation.md` §2). A test authored afterwards against code
+that already passes it is a regression guard, which is useful, and it is not
+evidence about the requirement it cites.
+
+**Tests land with the behaviour (SZ-TEST-003)**, never in a later cleanup phase.
+Operating rule 17 says tests are part of the requirement; this is what makes it
+checkable rather than aspirational.
 
 ## 2. Layers, and what each is actually for
 
@@ -24,7 +39,7 @@ updated, and that is what it means.
 | **Negative** | Does it refuse — §3 |
 | Appliance | Does the *machine* hold — verity, unseal, firewall (`SZ-OS-010`) |
 
-## 3. The negative tests are the important ones
+## 3. The negative tests are the important ones (SZ-TEST-004)
 
 For a signing appliance, most of the value is in what it refuses. These are not a
 sub-category of the test suite; they are the suite's reason for existing.
@@ -47,7 +62,7 @@ Every one of these is a test, and each cites the requirement it defends:
 - An `UPDATE` on `audit_events` → fails at the database.
 - An edited or truncated audit chain → detected.
 
-## 4. Hardware, and how not to be blocked by it
+## 4. Hardware, and how not to be blocked by it (SZ-TEST-006, SZ-TEST-007)
 
 HSM-dependent tests run in two modes (`SZ-HSM-001`):
 
@@ -66,7 +81,7 @@ need a real or virtualised machine, and the REQ IDs they cover are reported
 `unverified` when that environment is absent — never silently skipped. A skipped
 test that reports green is worse than a missing test.
 
-## 5. Determinism
+## 5. Determinism (SZ-TEST-008 … SZ-TEST-010)
 
 Flakiness in this suite is a security problem, because a flaky negative test gets
 disabled and a disabled negative test is a removed control.
@@ -80,7 +95,7 @@ disabled and a disabled negative test is a removed control.
 - A test that fails intermittently is quarantined **with a ticket and an owner**,
   never deleted, and a quarantined negative test blocks the release.
 
-## 6. Security regression tests
+## 6. Security regression tests (SZ-TEST-005)
 
 Every security finding — from `security-reviewer`, `adversarial-reviewer`, an
 advisory or an incident — gets a test that fails on the unfixed code before the
@@ -90,7 +105,7 @@ This is the only mechanism that stops a fixed vulnerability returning during a
 refactor two years later, and it is cheap exactly once: while the finding is
 still understood.
 
-## 7. Coverage, honestly
+## 7. Coverage, honestly (SZ-TEST-011)
 
 Line coverage is reported and is **not** a gate. A signing appliance with 95%
 line coverage and no negative test for approval replay is not tested.
@@ -99,7 +114,7 @@ The gate is requirement coverage: every `MUST` has at least one citing test, and
 the ones that cannot be tested automatically are listed with the reason and the
 manual procedure that covers them.
 
-## 8. How this is verified
+## 8. How this is verified (SZ-TEST-012)
 
 - A report maps every `SZ-*` `MUST` to its citing tests; any with none fails the
   build.

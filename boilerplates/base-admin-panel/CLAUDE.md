@@ -43,13 +43,13 @@ document. Do not start a build to answer a question.
 | File | What it is |
 |------|------------|
 | `prompts/00-master-orchestrator.md` | How the build runs. Read this first. |
-| `spec/requirements.md` | 362 requirements with stable IDs. The source of truth. |
+| `spec/requirements.md` | 394 requirements with stable IDs. The source of truth. |
 | `spec/agents.md` | The fleet: agent IDs, waves, who publishes and consumes what. |
 | `contracts/ownership.md` | Who owns which path. The routing table for tasks and findings. |
 | `contracts/README.md` | Contract law. Why 16 agents can build at once. |
 | `gates/gate-ladder.md` | G0–G8. |
 | `.claude/agents/` | The agent prompts themselves. |
-| `.claude/skills/` | `build-orchestrate`, `contract-guard`, `version-guard`, `visual-qa-cdp`, `supply-chain-audit`, `release-build`. |
+| `.claude/skills/` | `build-orchestrate`, `contract-guard`, `validate-tree`, `version-guard`, `visual-qa-cdp`, `supply-chain-audit`, `release-build`. |
 
 ## Rules that are not negotiable
 

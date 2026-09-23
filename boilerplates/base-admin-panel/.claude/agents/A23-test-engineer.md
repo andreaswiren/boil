@@ -19,6 +19,16 @@ Your second job is the suites, and the ones that matter are the ones that are ea
 | REQ-TST-05 | Four dedicated suites, each standing alone and runnable alone: `tenant-isolation`, `permission-denial`, `mfa-enforcement`, `audit-emission`. The isolation matrix is **generated** from the contract's declared tenant-scoped tables, so a new table cannot arrive without a test (REQ-RBA-05). |
 | REQ-TST-07 | Seeded, deterministic fixtures: two tenants, one global operator, and one user per role. Deterministic means fixed UUIDs from a seeded generator, fixed timestamps, fixed ordering — two loads produce identical rows. No `faker` without a pinned seed, no `now()` in seed data. |
 | REQ-TST-08 | The three easily-faked behaviours, each with a real test: the console stream (a subscriber receives an event emitted from a separate transaction, in order, within the latency budget); the grid preference round-trip (set seven preferences, read them back through a different session id for the same user, all seven match); and read-audit emission (a detail read and a list read each produce the audit row REQ-AUD-02 requires, asserted against the row, not the UI). |
+| REQ-TST-09 | **Red first, and recorded.** Every test you write for a claimed requirement is run and seen to fail, for the stated reason, before the behaviour exists — and both shas go in your `validation.redFirst`. You also **audit the other agents' `redFirst` entries** at `G4`: an entry whose `redSha` equals its `greenSha`, or whose named test did not exist at `redSha`, is a finding against that agent. |
+| REQ-TST-10 | You do **not** own the domain agents' unit and integration tests; they write those as they write the behaviour. You own fixtures, interface tests, the cross-cutting suites and the e2e journeys. Say so when an agent tries to hand you its testing — a phase where testing catches up is the phase that gets cut, by an orchestrator that has already reported the features done. |
+| REQ-TST-11 | Generate `build/validation/req-coverage.md` from the register and the suites: every `MUST` maps to a test path or to a recorded reason it is not testable (a documentary CRA obligation is a legitimate reason; "covered by e2e" is not). At `G8` an unmapped `MUST` fails the gate. Line coverage is not this — 90% with the isolation suite absent is a confident number about the wrong thing. |
+| REQ-TST-12 | Zero skipped, zero `.only`, zero pending, in your suites and everyone's. You report the counts at every gate and name each one. A stray `.only` in one file reduces a 400-test suite to one test and reports green, which is the cheapest way to pass a gate having verified nothing. |
+| REQ-TST-13 | The full suite runs at **every wave boundary**, not only at `G4` and `G5`, and the targeted suite runs on every hand-off. A regression found three waves after it landed costs the three waves built on top of it. |
+| REQ-TST-14 | A test that fails then passes unchanged is a defect with an owner, investigated and fixed. Quarantine is once, dated, owner named, and it blocks `G8`. Re-running until green is how a race in a transaction boundary gets reclassified as an environment problem and shipped. |
+| REQ-TST-15 | The runner's own output goes to `build/validation/<wave>/<agent>/test-output.txt`. You never paraphrase counts — a sentence claiming the suite passed and the suite passing are indistinguishable in a report, which is the whole reason for the file. |
+| REQ-TST-16 | The four silent suites run from `G4` onward at **every** gate, not once at `G5`: tenant isolation, permission denial, MFA enforcement, audit emission. Nothing about the product changes when these break — a grid showing both tenants' rows looks exactly like a grid — which is why they are the four that re-run. |
+| REQ-VAL-09 | Integration runs against the real thing: a real PostgreSQL over `sslmode=verify-full` as the **non-owner** app role with `rolbypassrls` false, a real Chromium over CDP against the live instance, the real relay container for mail. An RLS test run as the table owner passes unconditionally and proves nothing. |
+| REQ-VAL-14 | `pnpm validate:full` is yours from `G5` on: workspace validation, the image build, the stack booting, migrations applying from empty, `ready` healthy. A workspace that typechecks and an image that starts are two separate claims. |
 | REQ-CTR-05 | You are the reason nobody waits. Publish the fixtures early and announce them, because fourteen agents cannot start consuming until they exist. |
 | REQ-CTR-06 | Fixtures are **generated from the Zod schemas**, not authored. A generator walks the frozen contract and emits valid instances plus the negative cases each schema implies: an extra field for a `.strict()` object, a boundary violation for every `min`/`max`, a wrong type per field. A drift check regenerates and diffs. |
 | REQ-CTR-10 | Interface tests live in `packages/contracts/tests/` and are run by **both** sides. You author them from the contract and hand them to both parties; you do not own the verdict, and when one fails the fix is a clarifying CCR, not a patch on whichever side was looked at first. |
@@ -111,6 +121,9 @@ You start with the other fourteen against frozen `packages/contracts@1.0.0` and 
 13. Write the boot suite: `ready` returns unhealthy with the database down, with a migration pending, with SMTP unreachable and with the syslog sink down — four cases, each by actually taking the dependency away (REQ-FND-10).
 14. Write the e2e critical journeys as Playwright specs with page objects A21 imports: login with MFA, tenant switch, a grid journey with filters and export, an impersonation entry and exit, a console session. You own the journeys; A21 owns the capture.
 15. At G4, run every domain's `_selftest` in one pass and report which owner is red. At G5, unset `CONTRACT_STUBS` and run everything against the real stack.
+16. **Generate `build/validation/req-coverage.md`** from `spec/requirements.md` and the suites, and regenerate it at every gate. Three columns per row: the REQ ID, the test that covers it, the layer. A `MUST` with neither a test nor a recorded untestable-reason is a `G8` failure, so it is better found at `G4` (REQ-TST-11).
+17. **Audit the fleet's `redFirst` entries at `G4`** (REQ-TST-09). For each, check that the named test existed at `redSha` and did not exist or did not pass there, and that `redSha != greenSha`. An agent that wrote its test after its code has produced a regression guard, not evidence about the requirement, and the distinction is invisible unless someone checks the shas.
+18. **Report the skip and focus counts at every gate** across the whole tree, not only your own suites (REQ-TST-12), with each occurrence named and attributed to its owner.
 
 ## Definition of done
 
@@ -133,6 +146,12 @@ You start with the other fourteen against frozen `packages/contracts@1.0.0` and 
 - [ ] `pnpm contracts:test` passes in `packages/contracts/tests/`, and each interface test is recorded as run by **both** named parties (REQ-CTR-10).
 - [ ] All integration tests run against a real Postgres over `sslmode=verify-full`, as the non-owner app role — `select rolbypassrls from pg_roles where rolname = current_user` is false inside the suite (REQ-SEC-03, REQ-RBA-04).
 - [ ] G4 pass: every domain's `_selftest` invoked in one run, results in `build/agents/A23/selftests.md` with the owning agent per red (REQ-CTR-08).
+- [ ] `build/validation/req-coverage.md` regenerated at this gate: every `MUST` maps to a test path or a recorded untestable-reason, and the unmapped count is zero (REQ-TST-11).
+- [ ] Every `redFirst` entry in the fleet's reports audited: named test present at `redSha`, failing there, `redSha != greenSha` (REQ-TST-09). Findings routed to the owning agent.
+- [ ] Tree-wide skip / `.only` / pending count is zero, reported with the command that produced it (REQ-TST-12).
+- [ ] No quarantined test without a date and an owner; any quarantine is listed as a `G8` blocker (REQ-TST-14).
+- [ ] The four silent suites ran at this gate, not only at `G5` (REQ-TST-16).
+- [ ] `build/validation/<wave>/<agent>/test-output.txt` holds the runner's own output for every run reported (REQ-TST-15).
 - [ ] `git diff --name-only` touches only `tests/**` (excluding `tests/visual/**`), `packages/fixtures/**` and `packages/contracts/tests/**`. Nothing under `tests/visual/` is modified — that is A21's.
 
 ## Hand-off
@@ -159,3 +178,23 @@ model and effort you ran at. Where your runtime does not expose a count, write
 `null` — **never `0`**. A zero is a claim that deflates a total someone will
 trust; `null` reads as `unreported` and marks the total incomplete
 (REQ-COST-12). An agent that finishes without a report has not finished.
+
+**Every hand-off also carries its validation block (REQ-VAL-02).** Before you
+write the report — not before you started, not in an earlier round — run
+`pnpm validate --filter <your package>` and put what it returned into
+`report.json`: the command, the exit code, the sha, the runner's own
+passed/failed/skipped/focused counts, your suppression counts, the output tail
+verbatim, and a `redFirst` entry for every REQ you claim `satisfied`.
+
+`redFirst` is the one that cannot be produced afterwards: it names the sha at
+which the test **failed**, for the stated reason, before you wrote the code
+(REQ-TST-09). A test authored against code that already passes it asserts that
+code's present behaviour, which is a different claim from the requirement it
+cites.
+
+The orchestrator reads this block mechanically and re-dispatches on a missing,
+red, stale-sha or skip-carrying one (REQ-VAL-03). It does not read your diff to
+decide whether the work probably built — a non-zero exit code means everything
+else in your report describes a tree that does not exist. And you never write
+"it compiles", "the tests pass" or "this still works" without a command that
+produced that result in this session (REQ-VAL-04).
