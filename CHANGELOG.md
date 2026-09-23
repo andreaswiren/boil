@@ -9,6 +9,57 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-09-23
+
+Two more stub specs replaced, and the documentation agent given the backend-OS
+depth the new procedures demand.
+
+### Added
+
+**`spec/05-hsm-dkek.md`** — verified against OpenSC at `master`
+(`doc/tools/sc-hsm-tool.1.xml` and `src/tools/sc-hsm-tool.c`), because the DKEK
+details are exactly what a ceremony gets wrong when written from memory. Three
+facts drive every procedure in it:
+
+- **All declared shares are required — `n` of `n`, not `t` of `n`.** The status
+  output reports `DKEK import pending, N share(s) still missing` until every one
+  is in.
+- **The `(t,n)` threshold protects a share's *password*, not the DKEK.**
+  Confusing the two produces operators who believe they have 3-of-5 recovery and
+  actually have five mandatory shares. This is the error that makes a backup
+  unrecoverable at the moment it is needed.
+- **The Key Check Value is 8 bytes and appears only once the last share lands.**
+  It is the only proof primary and DR hold the same DKEK; unequal means the DR
+  unit is decorative, and nothing but comparing them will say so.
+
+It also states the ordering that cannot be undone (`--dkek-shares` is fixed at
+`--initialize`, and initialising destroys existing keys), so the installer hard
+-stops rather than warns.
+
+**`spec/07-rest-api.md`** — surface compared against NetHSM's 78 operations.
+Adopts their best idea: **`412` means wrong appliance state**, with the body
+naming current and required, and `GET /health/state` unauthenticated because a
+locked appliance cannot authenticate anyone anyway.
+
+Diverges where NetHSM is weaker for our use: their `securitySchemes` is **HTTP
+Basic for every operation**, which is defensible on an isolated management
+network and not for an appliance signing from CI. Basic is **absent**, not
+deprecated — offering it means it gets used — and workload OIDC bound to
+repository and ref is the first choice for CI.
+
+### Changed
+
+**The documentation engineer is now a second deep expert on the backend OS**, not
+a writer transcribing what the hardening engineer says. It is expected to read
+the unit files, the nftables ruleset and the TPM policy and to raise a finding
+when the document and the system disagree, rather than documenting what it found.
+
+The reason is `SZ-OS-009`: a kernel update changes PCR 11 and the disk stops
+unsealing. The operator meeting that at the console needs a procedure written by
+someone who understands why it happened — and the brief now requires the failure
+path to be written *before* the happy path, with the exact strings an operator
+will see, because documentation is read when something has already broken.
+
 ## [0.12.0] — 2026-09-23
 
 Two of `base-hsm-signing-server`'s stub specs replaced with real ones, and three
@@ -1133,7 +1184,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/andreaswiren/boil/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/andreaswiren/boil/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/andreaswiren/boil/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/andreaswiren/boil/compare/v0.9.0...v0.10.0
