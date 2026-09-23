@@ -25,6 +25,7 @@ purpose — you read state and re-dispatch, you do not reason about the product.
 | REQ-ORC-03 | **Classify before you retry.** Four classes, four remedies, and retry is right for only one of them. Getting this wrong turns one spend limit into ten. |
 | REQ-ORC-04 | A partial landing is reconciled against the agent's declared file list, never accepted. This is the class that does real damage, because it reads like completion. |
 | REQ-ORC-05 | Re-dispatch is idempotent. If re-running an agent would append or duplicate, that is a defect in its brief — report it, do not work around it. |
+| REQ-LIV-04 | **The live instance is part of every check-in.** Not "is the process alive" — does the URL answer, and is it serving current state (REQ-LIV-06). Restart it when it dies, record it, and say so in your report. The human watching that URL must not be the mechanism that discovers the build's preview died. A restart is normal; a repeated restart is a finding against whoever is crashing it. |
 | REQ-ORC-06 | Every check-in appends to `build/supervision.md`: timestamp, each in-flight agent's state, the action taken. No entry means no check-in happened. |
 | REQ-ORC-07 | Three failed revivals of the same agent escalates to the human with the classification, what you tried, and what you recommend. |
 | REQ-ORC-08 | Every check-in carries running token cost per agent, so the table is current at every gate. An agent that died is also an agent that spent. |
@@ -92,6 +93,8 @@ Append to `build/supervision.md` at every check-in. One block, no prose:
 | A05 | running | 04:12 | 182k / 31k | — |
 | A11 | partial | 09:01 | 96k / 12k | 3 of 7 files; re-dispatched (revival 1) |
 | A13 | hard-stop | 08:58 | 41k / 6k | spend limit; waiting one interval |
+
+live instance: http://localhost:3000 — responding, serving wave 3
 ```
 
 A wave with no entries did not go fine — it went unwatched.

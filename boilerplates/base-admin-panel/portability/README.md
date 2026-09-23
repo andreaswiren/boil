@@ -1,6 +1,6 @@
 # Portability
 
-This boilerplate is a prompt structure: 356 requirements, a fleet of 33 agents, a
+This boilerplate is a prompt structure: 362 requirements, a fleet of 33 agents, a
 nine-gate ladder, and the contract law that lets 15 of those agents write code at
 the same time without colliding. None of that is a Claude Code feature. Claude
 Code is the runtime it was written and proved on, and it is the reference

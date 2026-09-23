@@ -212,6 +212,18 @@ exist to fix that.
 | REQ-ORC-08 | MUST | The check-in carries the running token cost per agent, so the cost table is current at every gate rather than reconstructed at the end (REQ-COST-01, REQ-COST-03). An agent that died is also an agent that spent. |
 
 
+## LIV — The live instance
+
+| ID | Status | Requirement |
+|----|--------|-------------|
+| REQ-LIV-01 | MUST | **A live instance is running before the first agent produces anything visible, and it stays up for the whole build.** It is started in Wave 0, not when the UI is ready, and it is never torn down between waves. From the first moment it serves a **build status page** — current wave, current gate, what each agent is doing, what is waiting on the human — which is progressively replaced by the product as the product comes to exist. A build the human can only follow by reading agent reports is a build they cannot follow. |
+| REQ-LIV-02 | MUST | **The URL and the test logins are told to the human in the reply**, at the moment the instance first comes up and again at every gate — not written to a file they have to find, and not mentioned once at the start of a build that runs for hours. The credentials are stated in full: the address, each seeded account, its role and its password. An approver who cannot log in cannot approve at `G1`. |
+| REQ-LIV-03 | MUST | **The same instance is used for development, debugging and screenshot capture** (REQ-TST-02). No agent starts a second, ephemeral server for its own use. An ephemeral per-capture server hides every state-dependent defect — the screenshot is taken against a process that has just started, with empty caches and no accumulated state, which is the one configuration no user will ever see. |
+| REQ-LIV-04 | MUST | `A28` keeps the instance alive: it is part of every check-in, it is restarted when it dies, and **a build whose live instance is down is reported down** rather than continuing silently (REQ-ORC-06). The human watching the URL must not be the mechanism that discovers it. |
+| REQ-LIV-05 | MUST | **Seeded test credentials exist only in a non-production build**, gated on an explicit build flag, and a production build containing any seeded account **fails the release gate**. The convenience that makes a build followable is a standing credential in a deployed product, and the control has to be mechanical rather than a habit of deleting them later. |
+| REQ-LIV-06 | MUST | The instance reflects the current state of the build within one wave — it is rebuilt or hot-reloaded as agents land work, so what the human sees is what exists. A preview showing a state from two gates ago is worse than no preview, because it is believed. |
+
+
 ## MOC — Mockup & approval phase
 
 | ID | Status | Requirement |

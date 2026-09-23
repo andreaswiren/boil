@@ -9,6 +9,64 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.15.0] — 2026-09-23
+
+Reported as a bug, and it was one: **neither boilerplate had any notion of a
+running instance the human could watch.** Nothing in either register, orchestrator
+or gate ladder mentioned a preview URL, test logins, or keeping anything up
+between waves.
+
+### Added
+
+**`REQ-LIV-01`…`06` and `SZ-LIV-001`…`006` — the live instance.**
+
+A build runs for hours across five waves. Without this the human's only window
+into it is agent reports: prose, after the fact, about work they cannot see. They
+find the layout is wrong at the design gate and the grid is wrong at integration,
+when ten seconds of clicking would have caught both.
+
+- **Up from Wave 0, before any UI exists.** The URL serves a build status page —
+  current wave and gate, each agent's state, what is waiting on the human, the
+  running cost table — progressively replaced by the product, with the status
+  page still reachable at `/_build`. Serving something from the first minute is
+  the point, not a compromise.
+- **The URL and every test login are stated in the reply, at every gate** — in
+  full, with roles and passwords. Not written to a file, and not once at the
+  start of a build whose opening message scrolled away hours ago. An approver who
+  cannot log in stalls the design gate on a missing password rather than on a
+  decision.
+- **One instance for development, debugging and screenshot capture.** No agent
+  starts an ephemeral server for a clean capture: a freshly started process with
+  empty caches and no accumulated state is the one configuration no user ever
+  meets, so it hides exactly the defects that appear after an hour of use — and a
+  screenshot from a different process cannot settle a disagreement about what the
+  human saw.
+- **`A28` keeps it alive**, as part of every check-in, and a build whose instance
+  is down is *reported* down. The human watching the URL must not be the
+  mechanism that discovers it died.
+
+### The security half
+
+The convenience that makes a build followable is a set of standing credentials
+with known addresses, so both boilerplates make the exclusion mechanical:
+
+- **Seeds run only under a non-production build flag, and a production build
+  containing any seeded account fails the release gate.** Never a habit of
+  deleting them later — that habit fails exactly once, and the failure is a
+  reachable admin login.
+- Seeded addresses use `.invalid` so they cannot collide with a real address or
+  receive real mail.
+- On the signing appliance the consequence is sharper, so `SZ-LIV-005` adds one
+  the admin panel does not need: **the development instance never touches real
+  key material.** Software PKCS#11 token or emulator, never a production Nitrokey
+  HSM 2 and never a production DKEK. A development appliance wired to a real
+  signing key is a signing oracle with seeded logins and a URL the team has been
+  told to open.
+
+Specs: `spec/live-instance.md` and `spec/19-live-instance.md`, wired into both
+orchestrators, the admin panel's `G0` and `G1` exit conditions, and `A28`'s
+check-in.
+
 ## [0.14.0] — 2026-09-23
 
 `base-hsm-signing-server` no longer has stubs. Every domain spec, every skill and
@@ -1240,7 +1298,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/andreaswiren/boil/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/andreaswiren/boil/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/andreaswiren/boil/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/andreaswiren/boil/compare/v0.11.0...v0.12.0

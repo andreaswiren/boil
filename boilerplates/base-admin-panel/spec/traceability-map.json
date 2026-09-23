@@ -175,6 +175,11 @@
       "A28",
       "(process)",
       "G4"
+    ],
+    "LIV": [
+      "A28",
+      "(process)",
+      "G1"
     ]
   },
   "override": {
@@ -707,6 +712,11 @@
       "A08",
       "(process)",
       "G1"
+    ],
+    "REQ-LIV-05": [
+      "A19",
+      "(process)",
+      "G7"
     ]
   },
   "spec": {
@@ -744,7 +754,8 @@
     "MON": "spec/editor.md",
     "MOB": "spec/mobile-ux.md",
     "IMP": "spec/impersonation.md",
-    "ORC": "prompts/00-master-orchestrator.md"
+    "ORC": "prompts/00-master-orchestrator.md",
+    "LIV": "spec/live-instance.md"
   },
   "spec_by_id": {
     "REQ-UI-04": "spec/theming.md",

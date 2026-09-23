@@ -26,6 +26,18 @@ drift-checked, which is the difference that matters.
 ---
 
 
+## LIV — The live instance
+
+| ID | Status | Requirement |
+|----|--------|-------------|
+| SZ-LIV-001 | MUST | **A live instance runs before the first agent produces anything visible, and stays up for the whole build.** Started at the beginning, not when the UI is ready, and never torn down between phases. From the first moment the URL serves a **build status page** — current phase, each agent's state, what is waiting on a human — progressively replaced by the appliance's own surface as it comes to exist. A build the human can only follow by reading agent reports is a build they cannot follow. |
+| SZ-LIV-002 | MUST | **The URL and the test logins are told to the human in the reply**, when the instance first comes up and again at every phase boundary — not written to a file they must find, and not stated once at the start of a build that runs for hours. In full: the address, each seeded account, its role and its password. |
+| SZ-LIV-003 | MUST | **The same instance is used for development, debugging and screenshot capture.** No agent starts a second, ephemeral server. A freshly started process with empty caches and no accumulated state is the one configuration no operator ever meets, so it hides exactly the defects that appear after an hour of use — and a screenshot from a different process is not evidence about what the human looked at. |
+| SZ-LIV-004 | MUST | The instance is checked continuously, restarted when it dies, and **a build whose live instance is down is reported down** rather than continuing silently. The human watching the URL must not be the mechanism that discovers it died. |
+| SZ-LIV-005 | MUST | **The development instance never holds real key material.** It runs against a software PKCS#11 token or an HSM emulator, never a production Nitrokey HSM 2, and never a production DKEK (`spec/14-testing.md` §4). A development appliance wired to a real signing key is a signing oracle with seeded logins and a URL. |
+| SZ-LIV-006 | MUST | **Seeded test credentials exist only in a non-production build**, gated on an explicit build flag, and a production build containing any seeded account **fails the release gate**. On a signing appliance a standing credential with a known address is not a tidiness problem: it is authorization to sign. The control is mechanical, never a habit of deleting them later — that habit fails exactly once. |
+
+
 ## FUN — Product & functional surface
 
 | ID | Status | Requirement |

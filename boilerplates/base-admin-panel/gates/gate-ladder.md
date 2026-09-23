@@ -38,6 +38,10 @@ the questions that change the build; the rest is defaulted loudly.
    sized for a tenant with every module enabled (REQ-MOC-13, REQ-MOC-14). G1
    cannot start without it, because the menu is what the sidebar is sized to.
 
+6. **The live instance is up** (REQ-LIV-01) and its URL and test logins have
+   been given to the human in the reply (REQ-LIV-02). It serves the build status
+   page; there is no UI yet and that is expected.
+
 **Pass:** `build/intake.md` + `build/scope.md` exist, every `OPT` has a value,
 zero waived `MUST`s. **Fail →** A00 with the unresolved item named. A missing
 human answer stalls the build; it is never guessed.
@@ -92,7 +96,9 @@ concurrent with it:
    renderings against the touch and mobile budgets. Verdicts at
    `build/gates/G1/C1-design-r<N>.json` and `build/gates/G1/A27-mobile-r<N>.json`.
 
-**Pass:** checks 1–9 green, **then** a human names one layout or an explicit
+**Pass:** checks 1–9 green, the live instance serving the mockups at the URL the
+human was given (REQ-LIV-02, REQ-LIV-03) — they browse them, not only the
+screenshots — **then** a human names one layout or an explicit
 hybrid of named ones, recorded in `build/approvals.md` (REQ-MOC-05). The human is
 asked last, not first: their attention is the one resource in this build that
 cannot be re-run, and spending it on a set two reviewers would have rejected is

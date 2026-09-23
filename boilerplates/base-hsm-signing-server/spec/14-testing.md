@@ -5,7 +5,7 @@ that is the point of this document.
 
 ## 1. A requirement without a test is an intention
 
-`spec/requirements.md` carries 59 requirements. The traceability matrix maps each
+`spec/requirements.md` carries 65 requirements. The traceability matrix maps each
 to an owner. This document is the other half: **what evidence exists that each is
 true.**
 

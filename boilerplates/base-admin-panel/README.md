@@ -95,7 +95,7 @@ outbox, `en`/`sv` with ICU, Europe/Stockholm with correct DST and
 `YYYY-MM-DD HH:mm:ss`, an always-current help section with architecture charts,
 and EU CRA and CER compliance documentation generated from the repository state.
 
-All of it under [`spec/requirements.md`](spec/requirements.md) — 356 requirements
+All of it under [`spec/requirements.md`](spec/requirements.md) — 362 requirements
 with stable IDs, each owned by an agent and checked by a gate.
 
 ---
@@ -132,7 +132,7 @@ law that makes the parallelism safe.
 | [`prompts/`](prompts/) | The orchestrator and the phase prompts |
 | [`.claude/agents/`](.claude/agents/) | The 33 agent prompts: 29 builders and 4 gate agents |
 | [`.claude/skills/`](.claude/skills/) | Orchestration, contract guard, version guard, visual QA, supply-chain audit, release |
-| [`spec/`](spec/) | 356 requirements, the fleet roster, and a spec per domain |
+| [`spec/`](spec/) | 362 requirements, the fleet roster, and a spec per domain |
 | [`contracts/`](contracts/) | Contract law, the ownership map, types, events, OpenAPI, DB and RLS contracts |
 | [`gates/`](gates/) | The G0–G8 ladder, verdict schema, loop rules, Karpathy lens |
 | [`versions/`](versions/) | The externally-validated version manifest |

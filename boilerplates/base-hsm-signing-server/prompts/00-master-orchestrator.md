@@ -13,3 +13,35 @@ Never expose a raw remote HSM/PKCS#11 service. If legacy software requires PKCS#
 Never put HSM PINs, DKEK material, passkey secrets or recovery secrets in URLs, process arguments, logs, audit records, browser storage or source control.
 
 Do not declare a phase complete until requirement traceability, tests, security review, adversarial review and documentation are updated.
+
+## The live instance — bring it up first, keep it up (SZ-LIV-001 … SZ-LIV-006)
+
+**Before the first agent produces anything visible, start it.** The URL serves a
+build status page from the beginning — current phase, each agent's state, what is
+waiting on a human — and the appliance's surface progressively replaces it.
+
+**Tell the human, in your reply, at every phase boundary** (SZ-LIV-002):
+
+```
+Live instance:  https://localhost:8443       build status at /_build
+Test logins:    admin@dev.invalid     / <generated>   Administrator
+                approver@dev.invalid  / <generated>   Operator, can approve
+                viewer@dev.invalid    / <generated>   read-only
+```
+
+Generated per build, never fixed, never committed.
+
+**One instance for everything** (SZ-LIV-003) — development, debugging, capture and
+the human's browsing. No agent starts its own: a freshly started process hides
+the defects that appear after an hour of use, and a screenshot from a different
+process is not evidence about what the human saw.
+
+**It never touches a real key** (SZ-LIV-005). Software PKCS#11 token or emulator,
+never a production HSM and never a production DKEK. A development appliance wired
+to a real signing key is a signing oracle with seeded logins and a URL.
+
+**The seeded logins are a production defect** (SZ-LIV-006). On a signing appliance
+a standing credential with a known address is authorization to sign. Seeds are
+gated on a non-production flag and a production build containing one fails the
+release gate — mechanically, never by remembering to remove them.
+

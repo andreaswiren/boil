@@ -11,7 +11,7 @@ Read before you start:
 
 | File | Why |
 |------|-----|
-| `spec/requirements.md` | 356 requirement IDs. The only way to refer to a requirement. |
+| `spec/requirements.md` | 362 requirement IDs. The only way to refer to a requirement. |
 | `spec/agents.md` | The fleet, the waves, who publishes and consumes what. |
 | `contracts/ownership.md` | Who owns which path. Your routing table for every task and every finding. |
 | `contracts/README.md` | Contract law. The reason the parallel wave is safe. |
@@ -60,7 +60,7 @@ afternoon and a week.
 
 | Wave | Gate that must pass first | Agents | Concurrency |
 |------|---------------------------|--------|-------------|
-| 0 | — | `A00` (incl. `build/navigation.md`) | 1 |
+| 0 | — | `A00` (incl. `build/navigation.md`), **then bring up the live instance** | 1 |
 | all | — | `A28` supervisor, running for the duration of every wave | +1 |
 | 1 | G0 | `A06` → then `A08`, `A21` → then `C1`, `A27` (review) | 1, 2, then 2 |
 | 2 | G1 | `A20` → `A01` → `A02` | strictly sequential |
@@ -105,6 +105,48 @@ Two gates you must not soften:
   functions (REQ-GAT-01). Three out of four is a fail.
 
 ---
+
+## The live instance — bring it up first, keep it up (REQ-LIV-01 … REQ-LIV-06)
+
+**Before Wave 1, start it. Do not wait for a UI to exist.** From Wave 0 the URL
+serves a build status page — current wave and gate, each agent's state, what is
+waiting on the human, the running cost table — and the product progressively
+replaces it as the product comes to exist. The status page stays reachable at
+`/_build` for the whole build.
+
+A build runs for hours. Without this the human's only window is agent reports:
+prose, after the fact, about work they cannot see. They find the layout is wrong
+at `G1` and the grid is wrong at `G5`, when ten seconds of clicking would have
+caught both.
+
+**Tell them, in your reply, every gate** (REQ-LIV-02) — not once at the start of
+a build whose opening message scrolled away hours ago:
+
+```
+Live instance:  http://localhost:3000        build status at /_build
+Test logins:    admin@dev.invalid    / <generated>   Administrator
+                approver@dev.invalid / <generated>   Operator, can approve
+                viewer@dev.invalid   / <generated>   read-only
+```
+
+Generated per build, never fixed strings, never committed.
+
+**One instance, for everything** (REQ-LIV-03). `A21` captures against *this*
+process, over CDP. No agent starts its own ephemeral server: a freshly started
+process with empty caches and no accumulated state is the one configuration no
+user ever meets, so it hides precisely the defects that appear after an hour of
+use — and a screenshot from a different process is not evidence about what the
+human looked at.
+
+**`A28` keeps it alive** (REQ-LIV-04). It is part of every check-in: does the URL
+answer, and is it serving current state. If it is down, restart it and **say so**
+— the human watching the URL must not be the one who discovers it died.
+
+**The test logins are a production defect** (REQ-LIV-05). Seeds run only under a
+non-production build flag, and a production build containing a seeded account
+fails `G7`. Mechanical, not a habit of deleting them later: that habit fails
+exactly once, and the failure is a reachable admin login.
+
 
 ## Supervising a wave (REQ-ORC-01 … REQ-ORC-08)
 

@@ -50,6 +50,11 @@
       "documentation-engineer",
       "security-reviewer+adversarial-reviewer",
       "acceptance"
+    ],
+    "LIV": [
+      "test-automation-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
     ]
   },
   "spec": {
@@ -62,7 +67,8 @@
     "AUD": "spec/10-audit.md",
     "OS": "spec/11-os-appliance.md",
     "INS": "spec/13-installer-setup.md",
-    "DOC": "spec/15-documentation.md"
+    "DOC": "spec/15-documentation.md",
+    "LIV": "spec/19-live-instance.md"
   },
   "override": {
     "SZ-HSM-007": [
@@ -107,6 +113,16 @@
     ],
     "SZ-SEC-007": [
       "nextjs-architect",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "SZ-LIV-005": [
+      "hsm-pkcs11-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "SZ-LIV-006": [
+      "release-engineer",
       "security-reviewer+adversarial-reviewer",
       "acceptance"
     ]
