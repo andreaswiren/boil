@@ -32,8 +32,9 @@ document. Do not start a build to answer a question.
 | File | What it is |
 |------|------------|
 | `prompts/00-master-orchestrator.md` | How the build runs. Read this first. |
-| `spec/requirements.md` | 37 requirements with stable `SZ-*` IDs. The source of truth. |
-| `spec/00-product.md` … `16-ui.md` | One specification per domain. |
+| `spec/requirements.md` | 55 requirements with stable `SZ-*` IDs. The source of truth. |
+| `spec/00-product.md` … `16-ui.md` | One specification per domain. **Most are still one-paragraph stubs** — see `TODO` in the repository README. |
+| `spec/17-nethsm-parity.md` | The gap analysis against NetHSM, and the divergences decided on purpose. Read it before adding an endpoint. |
 | `contracts/ownership.md` | Who owns which path. The routing table for tasks and findings. |
 | `.claude/agents/` | The 34 agent prompts themselves. |
 | `.claude/skills/` | 19 domain skills — PKCS#11, DKEK ceremonies, Authenticode on Linux, appliance hardening, and the rest. |

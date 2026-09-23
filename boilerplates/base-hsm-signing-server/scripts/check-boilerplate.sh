@@ -238,7 +238,13 @@ fi
 if [ -f "$root/spec/traceability.csv" ] && [ -f "$root/scripts/gen-traceability.py" ]; then
   tmp=$(mktemp -d)
   cp "$root/spec/traceability.csv" "$tmp/before.csv"
-  ( cd "$root" && python3 scripts/gen-traceability.py >/dev/null 2>&1 ) || true
+  # A generator that fails leaves the file untouched, so the diff below passes
+  # and the matrix reads as "in sync" when it was never regenerated. That is a
+  # check reporting success for something it did not do.
+  if ! ( cd "$root" && python3 scripts/gen-traceability.py >"$tmp/gen.log" 2>&1 ); then
+    bad "scripts/gen-traceability.py failed, so the matrix was never checked:"
+    sed 's/^/    /' "$tmp/gen.log" | tail -4
+  fi
   if diff -q "$tmp/before.csv" "$root/spec/traceability.csv" >/dev/null 2>&1; then
     note "traceability matrix is in sync with the register"
   else

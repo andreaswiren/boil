@@ -9,6 +9,77 @@ requirement that motivated it.
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-09-23
+
+### Added
+
+**A NetHSM parity analysis for `base-hsm-signing-server`, and 18 requirements
+closing the real gaps.** Measured against `Nitrokey/nethsm` at commit
+`2a1bac5d97b1156ed2f9523360c11e0441537c52` — `docs/system-design.md`,
+`docs/developer-documentation.md` and `docs/nethsm-api.yaml` (56 endpoints, 78
+operations), cloned and read rather than recalled. The user guide at
+`docs.nitrokey.com` was proxy-blocked, so nothing rests on it.
+
+`spec/17-nethsm-parity.md` states what we adopt, what we cannot match, and what
+we decline on purpose.
+
+**The gap that mattered: there was no Locked state.** NetHSM boots provisioned
+but with no access to its own key store — the stores are encrypted under a
+Domain Key that lives only in memory, recovered from a TPM-sealed Device Key or
+from an operator's unlock passphrase. Ours had setup mode and then running, so a
+stolen disk yielded the database, the audit log and every wrapped backup.
+`SZ-HSM-006` … `SZ-HSM-010` adopt the state machine and the two-slot mechanism
+exactly, including that a failed unattended decryption falls back to attended
+rather than open, and that no TPM means attended-only rather than a silent
+fallback to an unsealed key on disk.
+
+**Their backup design is better than ours and is now ours.** Double-encrypted,
+the endpoint absent until a Backup Passphrase exists, and reading a backup
+requiring **both** the Backup Key and an Unlock Key — so an automated client with
+backup credentials fetches backups forever and decrypts none. `SZ-HSM-011`,
+`SZ-HSM-012`, including that a partial restore *removes* what the backup does
+not contain, stated before it runs.
+
+**Rate limits now have numbers.** NetHSM's: one failed unlock per second per
+address, one failed authentication per second per address *and* username. Ours
+said "rate limiting", which cannot be tested (`SZ-SEC-006`).
+
+Also adopted: an unauthenticated `/health/state` so a client can tell locked from
+broken; `/metrics` on a `Metrics` role so monitoring holds no operator
+credential; the key-object certificate lifecycle on the API; tag restriction
+enforced at the key as a second authorization axis; the four-role enum; A/B
+update with a separate commit step and automatic rollback; an audited factory
+reset; and refusing to become operational without healthy entropy, because a key
+generated from weak entropy has to be rotated and everything it signed
+re-examined.
+
+**Declined on purpose, and recorded**: `/random` and `encrypt`/`decrypt` (a
+signing appliance is not an entropy service or a decryption oracle),
+`/cluster/*` and `etcd` (introduces a Failed state on quorum loss; our DR is a
+second HSM), and Muen/MirageOS — §1 states what that trade costs rather than
+implying the isolation proof came with the hardening.
+
+### Fixed
+
+- **The matrix-sync check was reporting success for work it never did.** It ran
+  the generator with `|| true` and then diffed an unchanged file, so a generator
+  that failed produced "traceability matrix is in sync with the register". It
+  failed for this boilerplate on every run since 0.10.0. A failing generator now
+  fails the check.
+- `scripts/gen-traceability.py` hardcoded `REQ-` in its row pattern, so it
+  matched nothing in a register using `SZ-`. Third component this week to
+  hardcode an ID scheme after the conformance check and the roster check; it now
+  derives the prefix like they do. All three shipped copies re-synced.
+
+### Known, and stated rather than implied
+
+`base-hsm-signing-server` arrived as scaffolding and mostly still is: **16 of its
+18 domain specs are one-paragraph stubs**, its 19 skills are ~16 lines each, and
+`docs/operations/*` is three lines. The requirement register, the agent briefs
+and now the parity analysis carry real content. The README's own status line said
+this; it is repeated here because a reader who sees 55 requirements and 34 agents
+will otherwise assume the specifications behind them exist.
+
 ## [0.10.0] — 2026-09-22
 
 ### Added
@@ -996,7 +1067,8 @@ prose review had not:
 - `typescript` 7.x is deferred; `syslog-pro` needs its RFC 5425 TLS support
   verified before adoption.
 
-[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/andreaswiren/boil/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/andreaswiren/boil/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/andreaswiren/boil/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/andreaswiren/boil/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/andreaswiren/boil/compare/v0.8.0...v0.8.1

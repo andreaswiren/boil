@@ -3,7 +3,7 @@
 Live status for the `boil` repository. Updated in the same commit as the work it
 describes (`CLAUDE.md` hard rule 4).
 
-Repo version: **0.10.0**
+Repo version: **0.11.0**
 
 ---
 

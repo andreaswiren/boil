@@ -31,7 +31,11 @@ import re
 import sys
 from pathlib import Path
 
-REQ_ROW = re.compile(r'^\| (REQ-([A-Z0-9]+)-\d+) \| (MUST|SHOULD|OPT) \| (.+?) \|\s*$')
+# The ID prefix is not hardcoded. CONVENTIONS.md section 3 requires IDs that are
+# stable and never renumbered; it does not require one spelling, and a
+# boilerplate that arrives with a load-bearing prefix of its own keeps it rather
+# than having every citation rewritten to satisfy this script.
+REQ_ROW = re.compile(r'^\| ([A-Z][A-Z0-9]*-([A-Z0-9]+)-\d+) \| (MUST|SHOULD|OPT) \| (.+?) \|\s*$')
 HEADER = ["req_id", "domain", "status", "owner_agent", "contract_member", "gate",
           "spec_document", "requirement"]
 

@@ -1,0 +1,114 @@
+{
+  "_comment": "Ownership map for the traceability matrix, consumed by scripts/gen-traceability.py. domain = default (owner, review, spec) per requirement domain; override = per-ID exceptions. This boilerplate's IDs are SZ-*, and every requirement is reviewed by security-reviewer and adversarial-reviewer independently before it is called done (rule 5) — the review column names the additional owner, not a replacement for those two.",
+  "domain": {
+    "FUN": [
+      "product-owner",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "SEC": [
+      "security-architect",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "HSM": [
+      "hsm-pkcs11-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "AUTH": [
+      "auth-identity-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "API": [
+      "rest-api-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "PWA": [
+      "pwa-approval-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "AUD": [
+      "audit-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "OS": [
+      "os-control-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "INS": [
+      "installer-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "DOC": [
+      "documentation-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ]
+  },
+  "spec": {
+    "FUN": "spec/00-product.md",
+    "SEC": "spec/02-threat-model.md",
+    "HSM": "spec/05-hsm-dkek.md",
+    "AUTH": "spec/04-identity-auth.md",
+    "API": "spec/07-rest-api.md",
+    "PWA": "spec/09-pwa-approvals.md",
+    "AUD": "spec/10-audit.md",
+    "OS": "spec/11-os-appliance.md",
+    "INS": "spec/13-installer-setup.md",
+    "DOC": "spec/15-documentation.md"
+  },
+  "override": {
+    "SZ-HSM-007": [
+      "hsm-pkcs11-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "SZ-HSM-011": [
+      "backup-restore-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "SZ-HSM-012": [
+      "backup-restore-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "SZ-OS-006": [
+      "release-engineer",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ],
+    "SZ-SEC-011": [
+      "security-architect",
+      "security-reviewer+adversarial-reviewer",
+      "acceptance"
+    ]
+  },
+  "spec_by_id": {
+    "SZ-HSM-006": "spec/17-nethsm-parity.md",
+    "SZ-HSM-007": "spec/17-nethsm-parity.md",
+    "SZ-HSM-008": "spec/17-nethsm-parity.md",
+    "SZ-HSM-009": "spec/17-nethsm-parity.md",
+    "SZ-HSM-010": "spec/17-nethsm-parity.md",
+    "SZ-HSM-011": "spec/17-nethsm-parity.md",
+    "SZ-HSM-012": "spec/17-nethsm-parity.md",
+    "SZ-OS-006": "spec/17-nethsm-parity.md",
+    "SZ-OS-007": "spec/17-nethsm-parity.md",
+    "SZ-SEC-006": "spec/17-nethsm-parity.md",
+    "SZ-SEC-011": "spec/17-nethsm-parity.md",
+    "SZ-API-005": "spec/17-nethsm-parity.md",
+    "SZ-API-006": "spec/17-nethsm-parity.md",
+    "SZ-API-007": "spec/17-nethsm-parity.md",
+    "SZ-AUTH-005": "spec/17-nethsm-parity.md",
+    "SZ-AUTH-006": "spec/17-nethsm-parity.md",
+    "SZ-AUTH-007": "spec/17-nethsm-parity.md",
+    "SZ-INS-005": "spec/17-nethsm-parity.md"
+  }
+}
